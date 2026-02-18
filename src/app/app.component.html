@@ -1,0 +1,25 @@
+<nb-layout>
+  <nb-layout-header fixed>
+    <div class="header-container">
+      <div class="header-brand">
+        <nb-icon icon="music-outline" class="brand-icon"></nb-icon>
+        <span class="brand-name">Heavy Metal Playlist</span>
+      </div>
+      <div class="header-actions">
+        <app-theme-switcher></app-theme-switcher>
+      </div>
+    </div>
+  </nb-layout-header>
+
+  <nb-layout-column>
+    @if (view() === 'playlists') {
+      <app-playlists (playlistSelected)="onPlaylistSelected($event)" />
+    } @else {
+      <app-playlist [playlist]="selectedPlaylist()!" (back)="onBack()" />
+    }
+  </nb-layout-column>
+
+  <nb-layout-footer fixed>
+    <span class="footer-text">Heavy Metal Playlist · Datos guardados localmente</span>
+  </nb-layout-footer>
+</nb-layout>

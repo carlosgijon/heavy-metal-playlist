@@ -1,0 +1,40 @@
+.form-card {
+  min-width: 380px;
+  max-width: 480px;
+
+  nb-card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.field-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-hint-color);
+}
+
+.required {
+  color: var(--color-danger-default);
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: var(--color-danger-default);
+  margin-top: 0.15rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

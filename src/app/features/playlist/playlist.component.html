@@ -1,0 +1,188 @@
+<div class="playlist-container">
+
+  <!-- Header bar -->
+  <div class="playlist-header">
+    <div class="playlist-info">
+      <div class="playlist-nav">
+        <button nbButton ghost status="basic" size="small" nbTooltip="Volver a playlists" (click)="back.emit()">
+          <nb-icon icon="arrow-back-outline"></nb-icon>
+          Playlists
+        </button>
+        <span class="breadcrumb-sep">/</span>
+        <h2 class="playlist-title">
+          <nb-icon icon="music-outline"></nb-icon>
+          {{ playlist.name }}
+        </h2>
+      </div>
+      <span class="playlist-stats" *ngIf="songs.length > 0">
+        {{ songs.length }} elementos
+        <span *ngIf="totalDuration"> · {{ totalDuration }}</span>
+      </span>
+    </div>
+    <div class="header-actions">
+      <button
+        nbButton ghost status="warning" size="medium"
+        nbTooltip="Exportar a PDF para imprimir"
+        *ngIf="songs.length > 0"
+        (click)="exportToPdf()">
+        <nb-icon icon="printer-outline"></nb-icon>
+        Exportar PDF
+      </button>
+      <button nbButton ghost status="success" size="medium" (click)="openAddEvent()">
+        <nb-icon icon="star-outline"></nb-icon>
+        Añadir evento
+      </button>
+      <button nbButton status="primary" size="medium" (click)="openAddForm()">
+        <nb-icon icon="plus-outline"></nb-icon>
+        Nueva canción
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="loading">
+    <nb-spinner size="giant" status="primary"></nb-spinner>
+  </div>
+
+  <!-- Empty state -->
+  <nb-alert *ngIf="!loading && songs.length === 0" status="info" class="empty-state">
+    <nb-icon icon="music-outline" class="empty-icon"></nb-icon>
+    <p>El setlist está vacío.</p>
+    <p>Pulsa <strong>Nueva canción</strong> para empezar.</p>
+  </nb-alert>
+
+  <!-- Song table con drag & drop -->
+  <div class="table-wrapper" *ngIf="!loading && songs.length > 0">
+    <table class="songs-table">
+      <thead>
+        <tr>
+          <th class="col-drag"></th>
+          <th class="col-pos">#</th>
+          <th class="col-title">Título</th>
+          <th class="col-setlist">En setlist</th>
+          <th class="col-artist">Artista</th>
+          <th class="col-genre">Género</th>
+          <th class="col-tempo">BPM</th>
+          <th class="col-duration">Duración</th>
+          <th class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
+        <tr
+          *ngFor="let song of songs; let i = index"
+          cdkDrag
+          class="song-row"
+          [class.event-row]="song.type === 'event'"
+          [class.join-start]="isJoinStart(i)"
+          [class.join-end]="isJoinEnd(i)">
+
+          <!-- Drag handle -->
+          <td class="col-drag">
+            <div cdkDragHandle class="drag-handle" nbTooltip="Arrastra para reordenar">
+              <nb-icon icon="menu-outline"></nb-icon>
+            </div>
+          </td>
+
+          <!-- Event row: spans all song columns -->
+          <ng-container *ngIf="song.type === 'event'">
+            <td class="col-pos"></td>
+            <td colspan="6" class="event-cell">---- {{ song.title }}</td>
+            <td class="col-actions">
+              <button nbButton ghost size="small" style="visibility:hidden" aria-hidden="true" tabindex="-1">
+                <nb-icon icon="corner-right-down-outline"></nb-icon>
+              </button>
+              <button nbButton ghost status="info" size="small" nbTooltip="Editar" (click)="openEditForm(song)">
+                <nb-icon icon="edit-outline"></nb-icon>
+              </button>
+              <button nbButton ghost status="danger" size="small" nbTooltip="Eliminar" (click)="deleteSong(song)">
+                <nb-icon icon="trash-2-outline"></nb-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- Song row: normal columns -->
+          <ng-container *ngIf="!song.type || song.type === 'song'">
+
+            <!-- Position -->
+            <td class="col-pos">
+              <span class="position-badge">{{ songNumber(i) }}</span>
+            </td>
+
+            <!-- Título + Álbum -->
+            <td class="col-title">
+              <span class="song-title">{{ song.title }}</span>
+              <span class="song-album" *ngIf="song.album">{{ song.album }}</span>
+            </td>
+
+            <!-- Nombre en setlist -->
+            <td class="col-setlist">
+              <span *ngIf="song.setlistName" class="setlist-name">{{ song.setlistName }}</span>
+              <span *ngIf="!song.setlistName" class="empty-cell">—</span>
+            </td>
+
+            <!-- Artista -->
+            <td class="col-artist">{{ song.artist }}</td>
+
+            <!-- Género con color -->
+            <td class="col-genre">
+              <span
+                *ngIf="song.style"
+                class="genre-tag"
+                [ngStyle]="getGenreStyle(song.style)">
+                {{ song.style }}
+              </span>
+              <span *ngIf="!song.style" class="empty-cell">—</span>
+            </td>
+
+            <!-- BPM -->
+            <td class="col-tempo">
+              <span *ngIf="song.tempo">{{ song.tempo }}</span>
+              <span *ngIf="!song.tempo" class="empty-cell">—</span>
+            </td>
+
+            <!-- Duración -->
+            <td class="col-duration">
+              <span class="duration-val" *ngIf="song.duration">{{ formatDuration(song.duration) }}</span>
+              <span *ngIf="!song.duration" class="empty-cell">—</span>
+            </td>
+
+            <!-- Acciones -->
+            <td class="col-actions">
+              <button
+                nbButton ghost size="small"
+                [status]="song.joinWithNext ? 'primary' : 'basic'"
+                nbTooltip="Unir con siguiente"
+                (click)="toggleJoinWithNext(song)">
+                <nb-icon icon="corner-right-down-outline"></nb-icon>
+              </button>
+              <button nbButton ghost status="info" size="small" nbTooltip="Editar" (click)="openEditForm(song)">
+                <nb-icon icon="edit-outline"></nb-icon>
+              </button>
+              <button nbButton ghost status="danger" size="small" nbTooltip="Eliminar" (click)="deleteSong(song)">
+                <nb-icon icon="trash-2-outline"></nb-icon>
+              </button>
+            </td>
+
+          </ng-container>
+
+          <!-- Drag placeholder -->
+          <div *cdkDragPlaceholder class="drag-placeholder-row"></div>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Notas debajo de la tabla -->
+    <div class="notes-section" *ngIf="hasSongNotes()">
+      <div class="notes-title">
+        <nb-icon icon="message-square-outline"></nb-icon> Notas
+      </div>
+      <div class="note-row" *ngFor="let song of songs">
+        <ng-container *ngIf="song.type !== 'event' && song.notes">
+          <span class="note-num">{{ song.position + 1 }}.</span>
+          <span class="note-text">{{ song.notes }}</span>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+</div>

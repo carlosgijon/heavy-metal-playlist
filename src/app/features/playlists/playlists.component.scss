@@ -1,0 +1,154 @@
+.playlists-container {
+  padding: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.playlists-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.playlists-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 4rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem;
+  gap: 0.5rem;
+
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+}
+
+// ── Tabla ────────────────────────────────────────────────────────
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--card-border-radius);
+  border: 1px solid var(--card-border-color);
+}
+
+.playlists-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-background-color);
+
+  thead tr {
+    background: var(--color-primary-transparent-200);
+    border-bottom: 2px solid #3366ff;
+  }
+
+  th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-hint-color);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--card-border-color);
+    vertical-align: middle;
+  }
+
+  .col-center {
+    text-align: center;
+  }
+}
+
+.playlist-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--color-primary-transparent-100);
+  }
+
+  &:last-child td {
+    border-bottom: none;
+  }
+}
+
+.cell-name {
+  font-weight: 700;
+  color: #3366ff;
+  white-space: nowrap;
+
+  nb-icon {
+    font-size: 1rem;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+}
+
+.cell-desc {
+  color: var(--text-hint-color);
+  font-style: italic;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.song-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: #3366ff;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0 0.3rem;
+}
+
+.cell-duration {
+  color: var(--color-success-default);
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.cell-date {
+  color: var(--text-hint-color);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.cell-actions {
+  white-space: nowrap;
+
+  button {
+    margin: 0 0.1rem;
+  }
+}

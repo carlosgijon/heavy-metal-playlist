@@ -1,0 +1,82 @@
+<div class="playlists-container">
+
+  <!-- Header -->
+  <div class="playlists-header">
+    <h2 class="playlists-title">
+      <nb-icon icon="list-outline"></nb-icon>
+      Mis Playlists
+    </h2>
+    <button nbButton status="primary" size="medium" (click)="openCreateForm()">
+      <nb-icon icon="plus-outline"></nb-icon>
+      Nueva playlist
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="loading">
+    <nb-spinner size="giant" status="primary"></nb-spinner>
+  </div>
+
+  <!-- Empty state -->
+  <nb-alert *ngIf="!loading && playlists.length === 0" status="info" class="empty-state">
+    <nb-icon icon="music-outline" class="empty-icon"></nb-icon>
+    <p>No tienes playlists todavía.</p>
+    <p>Pulsa <strong>Nueva playlist</strong> para empezar.</p>
+  </nb-alert>
+
+  <!-- Tabla de playlists -->
+  <div class="table-wrapper" *ngIf="!loading && playlists.length > 0">
+    <table class="playlists-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th class="col-center">Canciones</th>
+          <th class="col-center">Duración total</th>
+          <th>Creada</th>
+          <th class="col-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let playlist of playlists"
+          class="playlist-row"
+          (click)="selectPlaylist(playlist)">
+          <td class="cell-name">
+            <nb-icon icon="music-outline"></nb-icon>
+            {{ playlist.name }}
+          </td>
+          <td class="cell-desc">{{ playlist.description || '—' }}</td>
+          <td class="col-center">
+            <span class="song-count">{{ playlist.songCount }}</span>
+          </td>
+          <td class="col-center cell-duration">
+            {{ formatDuration(playlist.totalDuration) }}
+          </td>
+          <td class="cell-date">{{ formatDate(playlist.createdAt) }}</td>
+          <td class="col-center cell-actions" (click)="$event.stopPropagation()">
+            <button
+              nbButton ghost status="warning" size="small"
+              nbTooltip="Exportar PDF"
+              (click)="exportPlaylistToPdf(playlist, $event)">
+              <nb-icon icon="printer-outline"></nb-icon>
+            </button>
+            <button
+              nbButton ghost status="info" size="small"
+              nbTooltip="Editar"
+              (click)="openEditForm(playlist, $event)">
+              <nb-icon icon="edit-outline"></nb-icon>
+            </button>
+            <button
+              nbButton ghost status="danger" size="small"
+              nbTooltip="Eliminar"
+              (click)="deletePlaylist(playlist, $event)">
+              <nb-icon icon="trash-2-outline"></nb-icon>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

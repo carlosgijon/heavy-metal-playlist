@@ -1,0 +1,30 @@
+appId: com.heavymetal.playlist
+productName: Heavy Metal Playlist
+copyright: Copyright © 2024
+
+directories:
+  output: dist-electron-build
+  buildResources: build
+
+files:
+  - dist/heavy-metal-playlist/browser/**
+  - dist-electron/**
+  - package.json
+  - node_modules/**
+
+mac:
+  target:
+    - target: dmg
+      arch: x64
+  category: public.app-category.music
+  darkModeSupport: true
+  minimumSystemVersion: "10.15.0"
+
+win:
+  target:
+    - target: nsis
+      arch: x64
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
