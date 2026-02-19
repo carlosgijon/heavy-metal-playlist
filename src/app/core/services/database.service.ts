@@ -54,4 +54,14 @@ export class DatabaseService {
   reorder(playlistId: string, ids: string[]): Promise<Song[]> {
     return this.invoke<Song[]>('songs:reorder', { playlistId, ids });
   }
+
+  // ── Settings ──────────────────────────────────────────────────
+
+  getSettings(): Promise<{ theme: string }> {
+    return this.invoke<{ theme: string }>('settings:get');
+  }
+
+  setSettings(partial: { theme?: string }): Promise<{ theme: string }> {
+    return this.invoke<{ theme: string }>('settings:set', partial);
+  }
 }

@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'songs:update',
       'songs:delete',
       'songs:reorder',
+      'settings:get',
+      'settings:set',
     ];
     if (!allowed.includes(channel)) {
       return Promise.reject(new Error(`Channel "${channel}" not allowed`));

@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </linearGradient>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#c0392b"/>
+      <stop offset="100%" stop-color="#7b0f0f"/>
+    </linearGradient>
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#252545"/>
+      <stop offset="100%" stop-color="#1a1a35"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- App icon background -->
+  <rect width="1024" height="1024" rx="210" fill="url(#bgGrad)"/>
+
+  <!-- Document shadow -->
+  <rect x="208" y="178" width="568" height="710" rx="28" fill="#000" opacity="0.4" filter="url(#shadow)"/>
+
+  <!-- Document body -->
+  <rect x="200" y="168" width="568" height="710" rx="28" fill="url(#paperGrad)"/>
+
+  <!-- Red header bar -->
+  <rect x="200" y="168" width="568" height="130" rx="28" fill="url(#headerGrad)"/>
+  <!-- Fix bottom corners of header -->
+  <rect x="200" y="256" width="568" height="42" fill="#7b0f0f"/>
+
+  <!-- Music note icon in header (left side) -->
+  <!-- Note head -->
+  <ellipse cx="278" cy="228" rx="26" ry="19" fill="white" transform="rotate(-15 278 228)"/>
+  <!-- Note stem -->
+  <rect x="300" y="168" width="12" height="75" rx="6" fill="white"/>
+  <!-- Note flag -->
+  <path d="M312 168 Q360 195 345 230" stroke="white" stroke-width="11" fill="none" stroke-linecap="round"/>
+
+  <!-- "SETLIST" text in header -->
+  <text x="512" y="236"
+        font-family="'Arial Black', 'Impact', 'Helvetica Neue', sans-serif"
+        font-size="66"
+        font-weight="900"
+        fill="white"
+        text-anchor="middle"
+        letter-spacing="3">SETLIST</text>
+
+  <!-- Divider line -->
+  <line x1="232" y1="315" x2="736" y2="315" stroke="#3a3a65" stroke-width="2"/>
+
+  <!-- Song list rows -->
+  <!-- Row 1 -->
+  <text x="240" y="362" font-family="'Courier New', Courier, monospace" font-size="28" fill="#e74c3c" font-weight="bold">01</text>
+  <rect x="292" y="344" width="416" height="14" rx="7" fill="#4a4a78"/>
+  <rect x="292" y="344" width="320" height="14" rx="7" fill="#5a5a8a"/>
+
+  <!-- Row 2 -->
+  <text x="240" y="412" font-family="'Courier New', Courier, monospace" font-size="28" fill="#e74c3c" font-weight="bold">02</text>
+  <rect x="292" y="394" width="416" height="14" rx="7" fill="#4a4a78"/>
+  <rect x="292" y="394" width="265" height="14" rx="7" fill="#5a5a8a"/>
+
+  <!-- Row 3 -->
+  <text x="240" y="462" font-family="'Courier New', Courier, monospace" font-size="28" fill="#e74c3c" font-weight="bold">03</text>
+  <rect x="292" y="444" width="416" height="14" rx="7" fill="#4a4a78"/>
+  <rect x="292" y="444" width="355" height="14" rx="7" fill="#5a5a8a"/>
+
+  <!-- Row 4 -->
+  <text x="240" y="512" font-family="'Courier New', Courier, monospace" font-size="28" fill="#e74c3c" font-weight="bold">04</text>
+  <rect x="292" y="494" width="416" height="14" rx="7" fill="#4a4a78"/>
+  <rect x="292" y="494" width="290" height="14" rx="7" fill="#5a5a8a"/>
+
+  <!-- Row 5 -->
+  <text x="240" y="562" font-family="'Courier New', Courier, monospace" font-size="28" fill="#e74c3c" font-weight="bold">05</text>
+  <rect x="292" y="544" width="416" height="14" rx="7" fill="#4a4a78"/>
+  <rect x="292" y="544" width="375" height="14" rx="7" fill="#5a5a8a"/>
+
+  <!-- Row 6 -->
+  <text x="240" y="612" font-family="'Courier New', Courier, monospace" font-size="28" fill="#e74c3c" font-weight="bold">06</text>
+  <rect x="292" y="594" width="416" height="14" rx="7" fill="#4a4a78"/>
+  <rect x="292" y="594" width="230" height="14" rx="7" fill="#5a5a8a"/>
+
+  <!-- Row 7 -->
+  <text x="240" y="662" font-family="'Courier New', Courier, monospace" font-size="28" fill="#e74c3c" font-weight="bold">07</text>
+  <rect x="292" y="644" width="416" height="14" rx="7" fill="#4a4a78"/>
+  <rect x="292" y="644" width="340" height="14" rx="7" fill="#5a5a8a"/>
+
+  <!-- Row 8 (partial/faded) -->
+  <text x="240" y="712" font-family="'Courier New', Courier, monospace" font-size="28" fill="#e74c3c" opacity="0.5" font-weight="bold">08</text>
+  <rect x="292" y="694" width="416" height="14" rx="7" fill="#4a4a78" opacity="0.4"/>
+  <rect x="292" y="694" width="300" height="14" rx="7" fill="#5a5a8a" opacity="0.4"/>
+
+  <!-- Lightning bolt (bottom center of document) -->
+  <polygon
+    points="518,730 488,800 516,800 482,870 558,782 526,782"
+    fill="#e74c3c"
+    opacity="0.95"/>
+
+  <!-- Decorative corner accent (top-right of background) -->
+  <circle cx="900" cy="124" r="60" fill="#c0392b" opacity="0.08"/>
+  <circle cx="900" cy="124" r="40" fill="#c0392b" opacity="0.08"/>
+
+  <!-- Bottom decorative accent -->
+  <circle cx="124" cy="900" r="60" fill="#c0392b" opacity="0.08"/>
+  <circle cx="124" cy="900" r="40" fill="#c0392b" opacity="0.08"/>
+</svg>

@@ -29,14 +29,19 @@ export interface Song {
   joinWithNext?: boolean;
 }
 
+export interface Settings {
+  theme: string;
+}
+
 interface StoreSchema {
   playlists: Playlist[];
   songs: Song[];
+  settings: Settings;
 }
 
 const store = new Store<StoreSchema>({
   name: 'heavy-metal-playlist',
-  defaults: { playlists: [], songs: [] },
+  defaults: { playlists: [], songs: [], settings: { theme: 'dark' } },
 });
 
 export class Database {
@@ -156,6 +161,19 @@ export class Database {
       .map((s, i) => ({ ...s, position: i }));
     const otherSongs = songs.filter((s) => s.playlistId !== playlistId);
     store.set('songs', [...otherSongs, ...playlistSongs]);
+  }
+
+  // ── Settings ───────────────────────────────────────────────────
+
+  getSettings(): Settings {
+    return store.get('settings', { theme: 'dark' });
+  }
+
+  setSettings(partial: Partial<Settings>): Settings {
+    const current = this.getSettings();
+    const updated = { ...current, ...partial };
+    store.set('settings', updated);
+    return updated;
   }
 
   reorder(playlistId: string, orderedIds: string[]): Song[] {

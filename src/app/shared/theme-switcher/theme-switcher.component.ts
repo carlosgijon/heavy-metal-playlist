@@ -1,5 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { NbSelectModule, NbThemeService } from '@nebular/theme';
+import { DatabaseService } from '../../core/services/database.service';
 
 @Component({
   selector: 'app-theme-switcher',
@@ -19,12 +20,20 @@ import { NbSelectModule, NbThemeService } from '@nebular/theme';
   `,
   styles: [`:host { display: flex; align-items: center; }`]
 })
-export class ThemeSwitcherComponent {
+export class ThemeSwitcherComponent implements OnInit {
   private readonly themeService = inject(NbThemeService);
+  private readonly db = inject(DatabaseService);
   currentTheme = 'dark';
 
-  changeTheme(theme: string): void {
+  async ngOnInit(): Promise<void> {
+    const settings = await this.db.getSettings();
+    this.currentTheme = settings.theme;
+    this.themeService.changeTheme(settings.theme);
+  }
+
+  async changeTheme(theme: string): Promise<void> {
     this.currentTheme = theme;
     this.themeService.changeTheme(theme);
+    await this.db.setSettings({ theme });
   }
 }

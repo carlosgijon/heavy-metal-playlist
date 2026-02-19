@@ -1,16 +1,16 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
-import { Database, Song, Playlist } from './database';
+import { Database, Song, Playlist, Settings } from './database';
 
 const db = new Database();
 const isDev = !app.isPackaged;
 
 function createWindow(): void {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 800,
-    minHeight: 600,
+    width: 1920,
+    height: 1080,
+    minWidth: 1920,
+    minHeight: 1080,
     title: 'Heavy Metal Playlist',
     backgroundColor: '#1a1a2e',
     webPreferences: {
@@ -66,6 +66,16 @@ ipcMain.handle('songs:delete', (_event, payload: { id: string }) => {
 
 ipcMain.handle('songs:reorder', (_event, payload: { playlistId: string; ids: string[] }) => {
   return db.reorder(payload.playlistId, payload.ids);
+});
+
+// ── Settings IPC Handlers ──────────────────────────────────────
+
+ipcMain.handle('settings:get', () => {
+  return db.getSettings();
+});
+
+ipcMain.handle('settings:set', (_event, payload: Partial<Settings>) => {
+  return db.setSettings(payload);
 });
 
 app.whenReady().then(() => {
