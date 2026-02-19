@@ -1,0 +1,265 @@
+.songs-container {
+  padding: 1.5rem 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.songs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.songs-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.songs-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.songs-count {
+  font-size: 0.85rem;
+  color: var(--text-hint-color);
+  background: var(--background-basic-color-3);
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.search-input {
+  width: 280px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+
+  .empty-icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.songs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-hint-color);
+    border-bottom: 1px solid var(--border-basic-color-3);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border-basic-color-4);
+    vertical-align: middle;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr.song-row:hover td {
+    background: var(--background-basic-color-2);
+  }
+}
+
+.col-title {
+  min-width: 220px;
+}
+.col-artist {
+  min-width: 130px;
+}
+.col-genre {
+  min-width: 130px;
+}
+.col-tempo {
+  width: 5rem;
+  text-align: center;
+}
+.col-duration {
+  width: 6rem;
+  text-align: right;
+}
+.col-actions {
+  width: 9rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.song-title {
+  display: block;
+  font-weight: 600;
+}
+
+.song-album {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-hint-color);
+  margin-top: 0.1rem;
+}
+
+.genre-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.empty-cell {
+  color: var(--text-disabled-color);
+}
+
+// Add to playlist overlay
+.add-to-playlist-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+
+  &[hidden] {
+    display: none !important;
+  }
+}
+
+.add-to-playlist-card {
+  width: 420px;
+  max-width: 95vw;
+}
+
+.atp-song-name {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-hint-color);
+  margin-top: 0.2rem;
+  font-weight: normal;
+}
+
+.field-group {
+  margin-bottom: 1rem;
+
+  .label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: var(--text-hint-color);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.playlist-dropdown {
+  position: relative;
+
+  .dropdown-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--input-basic-border-color);
+    border-radius: 0.25rem;
+    background: var(--input-basic-background-color);
+    color: var(--text-basic-color);
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s;
+
+    .placeholder {
+      color: var(--text-hint-color);
+    }
+
+    nb-icon {
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+  }
+
+  &.open .dropdown-trigger {
+    border-color: var(--color-primary-default);
+    nb-icon {
+      transform: rotate(180deg);
+    }
+  }
+
+  .dropdown-panel {
+    position: fixed;
+    background: var(--nb-color-primary);
+    color: var(--text-basic-color);
+    border: 1px solid var(--nb-color-secondary);
+    border-radius: 0.25rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 99999;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .dropdown-option {
+    padding: 0.55rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-basic-color);
+
+    &:hover {
+      background: var(--nb-color-secondary);
+    }
+    &.active {
+      color: var(--color-primary-default);
+      background: var(--nb-color-secondary);
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

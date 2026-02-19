@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Song, Playlist, PlaylistWithStats } from '../models/song.model';
+import { Song, Playlist, PlaylistWithStats, LibrarySong, PlaylistSongView } from '../models/song.model';
 
 declare global {
   interface Window {
@@ -15,7 +15,7 @@ export class DatabaseService {
     return window.electronAPI.invoke(channel, payload) as Promise<T>;
   }
 
-  // ── Playlists ──────────────────────────────────────────────────
+  // ── Playlists ──────────────────────────────────────────────────────────────
 
   getPlaylists(): Promise<PlaylistWithStats[]> {
     return this.invoke<PlaylistWithStats[]>('playlists:getAll');
@@ -33,7 +33,41 @@ export class DatabaseService {
     return this.invoke<void>('playlists:delete', { id });
   }
 
-  // ── Songs ──────────────────────────────────────────────────────
+  // ── Library Songs ──────────────────────────────────────────────────────────
+
+  getLibrarySongs(): Promise<LibrarySong[]> {
+    return this.invoke<LibrarySong[]>('library:getAll');
+  }
+
+  createLibrarySong(data: Omit<LibrarySong, 'id'>): Promise<LibrarySong> {
+    return this.invoke<LibrarySong>('library:create', data);
+  }
+
+  updateLibrarySong(song: LibrarySong): Promise<LibrarySong> {
+    return this.invoke<LibrarySong>('library:update', song);
+  }
+
+  deleteLibrarySong(id: string): Promise<void> {
+    return this.invoke<void>('library:delete', { id });
+  }
+
+  getLibrarySongUsage(id: string): Promise<string[]> {
+    return this.invoke<string[]>('library:getUsage', { id });
+  }
+
+  addSongToPlaylist(
+    playlistId: string,
+    songId: string,
+    opts: { setlistName?: string; joinWithNext?: boolean } = {},
+  ): Promise<PlaylistSongView> {
+    return this.invoke<PlaylistSongView>('library:addToPlaylist', {
+      playlistId,
+      songId,
+      ...opts,
+    });
+  }
+
+  // ── Songs (playlist entries) ───────────────────────────────────────────────
 
   getSongsByPlaylist(playlistId: string): Promise<Song[]> {
     return this.invoke<Song[]>('songs:getByPlaylist', { playlistId });
@@ -55,13 +89,25 @@ export class DatabaseService {
     return this.invoke<Song[]>('songs:reorder', { playlistId, ids });
   }
 
-  // ── Settings ──────────────────────────────────────────────────
+  // ── Settings ──────────────────────────────────────────────────────────────
 
-  getSettings(): Promise<{ theme: string }> {
-    return this.invoke<{ theme: string }>('settings:get');
+  getSettings(): Promise<{
+    theme: string;
+    bpmApiKey?: string;
+    spotifyAccessToken?: string;
+    spotifyRefreshToken?: string;
+    spotifyTokenExpiry?: number;
+  }> {
+    return this.invoke('settings:get');
   }
 
-  setSettings(partial: { theme?: string }): Promise<{ theme: string }> {
-    return this.invoke<{ theme: string }>('settings:set', partial);
+  setSettings(partial: {
+    theme?: string;
+    bpmApiKey?: string;
+    spotifyAccessToken?: string;
+    spotifyRefreshToken?: string;
+    spotifyTokenExpiry?: number;
+  }): Promise<void> {
+    return this.invoke('settings:set', partial);
   }
 }

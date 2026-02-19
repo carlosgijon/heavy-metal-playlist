@@ -2,17 +2,29 @@
   <nb-layout-header fixed>
     <div class="header-container">
       <div class="header-brand">
+        <button nbButton ghost size="small" class="sidebar-toggle" (click)="toggleSidebar()">
+          <nb-icon icon="menu-outline"></nb-icon>
+        </button>
         <nb-icon icon="music-outline" class="brand-icon"></nb-icon>
         <span class="brand-name">Heavy Metal Playlist</span>
       </div>
       <div class="header-actions">
+        <button nbButton ghost size="small" nbTooltip="Configuración" (click)="openSettings()">
+          <nb-icon icon="settings-outline"></nb-icon>
+        </button>
         <app-theme-switcher></app-theme-switcher>
       </div>
     </div>
   </nb-layout-header>
 
+  <nb-sidebar tag="left" state="compacted" fixed>
+    <nb-menu tag="main-menu" [items]="menuItems"></nb-menu>
+  </nb-sidebar>
+
   <nb-layout-column>
-    @if (view() === 'playlists') {
+    @if (view() === 'songs') {
+      <app-songs />
+    } @else if (view() === 'playlists') {
       <app-playlists (playlistSelected)="onPlaylistSelected($event)" />
     } @else {
       <app-playlist [playlist]="selectedPlaylist()!" (back)="onBack()" />

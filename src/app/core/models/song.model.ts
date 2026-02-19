@@ -10,21 +10,50 @@ export interface PlaylistWithStats extends Playlist {
   totalDuration: number; // seconds
 }
 
-export interface Song {
+/** Song in the global library (not tied to any playlist) */
+export interface LibrarySong {
   id: string;
-  playlistId: string;
-  position: number;
-  type?: 'song' | 'event';  // default 'song'; 'event' = intro/outro/bis/etc.
   title: string;
-  setlistName?: string;     // nombre para mostrar en el setlist impreso
   artist: string;
   album?: string;
   duration?: number; // seconds
-  tempo?: number;    // BPM (manual)
-  style?: string;    // genre
+  tempo?: number;    // BPM
+  style?: string;
   notes?: string;
-  joinWithNext?: boolean; // unir con la siguiente canción en la impresión
 }
+
+/** Entry linking a playlist to a library song (or an inline event) */
+export interface PlaylistSong {
+  id: string;
+  playlistId: string;
+  songId?: string;       // LibrarySong.id — undefined for events
+  position: number;
+  type?: 'song' | 'event';
+  title?: string;        // Inline title for events
+  setlistName?: string;
+  joinWithNext?: boolean;
+}
+
+/** Merged view used by the UI — combines PlaylistSong + LibrarySong */
+export interface PlaylistSongView {
+  id: string;            // PlaylistSong.id
+  playlistId: string;
+  songId?: string;       // LibrarySong.id
+  position: number;
+  type?: 'song' | 'event';
+  title: string;
+  setlistName?: string;
+  joinWithNext?: boolean;
+  artist: string;
+  album?: string;
+  duration?: number;
+  tempo?: number;
+  style?: string;
+  notes?: string;
+}
+
+// Backwards-compatible alias — all existing components use Song
+export type Song = PlaylistSongView;
 
 export interface ItunesTrack {
   trackId: number;
@@ -34,6 +63,7 @@ export interface ItunesTrack {
   trackTimeMillis: number;
   primaryGenreName: string;
   artworkUrl60?: string;
+  previewUrl?: string;
 }
 
 export interface ItunesResponse {
