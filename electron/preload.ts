@@ -7,6 +7,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'playlists:create',
       'playlists:update',
       'playlists:delete',
+      'library:getAll',
+      'library:create',
+      'library:update',
+      'library:delete',
+      'library:getUsage',
+      'library:addToPlaylist',
       'songs:getByPlaylist',
       'songs:create',
       'songs:update',
@@ -14,6 +20,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'songs:reorder',
       'settings:get',
       'settings:set',
+      'spotify:auth',
+      'spotify:getBpm',
+      'spotify:disconnect',
+      'dialog:confirm',
+      'bpm:lookup',
     ];
     if (!allowed.includes(channel)) {
       return Promise.reject(new Error(`Channel "${channel}" not allowed`));

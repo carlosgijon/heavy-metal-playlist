@@ -13,9 +13,11 @@ import {
   NbCheckboxModule,
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
-import { Song, ItunesTrack } from '../../../core/models/song.model';
+import { Song, ItunesTrack, LibrarySong } from '../../../core/models/song.model';
 import { MusicApiService } from '../../../core/services/music-api.service';
+import { BpmService } from '../../../core/services/bpm.service';
 import { ConnectivityService } from '../../../core/services/connectivity.service';
+import { DatabaseService } from '../../../core/services/database.service';
 
 @Component({
   selector: 'app-song-form',
@@ -38,25 +40,59 @@ export class SongFormComponent implements OnInit, OnDestroy {
   dialogRef = inject<NbDialogRef<SongFormComponent>>(NbDialogRef);
   private readonly fb = inject(FormBuilder);
   private readonly musicApi = inject(MusicApiService);
+  private readonly bpmService = inject(BpmService);
+  private readonly db = inject(DatabaseService);
   readonly connectivity = inject(ConnectivityService);
 
   form!: FormGroup;
   song: Partial<Song> | null = null; // set from outside before open
 
-  // Search state
+  // iTunes search state
   searchControl = new FormControl('');
   suggestions: ItunesTrack[] = [];
   isSearching = false;
+  isFetchingBpm = false;
 
-  /** 'search' = show iTunes search input; 'manual' = show form fields */
-  formMode: 'search' | 'manual' = 'search';
+  // Library search state
+  librarySearchControl = new FormControl('');
+  librarySongs: LibrarySong[] = [];
+  filteredLibrarySongs: LibrarySong[] = [];
+  selectedLibrarySong: LibrarySong | null = null;
+
+  /**
+   * 'library' — show library picker (default for new songs)
+   * 'search'  — show iTunes search
+   * 'manual'  — show full form fields
+   */
+  formMode: 'library' | 'search' | 'manual' = 'library';
 
   private readonly destroy$ = new Subject<void>();
 
+  // ── Tap BPM ───────────────────────────────────────────────────────────────
+  private tapTimestamps: number[] = [];
+  tapCount = 0;
+
+  tapBpm(): void {
+    const now = Date.now();
+    if (this.tapTimestamps.length > 0 && now - this.tapTimestamps[this.tapTimestamps.length - 1] > 3000) {
+      this.tapTimestamps = [];
+    }
+    this.tapTimestamps.push(now);
+    this.tapCount = this.tapTimestamps.length;
+    if (this.tapTimestamps.length >= 2) {
+      const intervals = this.tapTimestamps.slice(1).map((t, i) => t - this.tapTimestamps[i]);
+      const avg = intervals.reduce((a, b) => a + b) / intervals.length;
+      this.form.patchValue({ tempo: Math.round(60000 / avg) });
+    }
+  }
+
   get isEdit(): boolean { return !!this.song?.id; }
   get isEvent(): boolean { return this.song?.type === 'event'; }
+  get hasTaps(): boolean { return this.tapCount > 1; }
+  /** True when a library song was pre-selected — only show playlist-specific fields */
+  get isFromLibrary(): boolean { return !!this.selectedLibrarySong; }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     // Editing or event → go directly to field mode
     if (this.isEdit || this.isEvent) {
       this.formMode = 'manual';
@@ -88,17 +124,79 @@ export class SongFormComponent implements OnInit, OnDestroy {
           this.isSearching = true;
           return this.musicApi.search(term);
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       ).subscribe((results) => {
         this.suggestions = results;
         this.isSearching = false;
       });
+
+      // Load library songs for picker
+      this.loadLibrarySongs();
+
+      // Library filter
+      this.librarySearchControl.valueChanges.pipe(
+        takeUntil(this.destroy$),
+      ).subscribe((q) => this.filterLibrary(q ?? ''));
     }
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private async loadLibrarySongs(): Promise<void> {
+    try {
+      this.librarySongs = await this.db.getLibrarySongs();
+      this.filteredLibrarySongs = [...this.librarySongs];
+    } catch {
+      // Non-critical
+    }
+  }
+
+  private filterLibrary(q: string): void {
+    if (!q.trim()) {
+      this.filteredLibrarySongs = [...this.librarySongs];
+      return;
+    }
+    const lower = q.toLowerCase();
+    this.filteredLibrarySongs = this.librarySongs.filter(
+      (s) =>
+        s.title.toLowerCase().includes(lower) ||
+        s.artist.toLowerCase().includes(lower),
+    );
+  }
+
+  selectFromLibrary(libSong: LibrarySong): void {
+    this.selectedLibrarySong = libSong;
+    this.form.patchValue({
+      title:       libSong.title,
+      artist:      libSong.artist,
+      album:       libSong.album ?? '',
+      duration:    libSong.duration ?? null,
+      tempo:       libSong.tempo ?? null,
+      style:       libSong.style ?? '',
+      notes:       libSong.notes ?? '',
+      setlistName: '',
+      joinWithNext: false,
+    });
+    this.formMode = 'manual';
+  }
+
+  switchToSearch(): void {
+    this.selectedLibrarySong = null;
+    this.suggestions = [];
+    this.formMode = 'search';
+  }
+
+  switchToManual(): void {
+    this.suggestions = [];
+    this.formMode = 'manual';
+  }
+
+  switchToLibrary(): void {
+    this.selectedLibrarySong = null;
+    this.formMode = 'library';
   }
 
   selectSuggestion(track: ItunesTrack): void {
@@ -111,11 +209,15 @@ export class SongFormComponent implements OnInit, OnDestroy {
     });
     this.suggestions = [];
     this.formMode = 'manual';
-  }
 
-  switchToManual(): void {
-    this.suggestions = [];
-    this.formMode = 'manual';
+    // Auto-fetch BPM via Deezer (no API key required)
+    this.isFetchingBpm = true;
+    this.bpmService
+      .getBpm(track.trackName, track.artistName)
+      .subscribe((bpm) => {
+        this.isFetchingBpm = false;
+        if (bpm !== null) this.form.patchValue({ tempo: bpm });
+      });
   }
 
   formatDuration(seconds: number | null): string {
@@ -126,7 +228,6 @@ export class SongFormComponent implements OnInit, OnDestroy {
   }
 
   submit(): void {
-    // If still in search mode, switch to manual so the user sees the required fields
     if (this.formMode === 'search') {
       this.switchToManual();
       return;
@@ -141,13 +242,23 @@ export class SongFormComponent implements OnInit, OnDestroy {
       duration: value.duration ? Number(value.duration) : undefined,
       tempo:    value.tempo    ? Number(value.tempo)    : undefined,
     };
-    if (this.song?.id)                    result['id']       = this.song.id;
-    if (this.song?.position !== undefined) result['position'] = this.song.position;
-    if (this.song?.playlistId)             result['playlistId'] = this.song.playlistId;
+
+    // Preserve existing IDs when editing
+    if (this.song?.id)                     result['id']         = this.song.id;
+    if (this.song?.position !== undefined)  result['position']   = this.song.position;
+    if (this.song?.playlistId)              result['playlistId'] = this.song.playlistId;
+    if (this.song?.songId)                  result['songId']     = this.song.songId;
+
+    // When picking from library, attach the library song ID
+    if (this.selectedLibrarySong) {
+      result['songId'] = this.selectedLibrarySong.id;
+    }
+
     if (this.isEvent) {
       result['type']   = 'event';
       result['artist'] = '';
     }
+
     this.dialogRef.close(result);
   }
 

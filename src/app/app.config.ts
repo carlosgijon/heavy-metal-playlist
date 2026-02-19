@@ -1,28 +1,32 @@
-import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {
-  NbThemeModule,
-  NbLayoutModule,
-  NbSidebarModule,
-  NbCardModule,
-  NbButtonModule,
-  NbInputModule,
-  NbIconModule,
-  NbSelectModule,
-  NbAutocompleteModule,
-  NbSpinnerModule,
-  NbBadgeModule,
-  NbTooltipModule,
-  NbAlertModule,
-  NbFormFieldModule,
-  NbOptionModule,
-  NbMenuModule,
-  NbDialogModule,
-  NbToastrModule,
-} from '@nebular/theme';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { provideHttpClient } from '@angular/common/http';
+import {
+  ApplicationConfig,
+  importProvidersFrom,
+  provideZoneChangeDetection,
+} from '@angular/core';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
+import {
+  NbAlertModule,
+  NbAutocompleteModule,
+  NbBadgeModule,
+  NbButtonModule,
+  NbCardModule,
+  NbDialogModule,
+  NbFormFieldModule,
+  NbIconModule,
+  NbInputModule,
+  NbLayoutModule,
+  NbMenuModule,
+  NbOptionModule,
+  NbSelectModule,
+  NbSidebarModule,
+  NbSpinnerModule,
+  NbThemeModule,
+  NbToastrModule,
+  NbTooltipModule,
+} from '@nebular/theme';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -30,7 +34,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     importProvidersFrom(
       BrowserAnimationsModule,
-      NbThemeModule.forRoot({ name: 'dark' }),
+      NbThemeModule.forRoot({ name: 'default' }),
       NbLayoutModule,
       NbSidebarModule.forRoot(),
       NbMenuModule.forRoot(),
