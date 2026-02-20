@@ -7,6 +7,7 @@ import { LibrarySong, PlaylistWithStats } from '../../core/models/song.model';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SongLibraryFormComponent } from './song-library-form/song-library-form.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-songs',
@@ -116,20 +117,29 @@ export class SongsComponent implements OnInit {
       // ignore
     }
 
-    const confirmed = await (window as any).electronAPI.invoke('dialog:confirm', {
-      message: `¿Eliminar "${song.title}" de la librería?`,
-      detail: usage.length > 0 ? `También se eliminará de ${usage.length} playlist(s).` : undefined,
-      confirmLabel: 'Eliminar',
+    const ref = this.dialog.open<boolean>(ConfirmDialogComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: {
+        title: 'Eliminar canción',
+        message: usage.length > 0
+          ? `¿Eliminar "${song.title}" de la librería? También se eliminará de ${usage.length} playlist(s).`
+          : `¿Eliminar "${song.title}" de la librería?`,
+        confirmLabel: 'Eliminar',
+      } satisfies ConfirmDialogData,
     });
-    if (!confirmed) return;
 
-    try {
-      await this.db.deleteLibrarySong(song.id);
-      this.songs = this.songs.filter((s) => s.id !== song.id);
-      this.toast.warning(`"${song.title}" eliminada`, 'Canción eliminada');
-    } catch {
-      this.toast.danger('No se pudo eliminar la canción', 'Error');
-    }
+    ref.closed.subscribe(async (confirmed) => {
+      if (!confirmed) return;
+      try {
+        await this.db.deleteLibrarySong(song.id);
+        this.songs = this.songs.filter((s) => s.id !== song.id);
+        this.toast.warning(`"${song.title}" eliminada`, 'Canción eliminada');
+      } catch {
+        this.toast.danger('No se pudo eliminar la canción', 'Error');
+      }
+    });
   }
 
   openAddToPlaylist(song: LibrarySong): void {
