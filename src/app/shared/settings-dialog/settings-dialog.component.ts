@@ -1,14 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
 import { NgIconComponent } from '@ng-icons/core';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
-
-declare const window: Window & {
-  electronAPI: { invoke: (channel: string, payload?: unknown) => Promise<unknown> };
-};
 
 @Component({
   selector: 'app-settings-dialog',
@@ -39,32 +35,6 @@ declare const window: Window & {
         Guardar token
       </button>
 
-      <div class="divider my-2"></div>
-
-      <!-- Spotify -->
-      <p class="section-label">Spotify</p>
-      <div class="spotify-status mb-2" [class.connected]="isConnected()">
-        <ng-icon [name]="isConnected() ? 'heroCheckCircle' : 'heroXCircle'" class="w-4 h-4"></ng-icon>
-        <span>{{ isConnected() ? 'Conectado' : 'No conectado' }}</span>
-      </div>
-      <button
-        class="btn btn-success btn-sm w-full"
-        type="button"
-        [disabled]="isConnecting() || isConnected()"
-        (click)="connectSpotify()">
-        <span *ngIf="isConnecting()" class="loading loading-spinner loading-xs"></span>
-        <ng-icon *ngIf="!isConnecting()" name="heroMusicalNote" class="w-4 h-4"></ng-icon>
-        {{ isConnecting() ? 'Conectando...' : 'Conectar con Spotify' }}
-      </button>
-      <button
-        *ngIf="isConnected()"
-        class="btn btn-error btn-outline btn-sm w-full mt-2"
-        type="button"
-        (click)="disconnectSpotify()">
-        <ng-icon name="heroXMark" class="w-4 h-4"></ng-icon>
-        Desconectar de Spotify
-      </button>
-
       <div class="modal-action mt-4">
         <button class="btn btn-sm" type="button" (click)="close()">Cerrar</button>
       </div>
@@ -85,14 +55,6 @@ declare const window: Window & {
       opacity: 0.6;
       line-height: 1.4;
     }
-    .spotify-status {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.9rem;
-      opacity: 0.6;
-    }
-    .spotify-status.connected { opacity: 1; color: oklch(var(--su)); }
   `],
 })
 export class SettingsDialogComponent implements OnInit {
@@ -102,14 +64,11 @@ export class SettingsDialogComponent implements OnInit {
 
   bpmApiKey = '';
   showKey = false;
-  isConnected = signal(false);
-  isConnecting = signal(false);
 
   async ngOnInit(): Promise<void> {
     try {
       const settings = await this.db.getSettings();
       this.bpmApiKey = settings.bpmApiKey ?? '';
-      this.isConnected.set(!!(settings as any).spotifyAccessToken);
     } catch { /* non-critical */ }
   }
 
@@ -119,32 +78,6 @@ export class SettingsDialogComponent implements OnInit {
       this.toastr.success('API Key guardada', 'AudD');
     } catch {
       this.toastr.danger('No se pudo guardar', 'Error');
-    }
-  }
-
-  async connectSpotify(): Promise<void> {
-    this.isConnecting.set(true);
-    try {
-      await window.electronAPI.invoke('spotify:auth');
-      this.isConnected.set(true);
-      this.toastr.success('Conectado a Spotify', 'Spotify');
-    } catch (err) {
-      this.toastr.danger(
-        err instanceof Error ? err.message : 'Error de conexión',
-        'Spotify',
-      );
-    } finally {
-      this.isConnecting.set(false);
-    }
-  }
-
-  async disconnectSpotify(): Promise<void> {
-    try {
-      await window.electronAPI.invoke('spotify:disconnect');
-      this.isConnected.set(false);
-      this.toastr.info('Desconectado de Spotify', 'Spotify');
-    } catch {
-      this.toastr.danger('No se pudo desconectar', 'Error');
     }
   }
 

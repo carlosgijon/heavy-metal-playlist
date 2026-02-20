@@ -1,0 +1,38 @@
+name: Build macOS
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build-mac:
+    runs-on: macos-13 # macOS Ventura — compatible con target 10.14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin aarch64-apple-darwin
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.14" # ← mínimo macOS compatible
+        with:
+          tagName: v__VERSION__
+          releaseName: "Heavy Metal Playlist v__VERSION__"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-build
+          path: src-tauri/target/release/bundle/dmg/*.dmg

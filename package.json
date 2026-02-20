@@ -2,17 +2,13 @@
   "name": "heavy-metal-playlist",
   "version": "1.0.0",
   "description": "Setlist manager for heavy metal bands",
-  "main": "dist-electron/main.js",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "electron:compile": "tsc -p tsconfig.electron.json",
-    "electron:serve": "concurrently \"ng serve --host 0.0.0.0\" \"wait-on http://localhost:4200 && npm run electron:compile && electron .\"",
-    "electron:build": "ng build --base-href ./ && npm run electron:compile && electron-builder",
-    "electron:build:mac": "ng build --base-href ./ && npm run electron:compile && electron-builder --mac",
-    "electron:build:win": "ng build --base-href ./ && npm run electron:compile && electron-builder --win"
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "private": true,
   "dependencies": {
@@ -26,7 +22,7 @@
     "@angular/router": "^19.2.0",
     "@ng-icons/core": "^31.4.0",
     "@ng-icons/heroicons": "^31.4.0",
-    "electron-store": "^8.2.0",
+    "@tauri-apps/api": "^2.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -35,14 +31,11 @@
     "@angular-devkit/build-angular": "^19.2.20",
     "@angular/cli": "^19.2.20",
     "@angular/compiler-cli": "^19.2.0",
+    "@tauri-apps/cli": "^2.0.0",
     "autoprefixer": "^10.4.20",
-    "concurrently": "^9.2.1",
     "daisyui": "^4.12.24",
-    "electron": "^28.3.3",
-    "electron-builder": "^26.7.0",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
-    "typescript": "~5.7.2",
-    "wait-on": "^9.0.4"
+    "typescript": "~5.7.2"
   }
 }

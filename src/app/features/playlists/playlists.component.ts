@@ -6,6 +6,7 @@ import { PlaylistWithStats, Playlist } from '../../core/models/song.model';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { PlaylistFormComponent } from './playlist-form/playlist-form.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-playlists',
@@ -84,20 +85,31 @@ export class PlaylistsComponent implements OnInit {
     });
   }
 
-  async deletePlaylist(playlist: PlaylistWithStats, event: Event): Promise<void> {
+  deletePlaylist(playlist: PlaylistWithStats, event: Event): void {
     event.stopPropagation();
-    const msg =
-      playlist.songCount > 0
-        ? `¿Eliminar "${playlist.name}" y sus ${playlist.songCount} canciones?`
-        : `¿Eliminar "${playlist.name}"?`;
-    if (!window.confirm(msg)) return;
-    try {
-      await this.db.deletePlaylist(playlist.id);
-      this.playlists = this.playlists.filter((p) => p.id !== playlist.id);
-      this.toastr.warning(`"${playlist.name}" eliminada`, 'Playlist eliminada');
-    } catch {
-      this.toastr.danger('No se pudo eliminar la playlist', 'Error');
-    }
+    const ref = this.dialog.open<boolean>(ConfirmDialogComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: {
+        title: 'Eliminar playlist',
+        message: playlist.songCount > 0
+          ? `¿Eliminar "${playlist.name}" y sus ${playlist.songCount} canciones?`
+          : `¿Eliminar "${playlist.name}"?`,
+        confirmLabel: 'Eliminar',
+      } satisfies ConfirmDialogData,
+    });
+
+    ref.closed.subscribe(async (confirmed) => {
+      if (!confirmed) return;
+      try {
+        await this.db.deletePlaylist(playlist.id);
+        this.playlists = this.playlists.filter((p) => p.id !== playlist.id);
+        this.toastr.warning(`"${playlist.name}" eliminada`, 'Playlist eliminada');
+      } catch {
+        this.toastr.danger('No se pudo eliminar la playlist', 'Error');
+      }
+    });
   }
 
   async exportPlaylistToPdf(playlist: PlaylistWithStats, event: Event): Promise<void> {

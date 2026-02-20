@@ -45,3 +45,10 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+#tauri
+/src-tauri/target
+/src-tauri/bundler
+/src-tauri/node_modules
+/src-tauri/.cargo
+/src-tauri/icons

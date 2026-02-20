@@ -7,6 +7,7 @@ import { Song, PlaylistWithStats } from '../../core/models/song.model';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SongFormComponent } from './song-form/song-form.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-playlist',
@@ -113,16 +114,28 @@ export class PlaylistComponent implements OnInit {
     });
   }
 
-  async deleteSong(song: Song): Promise<void> {
-    const confirmed = window.confirm(`¿Eliminar "${song.title}"?`);
-    if (!confirmed) return;
-    try {
-      await this.db.delete(song.id);
-      this.songs = this.songs.filter((s) => s.id !== song.id);
-      this.toast.warning(`"${song.title}" eliminada`, 'Eliminado');
-    } catch {
-      this.toast.danger('No se pudo eliminar', 'Error');
-    }
+  deleteSong(song: Song): void {
+    const ref = this.dialog.open<boolean>(ConfirmDialogComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: {
+        title: 'Eliminar entrada',
+        message: `¿Eliminar "${song.title}" del setlist?`,
+        confirmLabel: 'Eliminar',
+      } satisfies ConfirmDialogData,
+    });
+
+    ref.closed.subscribe(async (confirmed) => {
+      if (!confirmed) return;
+      try {
+        await this.db.delete(song.id);
+        this.songs = this.songs.filter((s) => s.id !== song.id);
+        this.toast.warning(`"${song.title}" eliminada`, 'Eliminado');
+      } catch {
+        this.toast.danger('No se pudo eliminar', 'Error');
+      }
+    });
   }
 
   async onDrop(event: CdkDragDrop<Song[]>): Promise<void> {
