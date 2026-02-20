@@ -6,14 +6,14 @@ on:
 
 jobs:
   build-mac:
-    runs-on: macos-13 # macOS Ventura — compatible con target 10.14
+    runs-on: macos-14 # macOS Sonoma — Apple Silicon (M1)
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-apple-darwin aarch64-apple-darwin
+          targets: x86_64-apple-darwin,aarch64-apple-darwin
 
       - name: Install Node
         uses: actions/setup-node@v4
@@ -23,16 +23,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Tauri app
+      - name: Build Tauri app (Universal)
         uses: tauri-apps/tauri-action@v0
         env:
-          MACOSX_DEPLOYMENT_TARGET: "10.14" # ← mínimo macOS compatible
+          MACOSX_DEPLOYMENT_TARGET: "10.14"
         with:
-          tagName: v__VERSION__
-          releaseName: "Heavy Metal Playlist v__VERSION__"
+          args: --target universal-apple-darwin
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: mac-build
-          path: src-tauri/target/release/bundle/dmg/*.dmg
+          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
