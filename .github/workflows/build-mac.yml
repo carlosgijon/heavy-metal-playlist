@@ -28,6 +28,7 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: "10.14"
         with:
+          tauriScript: npm run tauri:build
           args: --target universal-apple-darwin
 
       - name: Upload artifacts
