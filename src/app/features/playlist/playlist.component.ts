@@ -1,19 +1,11 @@
 import { Component, inject, Input, OnInit, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
-import {
-  NbCardModule,
-  NbButtonModule,
-  NbIconModule,
-  NbToastrService,
-  NbDialogService,
-  NbBadgeModule,
-  NbSpinnerModule,
-  NbTooltipModule,
-  NbAlertModule,
-} from '@nebular/theme';
+import { Dialog } from '@angular/cdk/dialog';
+import { NgIconComponent } from '@ng-icons/core';
 import { Song, PlaylistWithStats } from '../../core/models/song.model';
 import { DatabaseService } from '../../core/services/database.service';
+import { ToastService } from '../../core/services/toast.service';
 import { SongFormComponent } from './song-form/song-form.component';
 
 @Component({
@@ -22,21 +14,15 @@ import { SongFormComponent } from './song-form/song-form.component';
   imports: [
     CommonModule,
     DragDropModule,
-    NbCardModule,
-    NbButtonModule,
-    NbIconModule,
-    NbBadgeModule,
-    NbSpinnerModule,
-    NbTooltipModule,
-    NbAlertModule,
+    NgIconComponent,
   ],
   templateUrl: './playlist.component.html',
   styleUrls: ['./playlist.component.scss'],
 })
 export class PlaylistComponent implements OnInit {
   private readonly db = inject(DatabaseService);
-  private readonly toastr = inject(NbToastrService);
-  private readonly dialog = inject(NbDialogService);
+  private readonly toast = inject(ToastService);
+  private readonly dialog = inject(Dialog);
 
   @Input() playlist!: PlaylistWithStats;
   readonly back = output<void>();
@@ -53,7 +39,7 @@ export class PlaylistComponent implements OnInit {
       this.loading = true;
       this.songs = await this.db.getSongsByPlaylist(this.playlist.id);
     } catch {
-      this.toastr.danger('No se pudieron cargar las canciones', 'Error');
+      this.toast.danger('No se pudieron cargar las canciones', 'Error');
     } finally {
       this.loading = false;
     }
@@ -61,11 +47,13 @@ export class PlaylistComponent implements OnInit {
 
   openAddForm(): void {
     const ref = this.dialog.open(SongFormComponent, {
-      closeOnBackdropClick: false,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { song: null },
     });
-    (ref.componentRef.instance as SongFormComponent).song = null;
-
-    ref.onClose.subscribe(async (result?: Partial<Song>) => {
+    ref.closed.subscribe(async (r) => {
+      const result = r as Partial<Song> | undefined;
       if (!result) return;
       try {
         const created = await this.db.create({
@@ -73,20 +61,22 @@ export class PlaylistComponent implements OnInit {
           playlistId: this.playlist.id,
         });
         this.songs = [...this.songs, created];
-        this.toastr.success(`"${created.title}" añadida`, 'Canción añadida');
+        this.toast.success(`"${created.title}" añadida`, 'Canción añadida');
       } catch {
-        this.toastr.danger('No se pudo añadir la canción', 'Error');
+        this.toast.danger('No se pudo añadir la canción', 'Error');
       }
     });
   }
 
   openAddEvent(): void {
     const ref = this.dialog.open(SongFormComponent, {
-      closeOnBackdropClick: false,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { song: { type: 'event' } as Partial<Song> },
     });
-    (ref.componentRef.instance as SongFormComponent).song = { type: 'event' } as Partial<Song>;
-
-    ref.onClose.subscribe(async (result?: Partial<Song>) => {
+    ref.closed.subscribe(async (r) => {
+      const result = r as Partial<Song> | undefined;
       if (!result) return;
       try {
         const created = await this.db.create({
@@ -96,27 +86,29 @@ export class PlaylistComponent implements OnInit {
           playlistId: this.playlist.id,
         });
         this.songs = [...this.songs, created];
-        this.toastr.success(`Evento "${created.title}" añadido`, 'Evento añadido');
+        this.toast.success(`Evento "${created.title}" añadido`, 'Evento añadido');
       } catch {
-        this.toastr.danger('No se pudo añadir el evento', 'Error');
+        this.toast.danger('No se pudo añadir el evento', 'Error');
       }
     });
   }
 
   openEditForm(song: Song): void {
     const ref = this.dialog.open(SongFormComponent, {
-      closeOnBackdropClick: false,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { song: { ...song } },
     });
-    (ref.componentRef.instance as SongFormComponent).song = { ...song };
-
-    ref.onClose.subscribe(async (result?: Partial<Song>) => {
+    ref.closed.subscribe(async (r) => {
+      const result = r as Partial<Song> | undefined;
       if (!result) return;
       try {
         const updated = await this.db.update(result as Song);
         this.songs = this.songs.map((s) => (s.id === updated.id ? updated : s));
-        this.toastr.success(`"${updated.title}" actualizada`, 'Actualizado');
+        this.toast.success(`"${updated.title}" actualizada`, 'Actualizado');
       } catch {
-        this.toastr.danger('No se pudo actualizar', 'Error');
+        this.toast.danger('No se pudo actualizar', 'Error');
       }
     });
   }
@@ -127,9 +119,9 @@ export class PlaylistComponent implements OnInit {
     try {
       await this.db.delete(song.id);
       this.songs = this.songs.filter((s) => s.id !== song.id);
-      this.toastr.warning(`"${song.title}" eliminada`, 'Eliminado');
+      this.toast.warning(`"${song.title}" eliminada`, 'Eliminado');
     } catch {
-      this.toastr.danger('No se pudo eliminar', 'Error');
+      this.toast.danger('No se pudo eliminar', 'Error');
     }
   }
 
@@ -140,7 +132,7 @@ export class PlaylistComponent implements OnInit {
     try {
       this.songs = await this.db.reorder(this.playlist.id, ids);
     } catch {
-      this.toastr.danger('No se pudo guardar el nuevo orden', 'Error');
+      this.toast.danger('No se pudo guardar el nuevo orden', 'Error');
       await this.loadSongs();
     }
   }
@@ -150,11 +142,10 @@ export class PlaylistComponent implements OnInit {
       const updated = await this.db.update({ ...song, joinWithNext: !song.joinWithNext });
       this.songs = this.songs.map((s) => (s.id === updated.id ? updated : s));
     } catch {
-      this.toastr.danger('No se pudo guardar el cambio', 'Error');
+      this.toast.danger('No se pudo guardar el cambio', 'Error');
     }
   }
 
-  // Returns 1-based song number (excluding events)
   songNumber(index: number): number {
     return this.songs.slice(0, index + 1).filter((s) => s.type !== 'event').length;
   }

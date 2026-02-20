@@ -1,8 +1,9 @@
-// Nebular themes — all prebuilt CSS (theme switcher activates the right one)
-@import '@nebular/theme/styles/prebuilt/dark.css';
-@import '@nebular/theme/styles/prebuilt/default.css';
-@import '@nebular/theme/styles/prebuilt/cosmic.css';
-@import '@nebular/theme/styles/prebuilt/corporate.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// CDK overlay for Dialog
+@import '@angular/cdk/overlay-prebuilt.css';
 
 // Global resets
 *, *::before, *::after {
@@ -13,14 +14,11 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: var(--font-family-primary, 'Open Sans', sans-serif);
 }
 
-// Remove default nb-layout scrollbar jump
-nb-layout {
-  .scrollable-container {
-    scrollbar-width: thin;
-  }
+// CDK overlay dark backdrop
+.cdk-overlay-dark-backdrop {
+  background: rgba(0, 0, 0, 0.6);
 }
 
 // CDK drag-drop global styles

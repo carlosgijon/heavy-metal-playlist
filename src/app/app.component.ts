@@ -1,18 +1,7 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { filter, Subject, takeUntil } from 'rxjs';
-import {
-  NbLayoutModule,
-  NbSidebarModule,
-  NbSidebarService,
-  NbButtonModule,
-  NbIconModule,
-  NbMenuModule,
-  NbMenuService,
-  NbCardModule,
-  NbMenuItem,
-  NbDialogService,
-  NbTooltipModule,
-} from '@nebular/theme';
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Dialog } from '@angular/cdk/dialog';
+import { NgIconComponent } from '@ng-icons/core';
 import { PlaylistsComponent } from './features/playlists/playlists.component';
 import { PlaylistComponent } from './features/playlist/playlist.component';
 import { SongsComponent } from './features/songs/songs.component';
@@ -24,13 +13,8 @@ import { PlaylistWithStats } from './core/models/song.model';
   selector: 'app-root',
   standalone: true,
   imports: [
-    NbLayoutModule,
-    NbSidebarModule,
-    NbButtonModule,
-    NbIconModule,
-    NbMenuModule,
-    NbCardModule,
-    NbTooltipModule,
+    CommonModule,
+    NgIconComponent,
     PlaylistsComponent,
     PlaylistComponent,
     SongsComponent,
@@ -39,53 +23,16 @@ import { PlaylistWithStats } from './core/models/song.model';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent implements OnInit, OnDestroy {
-  private readonly menuService = inject(NbMenuService);
-  private readonly sidebarService = inject(NbSidebarService);
-  private readonly dialog = inject(NbDialogService);
-  private readonly destroy$ = new Subject<void>();
+export class AppComponent {
+  private readonly dialog = inject(Dialog);
 
   view = signal<'songs' | 'playlists' | 'detail'>('playlists');
   selectedPlaylist = signal<PlaylistWithStats | null>(null);
-  private sidebarExpanded = false;
+  sidebarExpanded = false;
 
-  readonly menuItems: NbMenuItem[] = [
-    {
-      title: 'Canciones',
-      icon: 'music-outline',
-      data: { view: 'songs' },
-    },
-    {
-      title: 'Playlists',
-      icon: 'list-outline',
-      data: { view: 'playlists' },
-      selected: true,
-    },
-  ];
-
-  ngOnInit(): void {
-    this.menuService
-      .onItemClick()
-      .pipe(
-        filter(({ tag }) => tag === 'main-menu'),
-        takeUntil(this.destroy$),
-      )
-      .subscribe(({ item }) => {
-        if (item.data?.view) {
-          this.view.set(item.data.view);
-          this.selectedPlaylist.set(null);
-          this.menuItems.forEach((m) => (m.selected = m.data?.view === item.data.view));
-          if (this.sidebarExpanded) {
-            this.sidebarExpanded = false;
-            this.sidebarService.toggle(true, 'left'); // back to compacted
-          }
-        }
-      });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  setView(v: 'songs' | 'playlists'): void {
+    this.view.set(v);
+    this.selectedPlaylist.set(null);
   }
 
   onPlaylistSelected(playlist: PlaylistWithStats): void {
@@ -100,10 +47,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
   toggleSidebar(): void {
     this.sidebarExpanded = !this.sidebarExpanded;
-    this.sidebarService.toggle(true, 'left');
   }
 
   openSettings(): void {
-    this.dialog.open(SettingsDialogComponent, { closeOnBackdropClick: true });
+    this.dialog.open(SettingsDialogComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+    });
   }
 }

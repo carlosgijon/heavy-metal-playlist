@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import Store from 'electron-store';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
@@ -118,7 +118,7 @@ export class Database {
       let defaultPlaylist = playlists.find((p) => p.name === 'Setlist Principal');
       if (!defaultPlaylist) {
         defaultPlaylist = {
-          id: uuidv4(),
+          id: randomUUID(),
           name: 'Setlist Principal',
           createdAt: new Date().toISOString(),
         };
@@ -138,7 +138,7 @@ export class Database {
       const key = `${(s.title ?? '').trim().toLowerCase()}||${(s.artist ?? '').trim().toLowerCase()}`;
       if (!keyToLibId.has(key)) {
         const lib: LibrarySong = {
-          id: uuidv4(),
+          id: randomUUID(),
           title: s.title ?? '',
           artist: s.artist ?? '',
           album: s.album,
@@ -156,7 +156,7 @@ export class Database {
     const newPlaylistSongs: PlaylistSong[] = songsToMigrate.map((s) => {
       if (s.type === 'event') {
         return {
-          id: uuidv4(),
+          id: randomUUID(),
           playlistId: s.playlistId,
           position: s.position ?? 0,
           type: 'event' as const,
@@ -167,7 +167,7 @@ export class Database {
       }
       const key = `${(s.title ?? '').trim().toLowerCase()}||${(s.artist ?? '').trim().toLowerCase()}`;
       return {
-        id: uuidv4(),
+        id: randomUUID(),
         playlistId: s.playlistId,
         songId: keyToLibId.get(key)!,
         position: s.position ?? 0,
@@ -255,7 +255,7 @@ export class Database {
     const playlists: Playlist[] = store.get('playlists', []);
     const newPlaylist: Playlist = {
       ...data,
-      id: uuidv4(),
+      id: randomUUID(),
       createdAt: new Date().toISOString(),
     };
     store.set('playlists', [...playlists, newPlaylist]);
@@ -289,7 +289,7 @@ export class Database {
 
   createLibrarySong(data: Omit<LibrarySong, 'id'>): LibrarySong {
     const songs: LibrarySong[] = store.get('librarySongs', []);
-    const newSong: LibrarySong = { ...data, id: uuidv4() };
+    const newSong: LibrarySong = { ...data, id: randomUUID() };
     store.set('librarySongs', [...songs, newSong]);
     return newSong;
   }
@@ -346,7 +346,7 @@ export class Database {
 
     const position = allPs.filter((ps) => ps.playlistId === playlistId).length;
     const entry: PlaylistSong = {
-      id: uuidv4(),
+      id: randomUUID(),
       playlistId,
       songId,
       position,
@@ -385,7 +385,7 @@ export class Database {
 
     if (data.type === 'event') {
       const entry: PlaylistSong = {
-        id: uuidv4(),
+        id: randomUUID(),
         playlistId: data.playlistId,
         position,
         type: 'event',
@@ -417,7 +417,7 @@ export class Database {
     }
 
     const entry: PlaylistSong = {
-      id: uuidv4(),
+      id: randomUUID(),
       playlistId: data.playlistId,
       songId: lib.id,
       position,

@@ -1,23 +1,11 @@
-import { Component, ElementRef, HostListener, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  NbButtonModule,
-  NbIconModule,
-  NbToastrService,
-  NbDialogService,
-  NbSpinnerModule,
-  NbAlertModule,
-  NbTooltipModule,
-  NbBadgeModule,
-  NbInputModule,
-  NbCardModule,
-  NbSelectModule,
-  NbOptionModule,
-  NbCheckboxModule,
-} from '@nebular/theme';
+import { Dialog } from '@angular/cdk/dialog';
+import { NgIconComponent } from '@ng-icons/core';
 import { LibrarySong, PlaylistWithStats } from '../../core/models/song.model';
 import { DatabaseService } from '../../core/services/database.service';
+import { ToastService } from '../../core/services/toast.service';
 import { SongLibraryFormComponent } from './song-library-form/song-library-form.component';
 
 @Component({
@@ -26,76 +14,27 @@ import { SongLibraryFormComponent } from './song-library-form/song-library-form.
   imports: [
     CommonModule,
     FormsModule,
-    NbButtonModule,
-    NbIconModule,
-    NbSpinnerModule,
-    NbAlertModule,
-    NbTooltipModule,
-    NbBadgeModule,
-    NbInputModule,
-    NbCardModule,
-    NbSelectModule,
-    NbOptionModule,
-    NbCheckboxModule,
+    NgIconComponent,
   ],
   templateUrl: './songs.component.html',
   styleUrls: ['./songs.component.scss'],
 })
 export class SongsComponent implements OnInit {
   private readonly db = inject(DatabaseService);
-  private readonly toastr = inject(NbToastrService);
-  private readonly dialog = inject(NbDialogService);
-  private readonly el = inject(ElementRef);
+  private readonly toast = inject(ToastService);
+  private readonly dialog = inject(Dialog);
 
   songs: LibrarySong[] = [];
   playlists: PlaylistWithStats[] = [];
   loading = true;
   searchQuery = '';
 
-  // Add-to-playlist dialog state
+  // Add-to-playlist modal state
   addingToPlaylist: LibrarySong | null = null;
   selectedPlaylistId = '';
   addSetlistName = '';
   addJoinWithNext = false;
   addingInProgress = false;
-  dropdownOpen = false;
-  panelTop = 0;
-  panelLeft = 0;
-  panelWidth = 0;
-
-  get selectedPlaylistName(): string {
-    return this.playlists.find((p) => p.id === this.selectedPlaylistId)?.name ?? '';
-  }
-
-  toggleDropdown(): void {
-    if (this.dropdownOpen) {
-      this.dropdownOpen = false;
-      return;
-    }
-    const trigger = this.el.nativeElement.querySelector('.dropdown-trigger') as HTMLElement;
-    if (trigger) {
-      const rect = trigger.getBoundingClientRect();
-      this.panelTop = rect.bottom + 4;
-      this.panelLeft = rect.left;
-      this.panelWidth = rect.width;
-    }
-    this.dropdownOpen = true;
-  }
-
-  selectPlaylist(playlist: PlaylistWithStats): void {
-    this.selectedPlaylistId = playlist.id;
-    this.dropdownOpen = false;
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (this.dropdownOpen) {
-      const dropdown = this.el.nativeElement.querySelector('.playlist-dropdown');
-      if (!dropdown?.contains(event.target as Node)) {
-        this.dropdownOpen = false;
-      }
-    }
-  }
 
   async ngOnInit(): Promise<void> {
     await Promise.all([this.loadSongs(), this.loadPlaylists()]);
@@ -106,7 +45,7 @@ export class SongsComponent implements OnInit {
       this.loading = true;
       this.songs = await this.db.getLibrarySongs();
     } catch {
-      this.toastr.danger('No se pudieron cargar las canciones', 'Error');
+      this.toast.danger('No se pudieron cargar las canciones', 'Error');
     } finally {
       this.loading = false;
     }
@@ -132,33 +71,39 @@ export class SongsComponent implements OnInit {
   }
 
   openCreateForm(): void {
-    const ref = this.dialog.open(SongLibraryFormComponent, { closeOnBackdropClick: false });
-    (ref.componentRef.instance as SongLibraryFormComponent).song = null;
-
-    ref.onClose.subscribe(async (result?: Omit<LibrarySong, 'id'>) => {
+    const ref = this.dialog.open(SongLibraryFormComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { song: null },
+    });
+    ref.closed.subscribe(async (result) => {
       if (!result) return;
       try {
-        const created = await this.db.createLibrarySong(result);
+        const created = await this.db.createLibrarySong(result as Omit<LibrarySong, 'id'>);
         this.songs = [...this.songs, created];
-        this.toastr.success(`"${created.title}" añadida a la librería`, 'Canción creada');
+        this.toast.success(`"${created.title}" añadida a la librería`, 'Canción creada');
       } catch {
-        this.toastr.danger('No se pudo crear la canción', 'Error');
+        this.toast.danger('No se pudo crear la canción', 'Error');
       }
     });
   }
 
   openEditForm(song: LibrarySong): void {
-    const ref = this.dialog.open(SongLibraryFormComponent, { closeOnBackdropClick: false });
-    (ref.componentRef.instance as SongLibraryFormComponent).song = { ...song };
-
-    ref.onClose.subscribe(async (result?: LibrarySong) => {
+    const ref = this.dialog.open(SongLibraryFormComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { song: { ...song } },
+    });
+    ref.closed.subscribe(async (result) => {
       if (!result) return;
       try {
-        const updated = await this.db.updateLibrarySong(result);
+        const updated = await this.db.updateLibrarySong(result as LibrarySong);
         this.songs = this.songs.map((s) => (s.id === updated.id ? updated : s));
-        this.toastr.success(`"${updated.title}" actualizada`, 'Canción actualizada');
+        this.toast.success(`"${updated.title}" actualizada`, 'Canción actualizada');
       } catch {
-        this.toastr.danger('No se pudo actualizar la canción', 'Error');
+        this.toast.danger('No se pudo actualizar la canción', 'Error');
       }
     });
   }
@@ -181,9 +126,9 @@ export class SongsComponent implements OnInit {
     try {
       await this.db.deleteLibrarySong(song.id);
       this.songs = this.songs.filter((s) => s.id !== song.id);
-      this.toastr.warning(`"${song.title}" eliminada`, 'Canción eliminada');
+      this.toast.warning(`"${song.title}" eliminada`, 'Canción eliminada');
     } catch {
-      this.toastr.danger('No se pudo eliminar la canción', 'Error');
+      this.toast.danger('No se pudo eliminar la canción', 'Error');
     }
   }
 
@@ -207,13 +152,13 @@ export class SongsComponent implements OnInit {
         joinWithNext: this.addJoinWithNext,
       });
       const playlist = this.playlists.find((p) => p.id === this.selectedPlaylistId);
-      this.toastr.success(
+      this.toast.success(
         `"${this.addingToPlaylist.title}" añadida a "${playlist?.name}"`,
         'Añadida a playlist',
       );
       this.addingToPlaylist = null;
     } catch {
-      this.toastr.danger('No se pudo añadir a la playlist', 'Error');
+      this.toast.danger('No se pudo añadir a la playlist', 'Error');
     } finally {
       this.addingInProgress = false;
     }

@@ -1,37 +1,63 @@
-<nb-layout>
-  <nb-layout-header fixed>
-    <div class="header-container">
-      <div class="header-brand">
-        <button nbButton ghost size="small" class="sidebar-toggle" (click)="toggleSidebar()">
-          <nb-icon icon="menu-outline"></nb-icon>
-        </button>
-        <nb-icon icon="music-outline" class="brand-icon"></nb-icon>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.expanded]="sidebarExpanded">
+    <nav class="sidebar-nav">
+      <button
+        class="nav-item nav-toggle"
+        (click)="toggleSidebar()"
+        [title]="sidebarExpanded ? 'Cerrar menú' : 'Abrir menú'">
+        <ng-icon [name]="sidebarExpanded ? 'heroXMark' : 'heroBars3'" class="nav-icon"></ng-icon>
+        <span class="nav-label">Cerrar menú</span>
+      </button>
+      <button
+        class="nav-item"
+        [class.active]="view() === 'songs'"
+        (click)="setView('songs')"
+        title="Canciones">
+        <ng-icon name="heroMusicalNote" class="nav-icon"></ng-icon>
+        <span class="nav-label">Canciones</span>
+      </button>
+      <button
+        class="nav-item"
+        [class.active]="view() === 'playlists' || view() === 'detail'"
+        (click)="setView('playlists')"
+        title="Playlists">
+        <ng-icon name="heroQueueList" class="nav-icon"></ng-icon>
+        <span class="nav-label">Playlists</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Main area -->
+  <div class="main-area">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <ng-icon name="heroMusicalNote" class="w-5 h-5 text-primary"></ng-icon>
         <span class="brand-name">Heavy Metal Playlist</span>
       </div>
-      <div class="header-actions">
-        <button nbButton ghost size="small" nbTooltip="Configuración" (click)="openSettings()">
-          <nb-icon icon="settings-outline"></nb-icon>
+      <div class="header-right">
+        <button class="btn btn-ghost btn-sm px-2" (click)="openSettings()" title="Configuración">
+          <ng-icon name="heroCog6Tooth" class="w-5 h-5"></ng-icon>
         </button>
         <app-theme-switcher></app-theme-switcher>
       </div>
-    </div>
-  </nb-layout-header>
+    </header>
 
-  <nb-sidebar tag="left" state="compacted" fixed>
-    <nb-menu tag="main-menu" [items]="menuItems"></nb-menu>
-  </nb-sidebar>
+    <!-- Content -->
+    <main class="main-content">
+      @if (view() === 'songs') {
+        <app-songs />
+      } @else if (view() === 'playlists') {
+        <app-playlists (playlistSelected)="onPlaylistSelected($event)" />
+      } @else {
+        <app-playlist [playlist]="selectedPlaylist()!" (back)="onBack()" />
+      }
+    </main>
 
-  <nb-layout-column>
-    @if (view() === 'songs') {
-      <app-songs />
-    } @else if (view() === 'playlists') {
-      <app-playlists (playlistSelected)="onPlaylistSelected($event)" />
-    } @else {
-      <app-playlist [playlist]="selectedPlaylist()!" (back)="onBack()" />
-    }
-  </nb-layout-column>
-
-  <nb-layout-footer fixed>
-    <span class="footer-text">Heavy Metal Playlist · Datos guardados localmente</span>
-  </nb-layout-footer>
-</nb-layout>
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span>Heavy Metal Playlist · Datos guardados localmente</span>
+    </footer>
+  </div>
+</div>

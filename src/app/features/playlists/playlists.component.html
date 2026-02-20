@@ -3,26 +3,28 @@
   <!-- Header -->
   <div class="playlists-header">
     <h2 class="playlists-title">
-      <nb-icon icon="list-outline"></nb-icon>
+      <ng-icon name="heroQueueList" class="w-6 h-6"></ng-icon>
       Mis Playlists
     </h2>
-    <button nbButton status="primary" size="medium" (click)="openCreateForm()">
-      <nb-icon icon="plus-outline"></nb-icon>
+    <button class="btn btn-primary btn-sm" (click)="openCreateForm()">
+      <ng-icon name="heroPlus" class="w-4 h-4"></ng-icon>
       Nueva playlist
     </button>
   </div>
 
   <!-- Loading -->
   <div class="loading-container" *ngIf="loading">
-    <nb-spinner size="giant" status="primary"></nb-spinner>
+    <span class="loading loading-spinner loading-lg text-primary"></span>
   </div>
 
   <!-- Empty state -->
-  <nb-alert *ngIf="!loading && playlists.length === 0" status="info" class="empty-state">
-    <nb-icon icon="music-outline" class="empty-icon"></nb-icon>
-    <p>No tienes playlists todavía.</p>
-    <p>Pulsa <strong>Nueva playlist</strong> para empezar.</p>
-  </nb-alert>
+  <div *ngIf="!loading && playlists.length === 0" class="alert alert-info empty-state">
+    <ng-icon name="heroMusicalNote" class="w-8 h-8"></ng-icon>
+    <div>
+      <p>No tienes playlists todavía.</p>
+      <p>Pulsa <strong>Nueva playlist</strong> para empezar.</p>
+    </div>
+  </div>
 
   <!-- Tabla de playlists -->
   <div class="table-wrapper" *ngIf="!loading && playlists.length > 0">
@@ -43,8 +45,10 @@
           class="playlist-row"
           (click)="selectPlaylist(playlist)">
           <td class="cell-name">
-            <nb-icon icon="music-outline"></nb-icon>
-            {{ playlist.name }}
+            <div class="cell-name-inner">
+              <ng-icon name="heroMusicalNote" class="w-4 h-4"></ng-icon>
+              {{ playlist.name }}
+            </div>
           </td>
           <td class="cell-desc">{{ playlist.description || '—' }}</td>
           <td class="col-center">
@@ -56,22 +60,22 @@
           <td class="cell-date">{{ formatDate(playlist.createdAt) }}</td>
           <td class="col-center cell-actions" (click)="$event.stopPropagation()">
             <button
-              nbButton ghost status="warning" size="small"
-              nbTooltip="Exportar PDF"
+              class="btn btn-ghost btn-xs tooltip"
+              data-tip="Exportar PDF"
               (click)="exportPlaylistToPdf(playlist, $event)">
-              <nb-icon icon="printer-outline"></nb-icon>
+              <ng-icon name="heroPrinter" class="w-4 h-4"></ng-icon>
             </button>
             <button
-              nbButton ghost status="info" size="small"
-              nbTooltip="Editar"
+              class="btn btn-ghost btn-xs tooltip"
+              data-tip="Editar"
               (click)="openEditForm(playlist, $event)">
-              <nb-icon icon="edit-outline"></nb-icon>
+              <ng-icon name="heroPencil" class="w-4 h-4"></ng-icon>
             </button>
             <button
-              nbButton ghost status="danger" size="small"
-              nbTooltip="Eliminar"
+              class="btn btn-ghost btn-xs text-error tooltip"
+              data-tip="Eliminar"
               (click)="deletePlaylist(playlist, $event)">
-              <nb-icon icon="trash-2-outline"></nb-icon>
+              <ng-icon name="heroTrash" class="w-4 h-4"></ng-icon>
             </button>
           </td>
         </tr>

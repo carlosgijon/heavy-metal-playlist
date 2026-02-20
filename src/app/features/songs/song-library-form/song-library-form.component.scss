@@ -1,58 +1,57 @@
-.song-form-card {
-  width: 480px;
-  max-width: 95vw;
-}
-
 .field-group {
   margin-bottom: 1rem;
+}
 
-  .label {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-bottom: 0.35rem;
-    color: var(--text-hint-color);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  margin-bottom: 0.25rem;
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  opacity: 0.6;
+  margin-top: 0.25rem;
+}
+
+.field-error {
+  font-size: 0.78rem;
+  color: oklch(var(--er));
+  margin-top: 0.25rem;
 }
 
 .row-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+
+  > * { min-width: 0; }
 }
 
-.hint {
-  font-size: 0.78rem;
-  color: var(--text-hint-color);
-  margin-top: 0.25rem;
-}
+// ── Search section ────────────────────────────────────────────────
 
-.error-hint {
-  font-size: 0.78rem;
-  color: var(--color-danger-default);
-  margin-top: 0.25rem;
-}
-
-.search-section {
-  .search-hint {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    color: var(--color-warning-default);
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
-  }
+.search-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: oklch(var(--wa));
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
 }
 
 .suggestions-list {
-  border: 1px solid var(--border-basic-color-3);
-  border-radius: 4px;
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.375rem;
   overflow: hidden;
   margin-bottom: 0.75rem;
+  max-height: 280px;
+  overflow-y: auto;
 }
 
 .suggestion-item {
@@ -60,17 +59,15 @@
   flex-direction: column;
   padding: 0.6rem 0.75rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-basic-color-4);
+  border-bottom: 1px solid oklch(var(--b3));
+  transition: background 0.1s ease;
 
   &:last-child { border-bottom: none; }
+  &:hover { background: oklch(var(--b2)); }
 
-  &:hover {
-    background: var(--background-basic-color-2);
-  }
-
-  .s-title { font-weight: 600; font-size: 0.9rem; }
-  .s-meta  { font-size: 0.78rem; color: var(--text-hint-color); margin-top: 0.1rem; }
-  .s-duration { font-size: 0.75rem; color: var(--text-disabled-color); margin-top: 0.1rem; }
+  .s-title   { font-weight: 600; font-size: 0.9rem; }
+  .s-meta    { font-size: 0.78rem; opacity: 0.6; margin-top: 0.1rem; }
+  .s-duration { font-size: 0.75rem; opacity: 0.5; margin-top: 0.1rem; }
 }
 
 .manual-link {
@@ -78,22 +75,19 @@
   text-align: center;
 }
 
-.bpm-loading-icon {
-  width: 1rem;
-  height: 1rem;
-  color: var(--text-hint-color);
-}
+// ── Tap BPM row ─────────────────────────────────────────────────
 
 .tempo-row {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  min-width: 0;
 
-  input { flex: 1; }
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
+  button {
+    flex-shrink: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
