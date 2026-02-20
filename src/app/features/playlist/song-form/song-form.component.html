@@ -1,268 +1,260 @@
-<nb-card class="song-form-card">
-  <nb-card-header>
+<div class="modal-box w-[560px] max-w-[95vw] max-h-[90vh] overflow-x-hidden overflow-y-auto">
+  <h3 class="font-bold text-lg mb-4">
     {{ isEvent ? (isEdit ? 'Editar evento' : 'Nuevo evento') : (isEdit ? 'Editar canción' : 'Nueva canción') }}
-  </nb-card-header>
+  </h3>
 
-  <nb-card-body>
+  <!-- MODO EVENTO -->
+  <form *ngIf="isEvent" [formGroup]="form">
+    <div class="field-group">
+      <label class="field-label">Nombre del evento <span class="text-error">*</span></label>
+      <input
+        class="input input-bordered w-full"
+        [class.input-error]="form.get('title')?.invalid && form.get('title')?.touched"
+        formControlName="title"
+        placeholder="Ej: Intro, Outro, Bis..."
+        autocomplete="off" />
+      <p class="field-error" *ngIf="form.get('title')?.invalid && form.get('title')?.touched">
+        El nombre es obligatorio
+      </p>
+    </div>
+  </form>
 
-    <!-- ── MODO EVENTO ─────────────────────────────────────────── -->
-    <form *ngIf="isEvent" [formGroup]="form">
+  <!-- MODO CANCIÓN -->
+  <ng-container *ngIf="!isEvent">
+
+    <!-- PASO 1: LIBRERÍA -->
+    <div class="library-section" *ngIf="formMode === 'library'">
+      <p class="section-hint">Busca en tu librería o crea una canción nueva</p>
+
       <div class="field-group">
-        <label class="label">Nombre del evento *</label>
-        <input
-          nbInput fullWidth
-          formControlName="title"
-          placeholder="Ej: Intro, Outro, Bis..."
-          [status]="form.get('title')?.invalid && form.get('title')?.touched ? 'danger' : 'basic'" />
-        <p class="error-hint" *ngIf="form.get('title')?.invalid && form.get('title')?.touched">
-          El nombre es obligatorio
-        </p>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none opacity-50">
+            <ng-icon name="heroMagnifyingGlass" class="w-4 h-4"></ng-icon>
+          </div>
+          <input
+            class="input input-bordered w-full pl-9"
+            [formControl]="librarySearchControl"
+            placeholder="Buscar por título o artista..."
+            autocomplete="off" />
+        </div>
       </div>
+
+      <div class="library-list" *ngIf="filteredLibrarySongs.length > 0">
+        <div
+          class="library-item"
+          *ngFor="let s of filteredLibrarySongs"
+          (click)="selectFromLibrary(s)">
+          <div class="lib-main">
+            <span class="lib-title">{{ s.title }}</span>
+            <span class="lib-artist">{{ s.artist }}</span>
+          </div>
+          <span class="lib-meta">
+            <span *ngIf="s.tempo" class="lib-bpm">{{ s.tempo }} BPM</span>
+            <span *ngIf="s.duration">{{ formatDuration(s.duration) }}</span>
+          </span>
+        </div>
+      </div>
+
+      <p class="library-empty" *ngIf="librarySongs.length === 0">La librería está vacía.</p>
+      <p class="library-empty" *ngIf="librarySongs.length > 0 && filteredLibrarySongs.length === 0">
+        No se encontraron resultados.
+      </p>
+
+      <div class="library-actions">
+        <button class="btn btn-ghost btn-sm text-warning" type="button" (click)="switchToSearch()">
+          <ng-icon name="heroMagnifyingGlass" class="w-4 h-4"></ng-icon>
+          Buscar en iTunes
+        </button>
+        <button class="btn btn-ghost btn-sm" type="button" (click)="switchToManual()">
+          <ng-icon name="heroPencil" class="w-4 h-4"></ng-icon>
+          Crear manualmente
+        </button>
+      </div>
+    </div>
+
+    <!-- PASO 2: BUSCAR EN ITUNES -->
+    <div class="search-section" *ngIf="formMode === 'search'">
+
+      <p class="search-hint" *ngIf="!connectivity.isOnline()">
+        <ng-icon name="heroSignalSlash" class="w-4 h-4"></ng-icon>
+        Sin conexión — usa el botón para rellenar manualmente
+      </p>
+
+      <div class="field-group" *ngIf="connectivity.isOnline()">
+        <label class="field-label">Buscar canción</label>
+        <div class="relative">
+          <input
+            class="input input-bordered w-full pr-9"
+            [formControl]="searchControl"
+            placeholder="Escribe el título de la canción..."
+            autocomplete="off" />
+          <div *ngIf="isSearching" class="absolute inset-y-0 right-3 flex items-center">
+            <span class="loading loading-spinner loading-xs opacity-70"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="suggestions-list" *ngIf="suggestions.length > 0">
+        <div
+          class="suggestion-item"
+          *ngFor="let track of suggestions"
+          (click)="selectSuggestion(track)">
+          <span class="s-title">{{ track.trackName }}</span>
+          <span class="s-meta">{{ track.artistName }} &middot; {{ track.collectionName }}</span>
+          <span class="s-duration">{{ formatDuration(track.trackTimeMillis / 1000) }}</span>
+        </div>
+      </div>
+
+      <div class="manual-link">
+        <button class="btn btn-ghost btn-sm" type="button" (click)="switchToLibrary()">
+          <ng-icon name="heroArrowLeft" class="w-4 h-4"></ng-icon>
+          Volver a librería
+        </button>
+        <button class="btn btn-ghost btn-sm" type="button" (click)="switchToManual()">
+          <ng-icon name="heroPencil" class="w-4 h-4"></ng-icon>
+          Rellenar manualmente
+        </button>
+      </div>
+    </div>
+
+    <!-- PASO 3: CAMPOS DEL FORMULARIO -->
+    <form *ngIf="formMode === 'manual'" [formGroup]="form">
+
+      <div class="library-selected-banner" *ngIf="isFromLibrary">
+        <ng-icon name="heroCheckCircle" class="w-5 h-5 flex-shrink-0 text-primary"></ng-icon>
+        <div class="lsb-info">
+          <span class="lsb-title">{{ selectedLibrarySong?.title }}</span>
+          <span class="lsb-artist">{{ selectedLibrarySong?.artist }}</span>
+        </div>
+        <button class="btn btn-ghost btn-xs" type="button" (click)="switchToLibrary()">
+          <ng-icon name="heroXMark" class="w-4 h-4"></ng-icon>
+        </button>
+      </div>
+
+      <ng-container *ngIf="!isFromLibrary">
+
+        <div class="field-group">
+          <label class="field-label">Título <span class="text-error">*</span></label>
+          <input
+            class="input input-bordered w-full"
+            [class.input-error]="form.get('title')?.invalid && form.get('title')?.touched"
+            formControlName="title"
+            placeholder="Ej: Enter Sandman"
+            autocomplete="off" />
+          <p class="field-error" *ngIf="form.get('title')?.invalid && form.get('title')?.touched">
+            El título es obligatorio
+          </p>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Artista / Banda <span class="text-error">*</span></label>
+          <input
+            class="input input-bordered w-full"
+            [class.input-error]="form.get('artist')?.invalid && form.get('artist')?.touched"
+            formControlName="artist"
+            placeholder="Ej: Metallica"
+            autocomplete="off" />
+          <p class="field-error" *ngIf="form.get('artist')?.invalid && form.get('artist')?.touched">
+            El artista es obligatorio
+          </p>
+        </div>
+
+        <div class="row-fields">
+          <div class="field-group">
+            <label class="field-label">Duración (seg) <span class="text-error">*</span></label>
+            <input
+              class="input input-bordered w-full"
+              [class.input-error]="form.get('duration')?.invalid && form.get('duration')?.touched"
+              type="number"
+              formControlName="duration"
+              placeholder="Ej: 331"
+              min="0" />
+            <p class="field-hint" *ngIf="form.get('duration')?.value">
+              {{ formatDuration(form.get('duration')?.value) }}
+            </p>
+            <p class="field-error" *ngIf="form.get('duration')?.invalid && form.get('duration')?.touched">
+              La duración es obligatoria
+            </p>
+          </div>
+          <div class="field-group">
+            <label class="field-label">
+              Tempo (BPM)
+              <span *ngIf="isFetchingBpm" class="loading loading-spinner loading-xs"></span>
+            </label>
+            <div class="tempo-row">
+              <input
+                class="input input-bordered flex-1"
+                type="number"
+                formControlName="tempo"
+                placeholder="Ej: 120"
+                min="0" max="300" />
+              <button
+                type="button"
+                class="btn btn-warning btn-sm tooltip"
+                data-tip="Golpea al ritmo de la canción. Se reinicia al parar 3 segundos."
+                (click)="tapBpm()">
+                <ng-icon name="heroBolt" class="w-4 h-4"></ng-icon>
+                {{ hasTaps ? tapCount + ' taps · ' + form.get('tempo')?.value + ' BPM' : 'Tap BPM' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Álbum</label>
+          <input class="input input-bordered w-full" formControlName="album"
+            placeholder="Ej: Metallica (Black Album)" autocomplete="off" />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Estilo / Género</label>
+          <input class="input input-bordered w-full" formControlName="style"
+            placeholder="Ej: Thrash Metal, Death Metal..." autocomplete="off" />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Notas</label>
+          <textarea class="textarea textarea-bordered w-full" formControlName="notes" rows="2"
+            placeholder="Notas adicionales..."></textarea>
+        </div>
+
+      </ng-container>
+
+      <div class="playlist-fields-divider" *ngIf="isFromLibrary">
+        <span>Configuración en esta playlist</span>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Nombre en setlist</label>
+        <input class="input input-bordered w-full" formControlName="setlistName"
+          placeholder="Nombre que saldrá en el PDF (deja vacío para usar el título)"
+          autocomplete="off" />
+      </div>
+
+      <div class="field-group join-field">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" class="checkbox checkbox-sm" formControlName="joinWithNext" />
+          <span class="text-sm">Unir con la siguiente canción</span>
+        </label>
+      </div>
+
     </form>
 
-    <!-- ── MODO CANCIÓN ────────────────────────────────────────── -->
-    <ng-container *ngIf="!isEvent">
+  </ng-container>
 
-      <!-- PASO 1: LIBRERÍA -->
-      <div class="library-section" *ngIf="formMode === 'library'">
-        <p class="section-hint">Busca en tu librería o crea una canción nueva</p>
-
-        <div class="field-group">
-          <nb-form-field>
-            <nb-icon nbPrefix icon="search-outline"></nb-icon>
-            <input
-              nbInput fullWidth
-              [formControl]="librarySearchControl"
-              placeholder="Buscar por título o artista..."
-              autocomplete="off" />
-          </nb-form-field>
-        </div>
-
-        <!-- Library results -->
-        <div class="library-list" *ngIf="filteredLibrarySongs.length > 0">
-          <div
-            class="library-item"
-            *ngFor="let s of filteredLibrarySongs"
-            (click)="selectFromLibrary(s)">
-            <div class="lib-main">
-              <span class="lib-title">{{ s.title }}</span>
-              <span class="lib-artist">{{ s.artist }}</span>
-            </div>
-            <span class="lib-meta">
-              <span *ngIf="s.tempo" class="lib-bpm">{{ s.tempo }} BPM</span>
-              <span *ngIf="s.duration">{{ formatDuration(s.duration) }}</span>
-            </span>
-          </div>
-        </div>
-
-        <p class="library-empty" *ngIf="librarySongs.length === 0">
-          La librería está vacía.
-        </p>
-        <p class="library-empty" *ngIf="librarySongs.length > 0 && filteredLibrarySongs.length === 0">
-          No se encontraron resultados.
-        </p>
-
-        <div class="library-actions">
-          <button nbButton ghost status="warning" size="small" type="button" (click)="switchToSearch()">
-            <nb-icon icon="search-outline"></nb-icon>
-            Buscar en iTunes
-          </button>
-          <button nbButton ghost status="basic" size="small" type="button" (click)="switchToManual()">
-            <nb-icon icon="edit-outline"></nb-icon>
-            Crear manualmente
-          </button>
-        </div>
-      </div>
-
-      <!-- PASO 2: BUSCAR EN ITUNES -->
-      <div class="search-section" *ngIf="formMode === 'search'">
-
-        <p class="search-hint" *ngIf="!connectivity.isOnline()">
-          <nb-icon icon="wifi-off-outline"></nb-icon>
-          Sin conexión — usa el botón para rellenar manualmente
-        </p>
-
-        <div class="field-group" *ngIf="connectivity.isOnline()">
-          <label class="label">Buscar canción</label>
-          <nb-form-field>
-            <input
-              nbInput fullWidth
-              [formControl]="searchControl"
-              placeholder="Escribe el título de la canción..."
-              autocomplete="off" />
-            <nb-icon nbSuffix *ngIf="isSearching" icon="loader-outline"
-              [options]="{ animation: { type: 'pulse' } }"></nb-icon>
-          </nb-form-field>
-        </div>
-
-        <!-- Lista de sugerencias -->
-        <div class="suggestions-list" *ngIf="suggestions.length > 0">
-          <div
-            class="suggestion-item"
-            *ngFor="let track of suggestions"
-            (click)="selectSuggestion(track)">
-            <span class="s-title">{{ track.trackName }}</span>
-            <span class="s-meta">{{ track.artistName }} &middot; {{ track.collectionName }}</span>
-            <span class="s-duration">{{ formatDuration(track.trackTimeMillis / 1000) }}</span>
-          </div>
-        </div>
-
-        <div class="manual-link">
-          <button nbButton ghost status="basic" size="small" type="button" (click)="switchToLibrary()">
-            <nb-icon icon="arrow-back-outline"></nb-icon>
-            Volver a librería
-          </button>
-          <button nbButton ghost status="basic" size="small" type="button" (click)="switchToManual()">
-            <nb-icon icon="edit-outline"></nb-icon>
-            Rellenar manualmente
-          </button>
-        </div>
-      </div>
-
-      <!-- PASO 3: CAMPOS DEL FORMULARIO -->
-      <form *ngIf="formMode === 'manual'" [formGroup]="form">
-
-        <!-- Seleccionada de librería: mostrar datos de librería como referencia -->
-        <div class="library-selected-banner" *ngIf="isFromLibrary">
-          <nb-icon icon="checkmark-circle-2-outline"></nb-icon>
-          <div class="lsb-info">
-            <span class="lsb-title">{{ selectedLibrarySong?.title }}</span>
-            <span class="lsb-artist">{{ selectedLibrarySong?.artist }}</span>
-          </div>
-          <button nbButton ghost size="tiny" type="button" (click)="switchToLibrary()">
-            <nb-icon icon="close-outline"></nb-icon>
-          </button>
-        </div>
-
-        <!-- Solo mostrar campos de librería si NO es de librería (nueva canción) -->
-        <ng-container *ngIf="!isFromLibrary">
-
-          <!-- Título -->
-          <div class="field-group">
-            <label class="label">Título *</label>
-            <input
-              nbInput fullWidth
-              formControlName="title"
-              placeholder="Ej: Enter Sandman"
-              [status]="form.get('title')?.invalid && form.get('title')?.touched ? 'danger' : 'basic'" />
-            <p class="error-hint" *ngIf="form.get('title')?.invalid && form.get('title')?.touched">
-              El título es obligatorio
-            </p>
-          </div>
-
-          <!-- Artista -->
-          <div class="field-group">
-            <label class="label">Artista / Banda *</label>
-            <input
-              nbInput fullWidth
-              formControlName="artist"
-              placeholder="Ej: Metallica"
-              [status]="form.get('artist')?.invalid && form.get('artist')?.touched ? 'danger' : 'basic'" />
-            <p class="error-hint" *ngIf="form.get('artist')?.invalid && form.get('artist')?.touched">
-              El artista es obligatorio
-            </p>
-          </div>
-
-          <!-- Duración + Tempo -->
-          <div class="row-fields">
-            <div class="field-group">
-              <label class="label">Duración (seg) *</label>
-              <input
-                nbInput fullWidth
-                type="number"
-                formControlName="duration"
-                placeholder="Ej: 331"
-                min="0"
-                [status]="form.get('duration')?.invalid && form.get('duration')?.touched ? 'danger' : 'basic'" />
-              <p class="hint" *ngIf="form.get('duration')?.value">
-                {{ formatDuration(form.get('duration')?.value) }}
-              </p>
-              <p class="error-hint" *ngIf="form.get('duration')?.invalid && form.get('duration')?.touched">
-                La duración es obligatoria
-              </p>
-            </div>
-            <div class="field-group">
-              <label class="label">
-                Tempo (BPM)
-                <nb-icon *ngIf="isFetchingBpm" icon="loader-outline"
-                  [options]="{ animation: { type: 'pulse' } }"></nb-icon>
-              </label>
-              <div class="tempo-row">
-                <input
-                  nbInput
-                  type="number"
-                  formControlName="tempo"
-                  placeholder="Ej: 120"
-                  min="0" max="300" />
-                <button
-                  type="button"
-                  nbButton status="warning" size="small"
-                  nbTooltip="Golpea al ritmo de la canción. Se reinicia al parar 3 segundos."
-                  (click)="tapBpm()">
-                  <nb-icon icon="radio-outline"></nb-icon>
-                  {{ hasTaps ? tapCount + ' taps · ' + form.get('tempo')?.value + ' BPM' : 'Tap BPM' }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Álbum -->
-          <div class="field-group">
-            <label class="label">Álbum</label>
-            <input nbInput fullWidth formControlName="album" placeholder="Ej: Metallica (Black Album)" />
-          </div>
-
-          <!-- Estilo -->
-          <div class="field-group">
-            <label class="label">Estilo / Género</label>
-            <input nbInput fullWidth formControlName="style" placeholder="Ej: Thrash Metal, Death Metal..." />
-          </div>
-
-          <!-- Notas -->
-          <div class="field-group">
-            <label class="label">Notas</label>
-            <textarea nbInput fullWidth formControlName="notes" rows="2"
-              placeholder="Notas adicionales..."></textarea>
-          </div>
-
-        </ng-container>
-
-        <!-- Campos específicos de la playlist (siempre visibles en modo manual) -->
-        <div class="playlist-fields-divider" *ngIf="isFromLibrary">
-          <span>Configuración en esta playlist</span>
-        </div>
-
-        <!-- Nombre en setlist -->
-        <div class="field-group">
-          <label class="label">Nombre en setlist</label>
-          <input nbInput fullWidth formControlName="setlistName"
-            placeholder="Nombre que saldrá en el PDF (deja vacío para usar el título)" />
-        </div>
-
-        <!-- Unir con siguiente -->
-        <div class="field-group join-field">
-          <nb-checkbox formControlName="joinWithNext">Unir con la siguiente canción</nb-checkbox>
-        </div>
-
-      </form>
-
-    </ng-container>
-
-  </nb-card-body>
-
-  <nb-card-footer>
-    <div class="actions">
-      <button nbButton status="basic" type="button" (click)="cancel()">Cancelar</button>
-      <button
-        nbButton status="primary" type="button" (click)="submit()"
-        [disabled]="formMode === 'library'">
-        <nb-icon icon="save-outline"></nb-icon>
-        {{ formMode === 'search'
-            ? 'Rellenar manualmente'
-            : (isEvent
-                ? (isEdit ? 'Guardar evento' : 'Añadir evento')
-                : (isEdit ? 'Guardar cambios' : 'Añadir canción')) }}
-      </button>
-    </div>
-  </nb-card-footer>
-</nb-card>
+  <div class="modal-action">
+    <button class="btn btn-ghost btn-sm" type="button" (click)="cancel()">Cancelar</button>
+    <button
+      class="btn btn-primary btn-sm"
+      type="button"
+      (click)="submit()"
+      [disabled]="formMode === 'library'">
+      <ng-icon name="heroArrowDownTray" class="w-4 h-4"></ng-icon>
+      {{ formMode === 'search'
+          ? 'Rellenar manualmente'
+          : (isEvent
+              ? (isEdit ? 'Guardar evento' : 'Añadir evento')
+              : (isEdit ? 'Guardar cambios' : 'Añadir canción')) }}
+    </button>
+  </div>
+</div>

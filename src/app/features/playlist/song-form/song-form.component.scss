@@ -1,41 +1,37 @@
-.song-form-card {
-  width: 560px;
-  max-width: 95vw;
-  margin: 0;
-}
-
-// ── Labels ─────────────────────────────────────────────────────────
-
 .field-group {
   margin-bottom: 1rem;
+}
 
-  .label {
-    display: block;
-    margin-bottom: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-hint-color);
-  }
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  margin-bottom: 0.25rem;
+}
+
+.field-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.field-error {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: oklch(var(--er));
 }
 
 .row-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-}
 
-.hint {
-  margin: 0.25rem 0 0;
-  font-size: 0.75rem;
-  color: var(--text-hint-color);
-}
-
-.error-hint {
-  margin: 0.25rem 0 0;
-  font-size: 0.75rem;
-  color: var(--color-danger-default);
+  > * { min-width: 0; }
 }
 
 // ── Search mode ────────────────────────────────────────────────────
@@ -45,15 +41,13 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.8rem;
-  color: var(--color-warning-default);
+  color: oklch(var(--wa));
   margin-bottom: 1rem;
-
-  nb-icon { font-size: 1rem; }
 }
 
 .suggestions-list {
-  border: 1px solid var(--card-border-color);
-  border-radius: var(--card-border-radius);
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.375rem;
   overflow: hidden;
   margin-top: 0.5rem;
   max-height: 280px;
@@ -67,14 +61,12 @@
   gap: 0 0.75rem;
   padding: 0.6rem 0.85rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--card-border-color);
+  border-bottom: 1px solid oklch(var(--b3));
   transition: background 0.1s ease;
 
   &:last-child { border-bottom: none; }
 
-  &:hover {
-    background: var(--color-primary-transparent-100);
-  }
+  &:hover { background: oklch(var(--b2)); }
 
   .s-title {
     grid-column: 1;
@@ -90,7 +82,7 @@
     grid-column: 1;
     grid-row: 2;
     font-size: 0.72rem;
-    color: var(--text-hint-color);
+    opacity: 0.6;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -102,7 +94,7 @@
     align-self: center;
     font-size: 0.78rem;
     font-weight: 600;
-    color: var(--color-success-default);
+    color: oklch(var(--su));
     white-space: nowrap;
   }
 }
@@ -119,13 +111,13 @@
 
 .section-hint {
   font-size: 0.82rem;
-  color: var(--text-hint-color);
+  opacity: 0.6;
   margin-bottom: 0.75rem;
 }
 
 .library-list {
-  border: 1px solid var(--card-border-color);
-  border-radius: var(--card-border-radius);
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.375rem;
   overflow: hidden;
   max-height: 240px;
   overflow-y: auto;
@@ -138,14 +130,11 @@
   justify-content: space-between;
   padding: 0.55rem 0.85rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--card-border-color);
+  border-bottom: 1px solid oklch(var(--b3));
   transition: background 0.1s ease;
 
   &:last-child { border-bottom: none; }
-
-  &:hover {
-    background: var(--color-primary-transparent-100);
-  }
+  &:hover { background: oklch(var(--b2)); }
 
   .lib-main {
     display: flex;
@@ -163,7 +152,7 @@
 
   .lib-artist {
     font-size: 0.72rem;
-    color: var(--text-hint-color);
+    opacity: 0.6;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -173,20 +162,21 @@
     display: flex;
     gap: 0.5rem;
     font-size: 0.72rem;
-    color: var(--text-hint-color);
+    opacity: 0.6;
     white-space: nowrap;
     margin-left: 0.5rem;
   }
 
   .lib-bpm {
-    color: var(--color-success-default);
+    color: oklch(var(--su));
     font-weight: 600;
+    opacity: 1;
   }
 }
 
 .library-empty {
   font-size: 0.82rem;
-  color: var(--text-hint-color);
+  opacity: 0.6;
   text-align: center;
   margin: 0.5rem 0;
 }
@@ -205,17 +195,11 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  background: var(--color-primary-transparent-100);
-  border: 1px solid var(--color-primary-default);
+  background: oklch(var(--p) / 0.1);
+  border: 1px solid oklch(var(--p) / 0.4);
   border-radius: 6px;
   padding: 0.6rem 0.75rem;
   margin-bottom: 1rem;
-
-  nb-icon {
-    color: var(--color-primary-default);
-    font-size: 1.25rem;
-    flex-shrink: 0;
-  }
 
   .lsb-info {
     flex: 1;
@@ -234,7 +218,7 @@
   .lsb-artist {
     display: block;
     font-size: 0.75rem;
-    color: var(--text-hint-color);
+    opacity: 0.6;
   }
 }
 
@@ -247,13 +231,13 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-hint-color);
+  opacity: 0.6;
 
   &::before,
   &::after {
     content: '';
     flex: 1;
-    border-top: 1px solid var(--border-basic-color-3);
+    border-top: 1px solid oklch(var(--b3));
   }
 }
 
@@ -263,20 +247,19 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  min-width: 0;
 
-  input { flex: 1; }
+  button {
+    flex-shrink: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 // ── Join field ──────────────────────────────────────────────────────
 
 .join-field {
   padding-top: 0.25rem;
-}
-
-// ── Footer ─────────────────────────────────────────────────────────
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
 }

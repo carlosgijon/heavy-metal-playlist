@@ -1,36 +1,23 @@
 import { Component, inject, OnInit, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  NbButtonModule,
-  NbIconModule,
-  NbToastrService,
-  NbDialogService,
-  NbSpinnerModule,
-  NbAlertModule,
-  NbTooltipModule,
-} from '@nebular/theme';
+import { Dialog } from '@angular/cdk/dialog';
+import { NgIconComponent } from '@ng-icons/core';
 import { PlaylistWithStats, Playlist } from '../../core/models/song.model';
 import { DatabaseService } from '../../core/services/database.service';
+import { ToastService } from '../../core/services/toast.service';
 import { PlaylistFormComponent } from './playlist-form/playlist-form.component';
 
 @Component({
   selector: 'app-playlists',
   standalone: true,
-  imports: [
-    CommonModule,
-    NbButtonModule,
-    NbIconModule,
-    NbSpinnerModule,
-    NbAlertModule,
-    NbTooltipModule,
-  ],
+  imports: [CommonModule, NgIconComponent],
   templateUrl: './playlists.component.html',
   styleUrls: ['./playlists.component.scss'],
 })
 export class PlaylistsComponent implements OnInit {
   private readonly db = inject(DatabaseService);
-  private readonly toastr = inject(NbToastrService);
-  private readonly dialog = inject(NbDialogService);
+  private readonly toastr = inject(ToastService);
+  private readonly dialog = inject(Dialog);
 
   readonly playlistSelected = output<PlaylistWithStats>();
 
@@ -57,10 +44,13 @@ export class PlaylistsComponent implements OnInit {
   }
 
   openCreateForm(): void {
-    const ref = this.dialog.open(PlaylistFormComponent, { closeOnBackdropClick: false });
-    (ref.componentRef.instance as PlaylistFormComponent).playlist = null;
-
-    ref.onClose.subscribe(async (result?: Pick<Playlist, 'name' | 'description'>) => {
+    const ref = this.dialog.open<Pick<Playlist, 'name' | 'description'>>(PlaylistFormComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { playlist: null },
+    });
+    ref.closed.subscribe(async (result) => {
       if (!result) return;
       try {
         const created = await this.db.createPlaylist(result);
@@ -74,10 +64,13 @@ export class PlaylistsComponent implements OnInit {
 
   openEditForm(playlist: PlaylistWithStats, event: Event): void {
     event.stopPropagation();
-    const ref = this.dialog.open(PlaylistFormComponent, { closeOnBackdropClick: false });
-    (ref.componentRef.instance as PlaylistFormComponent).playlist = { ...playlist };
-
-    ref.onClose.subscribe(async (result?: Playlist) => {
+    const ref = this.dialog.open<Playlist>(PlaylistFormComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { playlist: { ...playlist } },
+    });
+    ref.closed.subscribe(async (result) => {
       if (!result) return;
       try {
         const updated = await this.db.updatePlaylist(result);
@@ -126,11 +119,9 @@ export class PlaylistsComponent implements OnInit {
             !isEvent &&
             (!!s.joinWithNext ||
               (i > 0 && !!songs[i - 1]?.joinWithNext && songs[i - 1].type !== 'event'));
-
           if (isEvent) {
             return `<tr><td class="n"></td><td class="name event-name">---- ${this.escapeHtml(s.title)}</td></tr>`;
           }
-
           songCounter++;
           const cls = isJoined ? ' class="joined"' : '';
           const displayName = this.escapeHtml((s.setlistName?.trim() || s.title).toUpperCase());
@@ -147,10 +138,10 @@ export class PlaylistsComponent implements OnInit {
   table { width: 100%; border-collapse: collapse; }
   tr { border-bottom: 1px solid #ccc; }
   tr:last-child { border-bottom: none; }
-  tr.joined { background: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+  tr.joined { background: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   tr.joined td { color: #fff; }
   td { padding: 0.15em 0.3em; vertical-align: middle; color: #000; }
-  td.n { width: 2.8em; text-align: right; padding-right: 0.6em; font-variant-numeric: tabular-nums; }
+  td.n { width: 2.8em; text-align: right; padding-right: 0.6em; }
   td.name { font-weight: bold; }
   td.event-name { font-weight: normal; }
 </style></head>
@@ -181,9 +172,7 @@ export class PlaylistsComponent implements OnInit {
 
   formatDate(isoDate: string): string {
     return new Date(isoDate).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
+      day: '2-digit', month: 'short', year: 'numeric',
     });
   }
 }

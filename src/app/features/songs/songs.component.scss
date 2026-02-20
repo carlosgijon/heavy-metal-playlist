@@ -30,8 +30,8 @@
 
 .songs-count {
   font-size: 0.85rem;
-  color: var(--text-hint-color);
-  background: var(--background-basic-color-3);
+  opacity: 0.6;
+  background: oklch(var(--b3));
   padding: 0.15rem 0.5rem;
   border-radius: 12px;
 }
@@ -59,38 +59,39 @@
   gap: 0.5rem;
   padding: 2rem;
   text-align: center;
-
-  .empty-icon {
-    font-size: 3rem;
-    width: 3rem;
-    height: 3rem;
-    margin-bottom: 0.5rem;
-  }
 }
 
 .table-wrapper {
-  overflow-x: auto;
+  // overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid oklch(var(--b3));
 }
 
 .songs-table {
   width: 100%;
   border-collapse: collapse;
+  background: oklch(var(--b1));
   font-size: 0.9rem;
+
+  thead tr {
+    background: oklch(var(--b2));
+    border-bottom: 2px solid oklch(var(--p));
+  }
 
   th {
     text-align: left;
     padding: 0.6rem 0.75rem;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--text-hint-color);
-    border-bottom: 1px solid var(--border-basic-color-3);
+    opacity: 0.6;
     white-space: nowrap;
   }
 
   td {
     padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid var(--border-basic-color-4);
+    border-bottom: 1px solid oklch(var(--b3));
     vertical-align: middle;
   }
 
@@ -99,7 +100,7 @@
   }
 
   tr.song-row:hover td {
-    background: var(--background-basic-color-2);
+    background: oklch(var(--b2));
   }
 }
 
@@ -134,7 +135,7 @@
 .song-album {
   display: block;
   font-size: 0.78rem;
-  color: var(--text-hint-color);
+  opacity: 0.5;
   margin-top: 0.1rem;
 }
 
@@ -148,118 +149,21 @@
 }
 
 .empty-cell {
-  color: var(--text-disabled-color);
+  opacity: 0.35;
 }
 
-// Add to playlist overlay
-.add-to-playlist-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-
-  &[hidden] {
-    display: none !important;
-  }
-}
-
-.add-to-playlist-card {
-  width: 420px;
-  max-width: 95vw;
-}
-
-.atp-song-name {
-  display: block;
-  font-size: 0.85rem;
-  color: var(--text-hint-color);
-  margin-top: 0.2rem;
-  font-weight: normal;
-}
+// ── Add-to-playlist modal fields ────────────────────────────────
 
 .field-group {
   margin-bottom: 1rem;
-
-  .label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-bottom: 0.35rem;
-    color: var(--text-hint-color);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
 }
 
-.playlist-dropdown {
-  position: relative;
-
-  .dropdown-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--input-basic-border-color);
-    border-radius: 0.25rem;
-    background: var(--input-basic-background-color);
-    color: var(--text-basic-color);
-    font-size: 0.9rem;
-    font-family: inherit;
-    cursor: pointer;
-    text-align: left;
-    transition: border-color 0.15s;
-
-    .placeholder {
-      color: var(--text-hint-color);
-    }
-
-    nb-icon {
-      flex-shrink: 0;
-      transition: transform 0.2s;
-    }
-  }
-
-  &.open .dropdown-trigger {
-    border-color: var(--color-primary-default);
-    nb-icon {
-      transform: rotate(180deg);
-    }
-  }
-
-  .dropdown-panel {
-    position: fixed;
-    background: var(--nb-color-primary);
-    color: var(--text-basic-color);
-    border: 1px solid var(--nb-color-secondary);
-    border-radius: 0.25rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-    z-index: 99999;
-    max-height: 220px;
-    overflow-y: auto;
-  }
-
-  .dropdown-option {
-    padding: 0.55rem 0.75rem;
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: var(--text-basic-color);
-
-    &:hover {
-      background: var(--nb-color-secondary);
-    }
-    &.active {
-      color: var(--color-primary-default);
-      background: var(--nb-color-secondary);
-    }
-  }
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
+.field-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  margin-bottom: 0.25rem;
 }

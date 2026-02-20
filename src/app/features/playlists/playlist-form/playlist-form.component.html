@@ -1,52 +1,42 @@
-<nb-card class="form-card">
-  <nb-card-header>
-    <h3>{{ isEdit ? 'Editar playlist' : 'Nueva playlist' }}</h3>
-  </nb-card-header>
+<div class="modal-box w-[480px] max-w-[95vw]">
+  <h3 class="font-bold text-lg mb-4">{{ isEdit ? 'Editar playlist' : 'Nueva playlist' }}</h3>
 
-  <nb-card-body>
-    <form [formGroup]="form" (ngSubmit)="save()">
+  <form [formGroup]="form" (ngSubmit)="save()">
 
-      <div class="field-group">
-        <label class="field-label" for="pl-name">
-          Nombre <span class="required">*</span>
-        </label>
-        <nb-form-field>
-          <input
-            nbInput
-            fullWidth
-            id="pl-name"
-            formControlName="name"
-            placeholder="Ej: Setlist Festival 2025"
-            autocomplete="off" />
-        </nb-form-field>
-        <div class="field-error"
-          *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
-          El nombre es obligatorio (máx. 80 caracteres).
-        </div>
+    <div class="field-group">
+      <label class="field-label" for="pl-name">
+        Nombre <span class="text-error">*</span>
+      </label>
+      <input
+        class="input input-bordered w-full"
+        [class.input-error]="form.get('name')?.invalid && form.get('name')?.touched"
+        id="pl-name"
+        formControlName="name"
+        placeholder="Ej: Setlist Festival 2025"
+        autocomplete="off" />
+      <div class="field-error" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
+        El nombre es obligatorio (máx. 80 caracteres).
       </div>
+    </div>
 
-      <div class="field-group">
-        <label class="field-label" for="pl-desc">Descripción</label>
-        <nb-form-field>
-          <textarea
-            nbInput
-            fullWidth
-            id="pl-desc"
-            formControlName="description"
-            placeholder="Descripción opcional..."
-            rows="3"></textarea>
-        </nb-form-field>
-      </div>
+    <div class="field-group">
+      <label class="field-label" for="pl-desc">Descripción</label>
+      <textarea
+        class="textarea textarea-bordered w-full"
+        id="pl-desc"
+        formControlName="description"
+        placeholder="Descripción opcional..."
+        rows="3"></textarea>
+    </div>
 
-    </form>
-  </nb-card-body>
+  </form>
 
-  <nb-card-footer class="form-actions">
-    <button nbButton ghost status="basic" type="button" (click)="cancel()">
+  <div class="modal-action">
+    <button class="btn btn-ghost btn-sm" type="button" (click)="cancel()">
       Cancelar
     </button>
-    <button nbButton status="primary" type="button" (click)="save()" [disabled]="form.invalid">
+    <button class="btn btn-primary btn-sm" type="button" (click)="save()" [disabled]="form.invalid">
       {{ isEdit ? 'Guardar cambios' : 'Crear playlist' }}
     </button>
-  </nb-card-footer>
-</nb-card>
+  </div>
+</div>

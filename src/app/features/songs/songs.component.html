@@ -1,30 +1,22 @@
 <div class="songs-container">
+
   <!-- Header -->
   <div class="songs-header">
     <div class="songs-title-row">
       <h2 class="songs-title">
-        <nb-icon icon="music-outline"></nb-icon>
+        <ng-icon name="heroMusicalNote" class="w-6 h-6"></ng-icon>
         Librería de Canciones
       </h2>
-      <span class="songs-count" *ngIf="songs.length > 0"
-        >{{ songs.length }} canciones</span
-      >
+      <span class="songs-count" *ngIf="songs.length > 0">{{ songs.length }} canciones</span>
     </div>
     <div class="header-actions">
       <input
-        nbInput
+        class="input input-bordered search-input"
         type="text"
         [(ngModel)]="searchQuery"
-        placeholder="Buscar por título, artista o género..."
-        class="search-input"
-      />
-      <button
-        nbButton
-        status="primary"
-        size="medium"
-        (click)="openCreateForm()"
-      >
-        <nb-icon icon="plus-outline"></nb-icon>
+        placeholder="Buscar por título, artista o género..." />
+      <button class="btn btn-primary btn-sm" (click)="openCreateForm()">
+        <ng-icon name="heroPlus" class="w-4 h-4"></ng-icon>
         Nueva canción
       </button>
     </div>
@@ -32,29 +24,23 @@
 
   <!-- Loading -->
   <div class="loading-container" *ngIf="loading">
-    <nb-spinner size="giant" status="primary"></nb-spinner>
+    <span class="loading loading-spinner loading-lg text-primary"></span>
   </div>
 
   <!-- Empty state -->
-  <nb-alert
-    *ngIf="!loading && songs.length === 0"
-    status="info"
-    class="empty-state"
-  >
-    <nb-icon icon="music-outline" class="empty-icon"></nb-icon>
-    <p>La librería está vacía.</p>
-    <p>Añade canciones aquí para reutilizarlas en varias playlists.</p>
-  </nb-alert>
+  <div *ngIf="!loading && songs.length === 0" class="alert alert-info empty-state">
+    <ng-icon name="heroMusicalNote" class="w-8 h-8"></ng-icon>
+    <div>
+      <p>La librería está vacía.</p>
+      <p>Añade canciones aquí para reutilizarlas en varias playlists.</p>
+    </div>
+  </div>
 
   <!-- No results -->
-  <nb-alert
-    *ngIf="!loading && songs.length > 0 && filteredSongs.length === 0"
-    status="warning"
-    class="empty-state"
-  >
-    <nb-icon icon="search-outline" class="empty-icon"></nb-icon>
+  <div *ngIf="!loading && songs.length > 0 && filteredSongs.length === 0" class="alert alert-warning empty-state">
+    <ng-icon name="heroMagnifyingGlass" class="w-8 h-8"></ng-icon>
     <p>No se encontraron canciones para "{{ searchQuery }}"</p>
-  </nb-alert>
+  </div>
 
   <!-- Songs table -->
   <div class="table-wrapper" *ngIf="!loading && filteredSongs.length > 0">
@@ -71,72 +57,43 @@
       </thead>
       <tbody>
         <tr *ngFor="let song of filteredSongs" class="song-row">
-          <!-- Título + Álbum -->
           <td class="col-title">
             <span class="song-title">{{ song.title }}</span>
             <span class="song-album" *ngIf="song.album">{{ song.album }}</span>
           </td>
-
-          <!-- Artista -->
           <td class="col-artist">{{ song.artist }}</td>
-
-          <!-- Género -->
           <td class="col-genre">
-            <span
-              *ngIf="song.style"
-              class="genre-tag"
-              [ngStyle]="getGenreStyle(song.style)"
-            >
+            <span *ngIf="song.style" class="genre-tag" [ngStyle]="getGenreStyle(song.style)">
               {{ song.style }}
             </span>
             <span *ngIf="!song.style" class="empty-cell">—</span>
           </td>
-
-          <!-- BPM -->
           <td class="col-tempo">
             <span *ngIf="song.tempo">{{ song.tempo }}</span>
             <span *ngIf="!song.tempo" class="empty-cell">—</span>
           </td>
-
-          <!-- Duración -->
           <td class="col-duration">
-            <span *ngIf="song.duration">{{
-              formatDuration(song.duration)
-            }}</span>
+            <span *ngIf="song.duration">{{ formatDuration(song.duration) }}</span>
             <span *ngIf="!song.duration" class="empty-cell">—</span>
           </td>
-
-          <!-- Acciones -->
           <td class="col-actions">
             <button
-              nbButton
-              ghost
-              status="success"
-              size="small"
-              nbTooltip="Añadir a una playlist"
-              (click)="openAddToPlaylist(song)"
-            >
-              <nb-icon icon="plus-circle-outline"></nb-icon>
+              class="btn btn-ghost btn-xs tooltip"
+              data-tip="Añadir a una playlist"
+              (click)="openAddToPlaylist(song)">
+              <ng-icon name="heroPlusCircle" class="w-4 h-4"></ng-icon>
             </button>
             <button
-              nbButton
-              ghost
-              status="info"
-              size="small"
-              nbTooltip="Editar"
-              (click)="openEditForm(song)"
-            >
-              <nb-icon icon="edit-outline"></nb-icon>
+              class="btn btn-ghost btn-xs tooltip"
+              data-tip="Editar"
+              (click)="openEditForm(song)">
+              <ng-icon name="heroPencil" class="w-4 h-4"></ng-icon>
             </button>
             <button
-              nbButton
-              ghost
-              status="danger"
-              size="small"
-              nbTooltip="Eliminar"
-              (click)="deleteSong(song)"
-            >
-              <nb-icon icon="trash-2-outline"></nb-icon>
+              class="btn btn-ghost btn-xs text-error tooltip"
+              data-tip="Eliminar"
+              (click)="deleteSong(song)">
+              <ng-icon name="heroTrash" class="w-4 h-4"></ng-icon>
             </button>
           </td>
         </tr>
@@ -144,86 +101,53 @@
     </table>
   </div>
 
-  <!-- Add to playlist dialog -->
-  <div class="add-to-playlist-overlay" [hidden]="!addingToPlaylist">
-    <nb-card class="add-to-playlist-card">
-      <nb-card-header>
-        Añadir a playlist
-        <span class="atp-song-name">{{ addingToPlaylist?.title }}</span>
-      </nb-card-header>
-      <nb-card-body>
-        <div class="field-group">
-          <label class="label">Playlist *</label>
-          <div class="playlist-dropdown" [class.open]="dropdownOpen">
-            <button
-              type="button"
-              class="dropdown-trigger"
-              (click)="toggleDropdown(); $event.stopPropagation()"
-            >
-              <span [class.placeholder]="!selectedPlaylistId">
-                {{
-                  selectedPlaylistId
-                    ? selectedPlaylistName
-                    : "Selecciona una playlist"
-                }}
-              </span>
-              <nb-icon icon="chevron-down-outline"></nb-icon>
-            </button>
-            <div
-              class="dropdown-panel"
-              *ngIf="dropdownOpen"
-              [style.top.px]="panelTop"
-              [style.left.px]="panelLeft"
-              [style.width.px]="panelWidth"
-            >
-              <div
-                class="dropdown-option"
-                *ngFor="let p of playlists"
-                [class.active]="p.id === selectedPlaylistId"
-                (click)="selectPlaylist(p); $event.stopPropagation()"
-              >
-                {{ p.name }}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="field-group">
-          <label class="label">Nombre en setlist</label>
-          <input
-            nbInput
-            fullWidth
-            [(ngModel)]="addSetlistName"
-            placeholder="Dejar vacío para usar el título original"
-          />
-        </div>
-        <div class="field-group">
-          <nb-checkbox [(checked)]="addJoinWithNext"
-            >Unir con la siguiente canción</nb-checkbox
-          >
-        </div>
-      </nb-card-body>
-      <nb-card-footer>
-        <div class="actions">
-          <button
-            nbButton
-            status="basic"
-            type="button"
-            (click)="cancelAddToPlaylist()"
-          >
-            Cancelar
-          </button>
-          <button
-            nbButton
-            status="primary"
-            type="button"
-            [disabled]="!selectedPlaylistId || addingInProgress"
-            (click)="confirmAddToPlaylist()"
-          >
-            <nb-icon icon="plus-outline"></nb-icon>
-            Añadir
-          </button>
-        </div>
-      </nb-card-footer>
-    </nb-card>
+  <!-- Add-to-playlist modal (DaisyUI inline modal) -->
+  <div class="modal" [class.modal-open]="addingToPlaylist !== null">
+    <div class="modal-box w-[420px] max-w-[95vw]">
+      <h3 class="font-bold text-lg">Añadir a playlist</h3>
+      <p class="text-sm opacity-60 mb-4">{{ addingToPlaylist?.title }}</p>
+
+      <div class="field-group">
+        <label class="field-label">Playlist <span class="text-error">*</span></label>
+        <select class="select select-bordered w-full" [(ngModel)]="selectedPlaylistId">
+          <option *ngFor="let p of playlists" [value]="p.id">{{ p.name }}</option>
+        </select>
+        <p *ngIf="playlists.length === 0" class="text-sm opacity-60 mt-1">
+          No tienes playlists. Crea una primero.
+        </p>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Nombre en setlist</label>
+        <input
+          class="input input-bordered w-full"
+          [(ngModel)]="addSetlistName"
+          placeholder="Dejar vacío para usar el título original" />
+      </div>
+
+      <div class="field-group">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" class="checkbox checkbox-sm" [(ngModel)]="addJoinWithNext" />
+          <span class="text-sm">Unir con la siguiente canción</span>
+        </label>
+      </div>
+
+      <div class="modal-action">
+        <button class="btn btn-ghost btn-sm" type="button" (click)="cancelAddToPlaylist()">
+          Cancelar
+        </button>
+        <button
+          class="btn btn-primary btn-sm"
+          type="button"
+          [disabled]="!selectedPlaylistId || addingInProgress"
+          (click)="confirmAddToPlaylist()">
+          <span *ngIf="addingInProgress" class="loading loading-spinner loading-xs"></span>
+          <ng-icon *ngIf="!addingInProgress" name="heroPlus" class="w-4 h-4"></ng-icon>
+          Añadir
+        </button>
+      </div>
+    </div>
+    <div class="modal-backdrop" (click)="cancelAddToPlaylist()"></div>
   </div>
+
 </div>

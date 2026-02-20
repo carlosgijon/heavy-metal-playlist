@@ -2,17 +2,9 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
-import {
-  NbDialogRef,
-  NbInputModule,
-  NbButtonModule,
-  NbCardModule,
-  NbSpinnerModule,
-  NbFormFieldModule,
-  NbIconModule,
-  NbCheckboxModule,
-} from '@nebular/theme';
+import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
+import { NgIconComponent } from '@ng-icons/core';
 import { Song, ItunesTrack, LibrarySong } from '../../../core/models/song.model';
 import { MusicApiService } from '../../../core/services/music-api.service';
 import { BpmService } from '../../../core/services/bpm.service';
@@ -25,19 +17,14 @@ import { DatabaseService } from '../../../core/services/database.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    NbCardModule,
-    NbInputModule,
-    NbButtonModule,
-    NbSpinnerModule,
-    NbFormFieldModule,
-    NbIconModule,
-    NbCheckboxModule,
+    NgIconComponent,
   ],
   templateUrl: './song-form.component.html',
   styleUrls: ['./song-form.component.scss'],
 })
 export class SongFormComponent implements OnInit, OnDestroy {
-  dialogRef = inject<NbDialogRef<SongFormComponent>>(NbDialogRef);
+  private readonly dialogRef = inject(DialogRef<Partial<Song>>);
+  readonly data = inject<{ song: Partial<Song> | null }>(DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly musicApi = inject(MusicApiService);
   private readonly bpmService = inject(BpmService);
@@ -45,30 +32,21 @@ export class SongFormComponent implements OnInit, OnDestroy {
   readonly connectivity = inject(ConnectivityService);
 
   form!: FormGroup;
-  song: Partial<Song> | null = null; // set from outside before open
+  song: Partial<Song> | null = null; // initialized from data in ngOnInit
 
-  // iTunes search state
   searchControl = new FormControl('');
   suggestions: ItunesTrack[] = [];
   isSearching = false;
   isFetchingBpm = false;
 
-  // Library search state
   librarySearchControl = new FormControl('');
   librarySongs: LibrarySong[] = [];
   filteredLibrarySongs: LibrarySong[] = [];
   selectedLibrarySong: LibrarySong | null = null;
 
-  /**
-   * 'library' — show library picker (default for new songs)
-   * 'search'  — show iTunes search
-   * 'manual'  — show full form fields
-   */
   formMode: 'library' | 'search' | 'manual' = 'library';
 
   private readonly destroy$ = new Subject<void>();
-
-  // ── Tap BPM ───────────────────────────────────────────────────────────────
   private tapTimestamps: number[] = [];
   tapCount = 0;
 
@@ -89,11 +67,11 @@ export class SongFormComponent implements OnInit, OnDestroy {
   get isEdit(): boolean { return !!this.song?.id; }
   get isEvent(): boolean { return this.song?.type === 'event'; }
   get hasTaps(): boolean { return this.tapCount > 1; }
-  /** True when a library song was pre-selected — only show playlist-specific fields */
   get isFromLibrary(): boolean { return !!this.selectedLibrarySong; }
 
   async ngOnInit(): Promise<void> {
-    // Editing or event → go directly to field mode
+    this.song = this.data.song;
+
     if (this.isEdit || this.isEvent) {
       this.formMode = 'manual';
     }
@@ -110,7 +88,6 @@ export class SongFormComponent implements OnInit, OnDestroy {
       joinWithNext:[this.song?.joinWithNext ?? false],
     });
 
-    // iTunes search subscription (only for songs, not events)
     if (!this.isEvent) {
       this.searchControl.valueChanges.pipe(
         debounceTime(600),
@@ -130,10 +107,8 @@ export class SongFormComponent implements OnInit, OnDestroy {
         this.isSearching = false;
       });
 
-      // Load library songs for picker
       this.loadLibrarySongs();
 
-      // Library filter
       this.librarySearchControl.valueChanges.pipe(
         takeUntil(this.destroy$),
       ).subscribe((q) => this.filterLibrary(q ?? ''));
@@ -210,7 +185,6 @@ export class SongFormComponent implements OnInit, OnDestroy {
     this.suggestions = [];
     this.formMode = 'manual';
 
-    // Auto-fetch BPM via Deezer (no API key required)
     this.isFetchingBpm = true;
     this.bpmService
       .getBpm(track.trackName, track.artistName)
@@ -243,13 +217,11 @@ export class SongFormComponent implements OnInit, OnDestroy {
       tempo:    value.tempo    ? Number(value.tempo)    : undefined,
     };
 
-    // Preserve existing IDs when editing
     if (this.song?.id)                     result['id']         = this.song.id;
     if (this.song?.position !== undefined)  result['position']   = this.song.position;
     if (this.song?.playlistId)              result['playlistId'] = this.song.playlistId;
     if (this.song?.songId)                  result['songId']     = this.song.songId;
 
-    // When picking from library, attach the library song ID
     if (this.selectedLibrarySong) {
       result['songId'] = this.selectedLibrarySong.id;
     }
