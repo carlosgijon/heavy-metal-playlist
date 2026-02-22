@@ -1,10 +1,10 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Heavy Metal Playlist",
-  "identifier": "com.heavymetalplaylist.app",
+  "productName": "Blackout ORM",
+  "identifier": "com.blackout.orm",
   "version": "1.0.0",
   "build": {
-    "frontendDist": "../dist/heavy-metal-playlist/browser",
+    "frontendDist": "../dist/blackout-orm/browser",
     "devUrl": "http://localhost:4200",
     "beforeDevCommand": "ng serve",
     "beforeBuildCommand": "ng build"
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Heavy Metal Playlist",
+        "title": "Blackout ORM",
         "width": 1920,
         "height": 1080,
         "minWidth": 1280,

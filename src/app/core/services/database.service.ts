@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
 import { Song, Playlist, PlaylistWithStats, LibrarySong, PlaylistSongView } from '../models/song.model';
+import { BandMember, Microphone, Instrument, Amplifier, PaEquipment, ChannelEntry } from '../models/equipment.model';
 
 @Injectable({ providedIn: 'root' })
 export class DatabaseService {
@@ -90,5 +91,101 @@ export class DatabaseService {
 
   setSettings(partial: { theme?: string; bpmApiKey?: string }): Promise<void> {
     return invoke<void>('settings_set', { payload: partial });
+  }
+
+  // ── Band Members ───────────────────────────────────────────────────────────
+
+  getMembers(): Promise<BandMember[]> {
+    return invoke<BandMember[]>('members_get_all');
+  }
+
+  createMember(payload: Omit<BandMember, 'id'>): Promise<BandMember> {
+    return invoke<BandMember>('members_create', { payload });
+  }
+
+  updateMember(member: BandMember): Promise<BandMember> {
+    return invoke<BandMember>('members_update', { member });
+  }
+
+  deleteMember(id: string): Promise<void> {
+    return invoke<void>('members_delete', { id });
+  }
+
+  // ── Microphones ────────────────────────────────────────────────────────────
+
+  getMicrophones(): Promise<Microphone[]> {
+    return invoke<Microphone[]>('microphones_get_all');
+  }
+
+  createMicrophone(payload: Omit<Microphone, 'id'>): Promise<Microphone> {
+    return invoke<Microphone>('microphones_create', { payload });
+  }
+
+  updateMicrophone(microphone: Microphone): Promise<Microphone> {
+    return invoke<Microphone>('microphones_update', { microphone });
+  }
+
+  deleteMicrophone(id: string): Promise<void> {
+    return invoke<void>('microphones_delete', { id });
+  }
+
+  // ── Instruments ────────────────────────────────────────────────────────────
+
+  getInstruments(): Promise<Instrument[]> {
+    return invoke<Instrument[]>('instruments_get_all');
+  }
+
+  createInstrument(payload: Omit<Instrument, 'id'>): Promise<Instrument> {
+    return invoke<Instrument>('instruments_create', { payload });
+  }
+
+  updateInstrument(instrument: Instrument): Promise<Instrument> {
+    return invoke<Instrument>('instruments_update', { instrument });
+  }
+
+  deleteInstrument(id: string): Promise<void> {
+    return invoke<void>('instruments_delete', { id });
+  }
+
+  // ── Amplifiers ─────────────────────────────────────────────────────────────
+
+  getAmplifiers(): Promise<Amplifier[]> {
+    return invoke<Amplifier[]>('amplifiers_get_all');
+  }
+
+  createAmplifier(payload: Omit<Amplifier, 'id'>): Promise<Amplifier> {
+    return invoke<Amplifier>('amplifiers_create', { payload });
+  }
+
+  updateAmplifier(amplifier: Amplifier): Promise<Amplifier> {
+    return invoke<Amplifier>('amplifiers_update', { amplifier });
+  }
+
+  deleteAmplifier(id: string): Promise<void> {
+    return invoke<void>('amplifiers_delete', { id });
+  }
+
+  // ── PA Equipment ───────────────────────────────────────────────────────────
+
+  getPaEquipment(): Promise<PaEquipment[]> {
+    return invoke<PaEquipment[]>('pa_get_all');
+  }
+
+  createPaItem(payload: Omit<PaEquipment, 'id'>): Promise<PaEquipment> {
+    return invoke<PaEquipment>('pa_create', { payload });
+  }
+
+  updatePaItem(item: PaEquipment): Promise<PaEquipment> {
+    return invoke<PaEquipment>('pa_update', { item });
+  }
+
+  deletePaItem(id: string): Promise<void> {
+    return invoke<void>('pa_delete', { id });
+  }
+
+  // ── Channel List (derived) ─────────────────────────────────────────────────
+
+  generateChannelList(): Promise<ChannelEntry[]> {
+    return invoke<ChannelEntry[]>('channel_list_generate');
   }
 }

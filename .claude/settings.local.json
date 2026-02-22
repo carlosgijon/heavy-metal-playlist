@@ -4,7 +4,11 @@
       "Bash(npm uninstall:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "WebFetch(domain:tabler.io)",
+      "WebFetch(domain:phosphoricons.com)",
+      "WebFetch(domain:game-icons.net)",
+      "WebFetch(domain:www.svgrepo.com)"
     ]
   }
 }

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 220" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+
+  <!-- ── MIC CAPSULE ───────────────────────────────────────────────── -->
+  <!-- Capsule body (rounded rect, open at bottom) -->
+  <path d="M36 8 C36 7 39 6 50 6 C61 6 64 7 64 8 L64 60 C64 68 57 74 50 74 C43 74 36 68 36 60 Z" fill="white"/>
+  <!-- Top dome arc -->
+  <path d="M36 22 C36 13 43 7 50 7 C57 7 64 13 64 22"/>
+  <!-- Grille horizontal lines -->
+  <line x1="36" y1="28" x2="64" y2="28"/>
+  <line x1="36" y1="38" x2="64" y2="38"/>
+  <line x1="36" y1="48" x2="64" y2="48"/>
+  <line x1="36" y1="58" x2="64" y2="58"/>
+  <!-- Grille vertical lines (subtle) -->
+  <line x1="44" y1="7"  x2="44" y2="72" stroke-width="0.7"/>
+  <line x1="50" y1="6"  x2="50" y2="74" stroke-width="0.7"/>
+  <line x1="56" y1="7"  x2="56" y2="72" stroke-width="0.7"/>
+
+  <!-- ── SHANK + CLIP ───────────────────────────────────────────────── -->
+  <!-- XLR shank -->
+  <rect x="44" y="74" width="12" height="18" rx="2" fill="white"/>
+  <!-- Connector ring (XLR collar) -->
+  <rect x="42" y="90" width="16" height="7" rx="3.5" fill="white"/>
+  <!-- Swivel clip (mic holder) -->
+  <rect x="40" y="97" width="20" height="9" rx="4" fill="white"/>
+  <!-- Clip screw indicator -->
+  <circle cx="50" cy="101" r="2" fill="white"/>
+
+  <!-- ── BOOM ARM ───────────────────────────────────────────────────── -->
+  <!-- Boom arm (horizontal arm from clamp to pole attachment) -->
+  <!-- Main tube of the boom, angled slightly -->
+  <line x1="50" y1="106" x2="50" y2="140"/>
+  <!-- T-junction / boom collar -->
+  <rect x="44" y="136" width="12" height="8" rx="3" fill="white"/>
+  <!-- Boom horizontal section -->
+  <line x1="10" y1="140" x2="90" y2="140"/>
+  <!-- Counterweight on boom (right side) -->
+  <rect x="82" y="134" width="12" height="12" rx="3" fill="white"/>
+  <!-- Boom tip (where mic attaches, left side) -->
+  <circle cx="10" cy="140" r="4" fill="white"/>
+
+  <!-- ── VERTICAL POLE ──────────────────────────────────────────────── -->
+  <!-- Main vertical pole (left of boom center) -->
+  <line x1="50" y1="144" x2="50" y2="190"/>
+  <!-- Pole collar/height-lock clamp -->
+  <rect x="44" y="155" width="12" height="8" rx="2" fill="white"/>
+  <!-- Knurled adjustment knob on clamp -->
+  <line x1="56" y1="157" x2="62" y2="157" stroke-width="1.5"/>
+  <line x1="56" y1="161" x2="62" y2="161" stroke-width="1.5"/>
+
+  <!-- ── TRIPOD BASE ─────────────────────────────────────────────────── -->
+  <!-- Hub where pole meets tripod -->
+  <circle cx="50" cy="192" r="5" fill="white"/>
+  <!-- Left leg -->
+  <path d="M47 194 L10 212" stroke-width="2"/>
+  <!-- Right leg -->
+  <path d="M53 194 L90 212" stroke-width="2"/>
+  <!-- Front/center leg (slightly foreshortened) -->
+  <path d="M50 197 L50 214" stroke-width="2"/>
+  <!-- Leg rubber feet -->
+  <rect x="6"  y="210" width="10" height="5" rx="2.5" fill="white"/>
+  <rect x="84" y="210" width="10" height="5" rx="2.5" fill="white"/>
+  <rect x="45" y="212" width="10" height="5" rx="2.5" fill="white"/>
+
+</svg>

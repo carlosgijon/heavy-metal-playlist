@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    heavy_metal_playlist_lib::run()
+    blackout_orm_lib::run()
 }
