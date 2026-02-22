@@ -1,10 +1,10 @@
 [package]
-name = "heavy-metal-playlist"
+name = "blackout-orm"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "heavy_metal_playlist_lib"
+name = "blackout_orm_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

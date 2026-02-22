@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 155" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Cabinet outer body -->
+  <rect x="4" y="18" width="192" height="126" rx="7" fill="white"/>
+  <!-- Handle on top -->
+  <path d="M76 18 C76 9 124 9 124 18" stroke-linecap="round"/>
+  <!-- Speaker grille area (left ~65% of cabinet interior) -->
+  <rect x="12" y="26" width="116" height="110" rx="5" fill="white"/>
+  <!-- Speaker grille cloth texture (subtle dot grid, simplified as cross-lines) -->
+  <line x1="12" y1="40" x2="128" y2="40" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <line x1="12" y1="56" x2="128" y2="56" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <line x1="12" y1="72" x2="128" y2="72" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <line x1="12" y1="88" x2="128" y2="88" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <line x1="12" y1="104" x2="128" y2="104" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <line x1="12" y1="120" x2="128" y2="120" stroke-width="0.5" stroke-dasharray="2,4"/>
+  <!-- Main speaker (centered in grille area) -->
+  <!-- Outer surround -->
+  <circle cx="70" cy="81" r="50"/>
+  <!-- Surround ring -->
+  <circle cx="70" cy="81" r="44"/>
+  <!-- Spider / cone -->
+  <circle cx="70" cy="81" r="32"/>
+  <!-- Inner cone -->
+  <circle cx="70" cy="81" r="18"/>
+  <!-- Dust cap -->
+  <circle cx="70" cy="81" r="7"/>
+  <!-- Speaker mounting screws (4 corners of circle) -->
+  <circle cx="70" cy="32" r="2.5" fill="#111" stroke="none"/>
+  <circle cx="70" cy="130" r="2.5" fill="#111" stroke="none"/>
+  <circle cx="21" cy="81" r="2.5" fill="#111" stroke="none"/>
+  <circle cx="119" cy="81" r="2.5" fill="#111" stroke="none"/>
+  <!-- Control panel (right strip) -->
+  <rect x="132" y="26" width="56" height="110" rx="5" fill="white"/>
+  <!-- Input jack -->
+  <circle cx="152" cy="44" r="7"/>
+  <circle cx="152" cy="44" r="3"/>
+  <!-- Knobs with indicator marks -->
+  <circle cx="168" cy="65" r="9"/>
+  <line x1="168" y1="57" x2="168" y2="61" stroke-width="2"/>
+  <circle cx="168" cy="85" r="9"/>
+  <line x1="160" y1="82" x2="163" y2="85" stroke-width="2"/>
+  <circle cx="168" cy="105" r="9"/>
+  <line x1="168" y1="97" x2="168" y2="101" stroke-width="2"/>
+  <circle cx="168" cy="125" r="9"/>
+  <line x1="176" y1="122" x2="173" y2="125" stroke-width="2"/>
+  <!-- Power LED -->
+  <circle cx="148" cy="60" r="4" fill="none"/>
+  <!-- Panel label area (subtle line) -->
+  <line x1="136" y1="50" x2="184" y2="50" stroke-width="0.7"/>
+  <!-- Cabinet feet / castors -->
+  <rect x="14" y="138" width="14" height="7" rx="4" fill="white"/>
+  <rect x="172" y="138" width="14" height="7" rx="4" fill="white"/>
+  <!-- Cabinet corner protectors (small right-angle marks) -->
+  <path d="M4 30 L4 24 L10 24" stroke-linecap="square"/>
+  <path d="M196 30 L196 24 L190 24" stroke-linecap="square"/>
+  <path d="M4 132 L4 138 L10 138" stroke-linecap="square"/>
+  <path d="M196 132 L196 138 L190 138" stroke-linecap="square"/>
+</svg>

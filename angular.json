@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "heavy-metal-playlist": {
+    "blackout-orm": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -43,7 +43,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/heavy-metal-playlist",
+            "outputPath": "dist/blackout-orm",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -91,10 +91,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "heavy-metal-playlist:build:production"
+              "buildTarget": "blackout-orm:build:production"
             },
             "development": {
-              "buildTarget": "heavy-metal-playlist:build:development"
+              "buildTarget": "blackout-orm:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -25,6 +25,24 @@
         <ng-icon name="heroQueueList" class="nav-icon"></ng-icon>
         <span class="nav-label">Playlists</span>
       </button>
+      <button
+        class="nav-item"
+        [class.active]="view() === 'equipo'"
+        (click)="setView('equipo')"
+        title="Rider">
+        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Mic capsule -->
+          <rect x="9" y="2" width="6" height="11" rx="3"/>
+          <!-- Pickup arc -->
+          <path d="M5 10 a7 7 0 0 0 14 0"/>
+          <!-- Stand pole -->
+          <line x1="12" y1="17" x2="12" y2="21"/>
+          <!-- Base -->
+          <line x1="9" y1="21" x2="15" y2="21"/>
+        </svg>
+        <span class="nav-label">Rider</span>
+      </button>
     </nav>
   </aside>
 
@@ -34,7 +52,7 @@
     <header class="app-header">
       <div class="header-left">
         <ng-icon name="heroMusicalNote" class="w-5 h-5 text-primary"></ng-icon>
-        <span class="brand-name">Heavy Metal Playlist</span>
+        <span class="brand-name">Blackout ORM</span>
       </div>
       <div class="header-right">
         <button class="btn btn-ghost btn-sm px-2" (click)="openSettings()" title="Configuración">
@@ -50,6 +68,8 @@
         <app-songs />
       } @else if (view() === 'playlists') {
         <app-playlists (playlistSelected)="onPlaylistSelected($event)" />
+      } @else if (view() === 'equipo') {
+        <app-equipo />
       } @else {
         <app-playlist [playlist]="selectedPlaylist()!" (back)="onBack()" />
       }
@@ -57,7 +77,7 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <span>Heavy Metal Playlist · Datos guardados localmente</span>
+      <span>Blackout ORM · Datos guardados localmente</span>
     </footer>
   </div>
 </div>

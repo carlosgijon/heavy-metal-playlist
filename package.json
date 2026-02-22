@@ -1,7 +1,7 @@
 {
-  "name": "heavy-metal-playlist",
+  "name": "blackout-orm",
   "version": "1.0.0",
-  "description": "Setlist manager for heavy metal bands",
+  "description": "ORM (Organization & Road Manager) for Blackout band",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -24,6 +24,7 @@
     "@ng-icons/core": "^31.4.0",
     "@ng-icons/heroicons": "^31.4.0",
     "@tauri-apps/api": "^2.0.0",
+    "roughjs": "^4.6.6",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
