@@ -183,11 +183,11 @@ export class EquipoComponent implements OnInit {
     // Safe SVG data URI: works with any Unicode content
     const svgDataUri = (svg: string) => `data:image/svg+xml,${encodeURIComponent(svg)}`;
 
-    // Create in-memory SVG element for Rough.js
+    // Full A4 portrait (210mm × 297mm) → viewBox 800 × 1120
     const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg') as SVGSVGElement;
-    svgEl.setAttribute('width', '752');
-    svgEl.setAttribute('height', '490');
-    svgEl.setAttribute('viewBox', '0 0 752 490');
+    svgEl.setAttribute('width', '210mm');
+    svgEl.setAttribute('height', '297mm');
+    svgEl.setAttribute('viewBox', '0 0 800 1120');
     svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
     const rc = rough.svg(svgEl);
@@ -202,19 +202,15 @@ export class EquipoComponent implements OnInit {
     });
     const ampByMember = new Map<string, Amplifier>();
     this.amplifiers.forEach(a => { if (a.memberId) ampByMember.set(a.memberId, a); });
-    const micById = new Map<string, Microphone>();
-    this.microphones.forEach(m => micById.set(m.id, m));
 
-    // Layout constants
-    // Grid: 3 rows (IZQ/CENTRO/DER) × 2 cols (FONDO | FRENTE)
-    // Left strip 26px = FONDO, right strip 26px = PÚBLICO, inner = 700px
-    const STRIP = 26;
-    const INNER_W = 752 - STRIP * 2; // 700
-    const INNER_H = 490;
-    const COL_W = INNER_W / 2;       // 350 each col
-    const ROW_H = INNER_H / 3;       // ~163 each row
+    // Layout constants — full A4 portrait, long edges = FONDO (left) / PÚBLICO (right)
+    const STRIP  = 44;           // strip width on each long edge
+    const TOTAL  = 800;
+    const INNER_W = TOTAL - STRIP * 2;  // 712
+    const INNER_H = 1120;
+    const COL_W   = INNER_W / 2;       // 356 per col (back | front)
+    const ROW_H   = INNER_H / 3;       // ~373 per row (IZQ | CTR | DER)
 
-    // Row positions (visual top-to-bottom = IZQ / CENTRO / DER)
     type RowKey = 'left' | 'center' | 'right';
     const ROWS: RowKey[] = ['left', 'center', 'right'];
     type ColKey = 'back' | 'front';
@@ -235,7 +231,7 @@ export class EquipoComponent implements OnInit {
       roughness: 1.8, stroke: '#222', strokeWidth: 2.5, fill: 'none',
     }));
 
-    // Vertical grid divider (col 0 | col 1)
+    // Vertical grid divider (col back | col front)
     svgEl.appendChild(rc.line(STRIP + COL_W, 0, STRIP + COL_W, INNER_H, {
       roughness: 1.2, stroke: '#999', strokeWidth: 1.2,
     }));
@@ -257,12 +253,13 @@ export class EquipoComponent implements OnInit {
       el.setAttribute('x', String(x));
       el.setAttribute('y', String(y));
       el.setAttribute('font-family', 'Arial, sans-serif');
-      el.setAttribute('font-size', attrs['font-size'] ?? '11');
+      el.setAttribute('font-size', attrs['font-size'] ?? '14');
       el.setAttribute('fill', attrs['fill'] ?? '#111');
-      if (attrs['font-weight']) el.setAttribute('font-weight', attrs['font-weight']);
-      if (attrs['text-anchor']) el.setAttribute('text-anchor', attrs['text-anchor']);
-      if (attrs['opacity']) el.setAttribute('opacity', attrs['opacity']);
-      if (attrs['transform']) el.setAttribute('transform', attrs['transform']);
+      if (attrs['font-weight'])    el.setAttribute('font-weight', attrs['font-weight']);
+      if (attrs['text-anchor'])    el.setAttribute('text-anchor', attrs['text-anchor']);
+      if (attrs['letter-spacing']) el.setAttribute('letter-spacing', attrs['letter-spacing']);
+      if (attrs['opacity'])        el.setAttribute('opacity', attrs['opacity']);
+      if (attrs['transform'])      el.setAttribute('transform', attrs['transform']);
       el.textContent = text;
       svgEl.appendChild(el);
     };
@@ -283,12 +280,12 @@ export class EquipoComponent implements OnInit {
     ROWS.forEach((rowKey, ri) => {
       const ry = ri * ROW_H;
 
-      // Row label (vertical text on left strip)
-      addText(
-        13, ry + ROW_H / 2 + 4, ROW_LABELS[rowKey],
-        { 'font-size': '8', 'font-weight': 'bold', 'fill': '#555',
-          'text-anchor': 'middle', 'transform': `rotate(-90, 13, ${ry + ROW_H / 2 + 4})` },
-      );
+      // Row label — vertical text in left strip, white on dark bg
+      const labelCy = ry + ROW_H / 2;
+      addText(22, labelCy + 5, ROW_LABELS[rowKey], {
+        'font-size': '13', 'font-weight': 'bold', 'fill': '#bbb',
+        'text-anchor': 'middle', 'transform': `rotate(-90, 22, ${labelCy})`,
+      });
 
       COLS.forEach((colKey, ci) => {
         const cx = STRIP + ci * COL_W;
@@ -296,84 +293,92 @@ export class EquipoComponent implements OnInit {
         const member = this.members.find(m => m.stagePosition === pos);
 
         if (!member) {
-          // Empty cell marker
-          addText(cx + COL_W / 2, ry + ROW_H / 2 + 4, '—',
-            { 'font-size': '18', 'fill': '#ddd', 'text-anchor': 'middle' });
+          addText(cx + COL_W / 2, ry + ROW_H / 2 + 8, '—',
+            { 'font-size': '36', 'fill': '#ddd', 'text-anchor': 'middle' });
           return;
         }
 
         // Determine primary instrument type
         const memberInsts = instByMember.get(member.id) ?? [];
         const primaryType = memberInsts[0]?.type;
-        const iconKey = primaryType === 'guitar' ? 'guitar'
-          : primaryType === 'bass' ? 'bass'
-          : primaryType === 'drums' ? 'drums'
+        const iconKey = primaryType === 'guitar'   ? 'guitar'
+          : primaryType === 'bass'     ? 'bass'
+          : primaryType === 'drums'    ? 'drums'
           : primaryType === 'keyboard' ? 'keyboard'
           : member.role === 'vocalist' ? 'microphone'
           : 'note';
 
         // Instrument icon (centered, top of cell)
-        const iconH = Math.min(ROW_H * 0.45, 65);
-        const iconW = 50;
-        addImage(icons[iconKey] ?? '', cx + COL_W / 2 - iconW / 2, ry + 8, iconW, iconH);
+        const iconH = Math.min(ROW_H * 0.42, 140);
+        const iconW = Math.round(iconH * 0.83);
+        const iconY = ry + 18;
+        addImage(icons[iconKey] ?? '', cx + COL_W / 2 - iconW / 2, iconY, iconW, iconH);
 
         // Member name
-        addText(cx + COL_W / 2, ry + iconH + 18,
-          member.name.length > 16 ? member.name.slice(0, 15) + '…' : member.name,
-          { 'font-size': '11', 'font-weight': 'bold', 'text-anchor': 'middle', 'fill': '#111' });
+        const name = member.name.length > 20 ? member.name.slice(0, 19) + '…' : member.name;
+        addText(cx + COL_W / 2, iconY + iconH + 26,
+          name,
+          { 'font-size': '22', 'font-weight': 'bold', 'text-anchor': 'middle', 'fill': '#111' });
 
-        // Amp info (if any)
+        // Role label
+        const roleLabel = primaryType === 'guitar'   ? 'Guitarra'
+          : primaryType === 'bass'     ? 'Bajo'
+          : primaryType === 'drums'    ? 'Batería'
+          : primaryType === 'keyboard' ? 'Teclado'
+          : member.role === 'vocalist' ? 'Voz'
+          : '';
+        if (roleLabel) {
+          addText(cx + COL_W / 2, iconY + iconH + 48,
+            roleLabel,
+            { 'font-size': '14', 'fill': '#888', 'text-anchor': 'middle' });
+        }
+
+        // Amp info
         const amp = ampByMember.get(member.id);
         if (amp) {
           const ampLabel = [amp.brand, amp.model].filter(Boolean).join(' ') || amp.name;
-          const ampShort = ampLabel.length > 22 ? ampLabel.slice(0, 21) + '…' : ampLabel;
-          addText(cx + COL_W / 2, ry + iconH + 30,
+          const ampShort = ampLabel.length > 28 ? ampLabel.slice(0, 27) + '…' : ampLabel;
+          addText(cx + COL_W / 2, iconY + iconH + (roleLabel ? 70 : 48),
             ampShort,
-            { 'font-size': '8.5', 'fill': '#666', 'text-anchor': 'middle' });
+            { 'font-size': '13', 'fill': '#666', 'text-anchor': 'middle' });
         }
 
-        // Mic icon in top-right corner: show if backup vocalist (has vocalMicId) or has miked instrument
+        // Mic badge (top-right corner of cell)
         const hasMicBadge = (!!member.vocalMicId && member.role !== 'vocalist')
           || memberInsts.some(i => i.micId);
         if (hasMicBadge) {
-          addImage(icons['microphone'] ?? '', cx + COL_W - 22, ry + 4, 18, 18);
+          addImage(icons['microphone'] ?? '', cx + COL_W - 38, ry + 10, 28, 28);
         }
       });
     });
 
-    // FONDO strip (left) — vertical label
+    // FONDO strip (left long edge) — dark, vertical label
     const fondoRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     fondoRect.setAttribute('x', '0');
     fondoRect.setAttribute('y', '0');
     fondoRect.setAttribute('width', String(STRIP));
     fondoRect.setAttribute('height', String(INNER_H));
     fondoRect.setAttribute('fill', '#1a1a1a');
-    svgEl.insertBefore(fondoRect, svgEl.firstChild);  // behind Rough.js elements
+    svgEl.insertBefore(fondoRect, svgEl.firstChild);
 
-    addText(13, INNER_H / 2,
-      'FONDO DEL ESCENARIO',
-      { 'font-size': '7', 'font-weight': 'bold', 'fill': '#fff', 'letter-spacing': '2',
-        'text-anchor': 'middle', 'transform': `rotate(-90, 13, ${INNER_H / 2})` });
+    addText(22, INNER_H / 2, 'FONDO DEL ESCENARIO', {
+      'font-size': '12', 'font-weight': 'bold', 'fill': '#fff', 'letter-spacing': '3',
+      'text-anchor': 'middle', 'transform': `rotate(-90, 22, ${INNER_H / 2})`,
+    });
 
-    // PÚBLICO strip (right) — vertical label
+    // PÚBLICO strip (right long edge) — red, vertical label
     const pubRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    pubRect.setAttribute('x', String(752 - STRIP));
+    pubRect.setAttribute('x', String(TOTAL - STRIP));
     pubRect.setAttribute('y', '0');
     pubRect.setAttribute('width', String(STRIP));
     pubRect.setAttribute('height', String(INNER_H));
     pubRect.setAttribute('fill', '#dc2626');
     svgEl.appendChild(pubRect);
 
-    addText(752 - 13, INNER_H / 2,
-      'PÚBLICO',
-      { 'font-size': '7', 'font-weight': 'bold', 'fill': '#fff',
-        'text-anchor': 'middle', 'transform': `rotate(90, ${752 - 13}, ${INNER_H / 2})` });
-
-    // Column header labels at top
-    addText(STRIP + COL_W / 2, -5, 'FONDO',
-      { 'font-size': '8', 'fill': '#888', 'text-anchor': 'middle' });
-    addText(STRIP + COL_W + COL_W / 2, -5, 'FRENTE',
-      { 'font-size': '8', 'fill': '#888', 'text-anchor': 'middle' });
+    addText(TOTAL - 22, INNER_H / 2, 'PÚBLICO', {
+      'font-size': '12', 'font-weight': 'bold', 'fill': '#fff',
+      'text-anchor': 'middle', 'transform': `rotate(90, ${TOTAL - 22}, ${INNER_H / 2})`,
+    });
 
     return svgEl.outerHTML;
   }
@@ -498,20 +503,17 @@ export class EquipoComponent implements OnInit {
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; font-size: 11px; color: #111; }
-  @page { size: A4 portrait; margin: 10mm 12mm; }
-  .page { padding: 0; page-break-after: always; }
+  @page { size: A4 portrait; margin: 0; }
+  .page { padding: 10mm 12mm; page-break-after: always; }
   .page:last-child { page-break-after: auto; }
   h1 { font-size: 20px; font-weight: bold; color: #1a1a1a; margin-bottom: 2px; }
   h2 { font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #dc2626; padding-bottom: 4px; color: #dc2626; }
   .subtitle { color: #666; font-size: 11px; margin-bottom: 8px; }
 
-  /* ── STAGE PAGE ── */
-  .page-stage { page-break-after: always; }
-  .stage-header { padding: 4px 0 8px; display: flex; align-items: baseline; gap: 12px; }
-  .stage-header h1 { font-size: 18px; }
-  .stage-header .subtitle { margin: 0; }
-  .stage-svg-wrap { overflow: visible; }
-  .stage-svg-wrap svg { max-width: 100%; height: auto; }
+  /* ── STAGE PAGE — full bleed ── */
+  .page-stage { padding: 0; page-break-after: always; }
+  .stage-svg-wrap { display: block; line-height: 0; }
+  .stage-svg-wrap svg { display: block; }
 
   /* ── CHANNEL LIST ── */
   table { width: 100%; border-collapse: collapse; font-size: 10px; }
@@ -535,16 +537,11 @@ export class EquipoComponent implements OnInit {
 </head>
 <body>
 
-<!-- PAGE 1: STAGE PLOT (Rough.js SVG) -->
+<!-- PAGE 1: STAGE PLOT (Rough.js SVG, full bleed A4) -->
 <div class="page-stage">
-  <div class="stage-header">
-    <h1>Rider Técnico — Blackout</h1>
-    <span class="subtitle">Stage Plot</span>
-  </div>
   <div class="stage-svg-wrap">
     ${stageSvg}
   </div>
-  ${this.members.length === 0 ? '<p style="padding:12px;color:#999">Sin integrantes configurados</p>' : ''}
 </div>
 
 <!-- PAGE 2: CHANNEL LIST -->
