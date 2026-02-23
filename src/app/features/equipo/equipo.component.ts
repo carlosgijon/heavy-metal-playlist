@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { heroDocumentText } from '@ng-icons/heroicons/outline';
 import rough from 'roughjs';
-import { invoke } from '@tauri-apps/api/core';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import {
@@ -152,6 +151,33 @@ export class EquipoComponent implements OnInit {
     return result;
   }
 
+  private printHtml(html: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:0;visibility:hidden';
+      document.body.appendChild(iframe);
+
+      const cleanup = () => {
+        document.body.removeChild(iframe);
+        URL.revokeObjectURL(url);
+      };
+
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow!.focus();
+          iframe.contentWindow!.print();
+          setTimeout(() => { cleanup(); resolve(); }, 1500);
+        } catch (e) {
+          cleanup(); reject(e);
+        }
+      };
+      iframe.onerror = () => { cleanup(); reject(new Error('iframe load error')); };
+      iframe.src = url; // triggers onload reliably after full parse
+    });
+  }
+
   async generateRider(): Promise<void> {
     this.generatingPdf = true;
     try {
@@ -161,9 +187,7 @@ export class EquipoComponent implements OnInit {
       ]);
       const stageSvg = this.buildStageSvg(icons);
       const html = this.buildRiderHtml(channels, icons, stageSvg);
-      // Open in system browser (Safari/Chrome) which handles print/PDF natively.
-      // Avoids WKWebView iframe print limitations (async context breaks gesture chain).
-      await invoke('rider_open', { html });
+      await this.printHtml(html);
     } catch {
       this.toast.danger('Error al generar el rider');
     } finally {
@@ -524,22 +548,10 @@ export class EquipoComponent implements OnInit {
 
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .no-print { display: none !important; }
   }
 </style>
-<script>
-  window.addEventListener('load', function () {
-    setTimeout(function () { window.print(); }, 600);
-  });
-</script>
 </head>
 <body>
-<div class="no-print" style="position:fixed;top:12px;right:12px;z-index:9999">
-  <button onclick="window.print()"
-    style="background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-family:Arial,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">
-    🖨 Imprimir / Exportar PDF
-  </button>
-</div>
 
 <!-- PAGE 1: STAGE PLOT (Rough.js SVG) -->
 <div class="page-stage">
