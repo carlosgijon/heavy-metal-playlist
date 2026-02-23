@@ -55,6 +55,7 @@ pub fn run() {
             commands::equipment::pa_update,
             commands::equipment::pa_delete,
             commands::equipment::channel_list_generate,
+            commands::rider::rider_open,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
