@@ -198,14 +198,14 @@ export class EquipoComponent implements OnInit {
   // ── Stage Plot SVG (Rough.js) ─────────────────────────────────────────────
 
   private buildStageSvg(icons: Record<string, string>): string {
-    // Safe SVG data URI: works with any Unicode content
     const svgDataUri = (svg: string) => `data:image/svg+xml,${encodeURIComponent(svg)}`;
 
-    // Create in-memory SVG element for Rough.js
+    // A4 portrait content area: 186mm × 277mm (210 - 2×12mm margins, 297 - 2×10mm margins)
+    // viewBox proportioned to match: 720 × 1040
     const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg') as SVGSVGElement;
-    svgEl.setAttribute('width', '752');
-    svgEl.setAttribute('height', '490');
-    svgEl.setAttribute('viewBox', '0 0 752 490');
+    svgEl.setAttribute('width', '186mm');
+    svgEl.setAttribute('height', '277mm');
+    svgEl.setAttribute('viewBox', '0 0 720 1040');
     svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
     const rc = rough.svg(svgEl);
@@ -220,22 +220,21 @@ export class EquipoComponent implements OnInit {
     });
     const ampByMember = new Map<string, Amplifier>();
     this.amplifiers.forEach(a => { if (a.memberId) ampByMember.set(a.memberId, a); });
-    const micById = new Map<string, Microphone>();
-    this.microphones.forEach(m => micById.set(m.id, m));
 
-    // Layout constants
-    // Grid: 3 rows (IZQ/CENTRO/DER) × 2 cols (FONDO | FRENTE)
-    // Left strip 26px = FONDO, right strip 26px = PÚBLICO, inner = 700px
-    const STRIP = 26;
-    const INNER_W = 752 - STRIP * 2; // 700
-    const INNER_H = 490;
-    const COL_W = INNER_W / 2;       // 350 each col
-    const ROW_H = INNER_H / 3;       // ~163 each row
+    // Layout: title strip (top) + side strips (FONDO/PÚBLICO) + 3×2 grid
+    const TITLE_H = 44;
+    const STRIP   = 26;
+    const TOTAL_W = 720;
+    const TOTAL_H = 1040;
+    const GRID_Y  = TITLE_H;
+    const GRID_H  = TOTAL_H - TITLE_H;   // 996
+    const INNER_W = TOTAL_W - STRIP * 2; // 668
+    const COL_W   = INNER_W / 2;         // 334
+    const ROW_H   = GRID_H / 3;          // 332
 
-    // Row positions (visual top-to-bottom = IZQ / CENTRO / DER)
     type RowKey = 'left' | 'center' | 'right';
-    const ROWS: RowKey[] = ['left', 'center', 'right'];
     type ColKey = 'back' | 'front';
+    const ROWS: RowKey[] = ['left', 'center', 'right'];
     const COLS: ColKey[] = ['back', 'front'];
 
     const POS_MAP: Record<RowKey, Record<ColKey, StagePosition>> = {
@@ -243,70 +242,93 @@ export class EquipoComponent implements OnInit {
       center: { back: 'back-center', front: 'front-center' },
       right:  { back: 'back-right',  front: 'front-right'  },
     };
+    const ROW_LABELS: Record<RowKey, string> = { left: 'IZQ', center: 'CTR', right: 'DER' };
 
-    const ROW_LABELS: Record<RowKey, string> = {
-      left: 'IZQ', center: 'CTR', right: 'DER',
+    // ── Helpers ──
+    const addRect = (x: number, y: number, w: number, h: number, fill: string) => {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      el.setAttribute('x', String(x)); el.setAttribute('y', String(y));
+      el.setAttribute('width', String(w)); el.setAttribute('height', String(h));
+      el.setAttribute('fill', fill);
+      svgEl.appendChild(el);
     };
 
-    // Outer stage border
-    svgEl.appendChild(rc.rectangle(STRIP, 0, INNER_W, INNER_H, {
-      roughness: 1.8, stroke: '#222', strokeWidth: 2.5, fill: 'none',
-    }));
-
-    // Vertical grid divider (col 0 | col 1)
-    svgEl.appendChild(rc.line(STRIP + COL_W, 0, STRIP + COL_W, INNER_H, {
-      roughness: 1.2, stroke: '#999', strokeWidth: 1.2,
-    }));
-
-    // Horizontal row dividers
-    svgEl.appendChild(rc.line(STRIP, ROW_H, STRIP + INNER_W, ROW_H, {
-      roughness: 1.0, stroke: '#bbb', strokeWidth: 1,
-    }));
-    svgEl.appendChild(rc.line(STRIP, ROW_H * 2, STRIP + INNER_W, ROW_H * 2, {
-      roughness: 1.0, stroke: '#bbb', strokeWidth: 1,
-    }));
-
-    // Helper: add SVG text element
-    const addText = (
-      x: number, y: number, text: string,
-      attrs: Record<string, string> = {},
-    ) => {
+    const addText = (x: number, y: number, text: string, attrs: Record<string, string> = {}) => {
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      el.setAttribute('x', String(x));
-      el.setAttribute('y', String(y));
+      el.setAttribute('x', String(x)); el.setAttribute('y', String(y));
       el.setAttribute('font-family', 'Arial, sans-serif');
-      el.setAttribute('font-size', attrs['font-size'] ?? '11');
+      el.setAttribute('font-size', attrs['font-size'] ?? '12');
       el.setAttribute('fill', attrs['fill'] ?? '#111');
-      if (attrs['font-weight']) el.setAttribute('font-weight', attrs['font-weight']);
-      if (attrs['text-anchor']) el.setAttribute('text-anchor', attrs['text-anchor']);
-      if (attrs['opacity']) el.setAttribute('opacity', attrs['opacity']);
-      if (attrs['transform']) el.setAttribute('transform', attrs['transform']);
+      if (attrs['font-weight'])   el.setAttribute('font-weight', attrs['font-weight']);
+      if (attrs['text-anchor'])   el.setAttribute('text-anchor', attrs['text-anchor']);
+      if (attrs['letter-spacing']) el.setAttribute('letter-spacing', attrs['letter-spacing']);
+      if (attrs['transform'])     el.setAttribute('transform', attrs['transform']);
       el.textContent = text;
       svgEl.appendChild(el);
     };
 
-    // Helper: add <image> (SVG as data URI)
     const addImage = (svgContent: string, x: number, y: number, w: number, h: number) => {
       if (!svgContent) return;
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'image');
       el.setAttribute('href', svgDataUri(svgContent));
-      el.setAttribute('x', String(x));
-      el.setAttribute('y', String(y));
-      el.setAttribute('width', String(w));
-      el.setAttribute('height', String(h));
+      el.setAttribute('x', String(x)); el.setAttribute('y', String(y));
+      el.setAttribute('width', String(w)); el.setAttribute('height', String(h));
       svgEl.appendChild(el);
     };
 
-    // Render cells
-    ROWS.forEach((rowKey, ri) => {
-      const ry = ri * ROW_H;
+    // ── Title strip ──
+    addRect(0, 0, TOTAL_W, TITLE_H, '#1a1a1a');
+    addText(TOTAL_W / 2, 17, 'RIDER TÉCNICO — BLACKOUT', {
+      'font-size': '14', 'font-weight': 'bold', 'fill': '#fff',
+      'text-anchor': 'middle', 'letter-spacing': '3',
+    });
+    addText(TOTAL_W / 2, 34, 'S T A G E   P L O T', {
+      'font-size': '9', 'fill': '#dc2626',
+      'text-anchor': 'middle', 'letter-spacing': '5',
+    });
 
-      // Row label (vertical text on left strip)
-      addText(
-        13, ry + ROW_H / 2 + 4, ROW_LABELS[rowKey],
-        { 'font-size': '8', 'font-weight': 'bold', 'fill': '#555',
-          'text-anchor': 'middle', 'transform': `rotate(-90, 13, ${ry + ROW_H / 2 + 4})` },
-      );
+    // ── FONDO strip (left) ──
+    addRect(0, GRID_Y, STRIP, GRID_H, '#2a2a2a');
+    addText(13, GRID_Y + GRID_H / 2, 'FONDO DEL ESCENARIO', {
+      'font-size': '8', 'font-weight': 'bold', 'fill': '#fff', 'letter-spacing': '2',
+      'text-anchor': 'middle', 'transform': `rotate(-90,13,${GRID_Y + GRID_H / 2})`,
+    });
+
+    // ── PÚBLICO strip (right) ──
+    addRect(TOTAL_W - STRIP, GRID_Y, STRIP, GRID_H, '#dc2626');
+    addText(TOTAL_W - 13, GRID_Y + GRID_H / 2, 'PÚBLICO', {
+      'font-size': '8', 'font-weight': 'bold', 'fill': '#fff',
+      'text-anchor': 'middle', 'transform': `rotate(90,${TOTAL_W - 13},${GRID_Y + GRID_H / 2})`,
+    });
+
+    // ── Stage border + grid lines (Rough.js) ──
+    svgEl.appendChild(rc.rectangle(STRIP, GRID_Y, INNER_W, GRID_H, {
+      roughness: 1.8, stroke: '#222', strokeWidth: 2.5, fill: 'none',
+    }));
+    svgEl.appendChild(rc.line(STRIP + COL_W, GRID_Y, STRIP + COL_W, GRID_Y + GRID_H, {
+      roughness: 1.2, stroke: '#999', strokeWidth: 1.2,
+    }));
+    svgEl.appendChild(rc.line(STRIP, GRID_Y + ROW_H, STRIP + INNER_W, GRID_Y + ROW_H, {
+      roughness: 1.0, stroke: '#ccc', strokeWidth: 1,
+    }));
+    svgEl.appendChild(rc.line(STRIP, GRID_Y + ROW_H * 2, STRIP + INNER_W, GRID_Y + ROW_H * 2, {
+      roughness: 1.0, stroke: '#ccc', strokeWidth: 1,
+    }));
+
+    // Column headers
+    addText(STRIP + COL_W / 2,       GRID_Y + 16, 'FONDO',
+      { 'font-size': '9', 'fill': '#999', 'text-anchor': 'middle', 'letter-spacing': '1' });
+    addText(STRIP + COL_W + COL_W / 2, GRID_Y + 16, 'FRENTE',
+      { 'font-size': '9', 'fill': '#999', 'text-anchor': 'middle', 'letter-spacing': '1' });
+
+    // ── Cells ──
+    ROWS.forEach((rowKey, ri) => {
+      const ry = GRID_Y + ri * ROW_H;
+
+      addText(13, ry + ROW_H / 2 + 5, ROW_LABELS[rowKey], {
+        'font-size': '9', 'font-weight': 'bold', 'fill': '#aaa',
+        'text-anchor': 'middle', 'transform': `rotate(-90,13,${ry + ROW_H / 2 + 5})`,
+      });
 
       COLS.forEach((colKey, ci) => {
         const cx = STRIP + ci * COL_W;
@@ -314,84 +336,52 @@ export class EquipoComponent implements OnInit {
         const member = this.members.find(m => m.stagePosition === pos);
 
         if (!member) {
-          // Empty cell marker
-          addText(cx + COL_W / 2, ry + ROW_H / 2 + 4, '—',
-            { 'font-size': '18', 'fill': '#ddd', 'text-anchor': 'middle' });
+          addText(cx + COL_W / 2, ry + ROW_H / 2 + 14, '—',
+            { 'font-size': '40', 'fill': '#e8e8e8', 'text-anchor': 'middle' });
           return;
         }
 
-        // Determine primary instrument type
         const memberInsts = instByMember.get(member.id) ?? [];
         const primaryType = memberInsts[0]?.type;
-        const iconKey = primaryType === 'guitar' ? 'guitar'
-          : primaryType === 'bass' ? 'bass'
-          : primaryType === 'drums' ? 'drums'
+        const iconKey = primaryType === 'guitar'   ? 'guitar'
+          : primaryType === 'bass'     ? 'bass'
+          : primaryType === 'drums'    ? 'drums'
           : primaryType === 'keyboard' ? 'keyboard'
           : member.role === 'vocalist' ? 'microphone'
           : 'note';
 
-        // Instrument icon (centered, top of cell)
-        const iconH = Math.min(ROW_H * 0.45, 65);
-        const iconW = 50;
-        addImage(icons[iconKey] ?? '', cx + COL_W / 2 - iconW / 2, ry + 8, iconW, iconH);
+        // Large icon — centered, takes up ~40% of row height
+        const iconSize = Math.min(ROW_H * 0.40, 120);
+        addImage(icons[iconKey] ?? '', cx + COL_W / 2 - iconSize / 2, ry + 30, iconSize, iconSize);
 
-        // Member name
-        addText(cx + COL_W / 2, ry + iconH + 18,
-          member.name.length > 16 ? member.name.slice(0, 15) + '…' : member.name,
-          { 'font-size': '11', 'font-weight': 'bold', 'text-anchor': 'middle', 'fill': '#111' });
+        // Name
+        const nameY = ry + 30 + iconSize + 24;
+        const nameStr = member.name.length > 20 ? member.name.slice(0, 19) + '…' : member.name;
+        addText(cx + COL_W / 2, nameY, nameStr,
+          { 'font-size': '17', 'font-weight': 'bold', 'text-anchor': 'middle', 'fill': '#111' });
 
-        // Amp info (if any)
+        // Role
+        addText(cx + COL_W / 2, nameY + 22,
+          ROLE_LABELS[member.role] ?? member.role,
+          { 'font-size': '11', 'fill': '#888', 'text-anchor': 'middle' });
+
+        // Amp
         const amp = ampByMember.get(member.id);
         if (amp) {
           const ampLabel = [amp.brand, amp.model].filter(Boolean).join(' ') || amp.name;
-          const ampShort = ampLabel.length > 22 ? ampLabel.slice(0, 21) + '…' : ampLabel;
-          addText(cx + COL_W / 2, ry + iconH + 30,
-            ampShort,
-            { 'font-size': '8.5', 'fill': '#666', 'text-anchor': 'middle' });
+          const ampShort = ampLabel.length > 30 ? ampLabel.slice(0, 29) + '…' : ampLabel;
+          addText(cx + COL_W / 2, nameY + 40, ampShort,
+            { 'font-size': '10', 'fill': '#777', 'text-anchor': 'middle' });
         }
 
-        // Mic icon in top-right corner: show if backup vocalist (has vocalMicId) or has miked instrument
+        // Mic badge (top-right corner)
         const hasMicBadge = (!!member.vocalMicId && member.role !== 'vocalist')
           || memberInsts.some(i => i.micId);
         if (hasMicBadge) {
-          addImage(icons['microphone'] ?? '', cx + COL_W - 22, ry + 4, 18, 18);
+          addImage(icons['microphone'] ?? '', cx + COL_W - 36, ry + 10, 28, 28);
         }
       });
     });
-
-    // FONDO strip (left) — vertical label
-    const fondoRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    fondoRect.setAttribute('x', '0');
-    fondoRect.setAttribute('y', '0');
-    fondoRect.setAttribute('width', String(STRIP));
-    fondoRect.setAttribute('height', String(INNER_H));
-    fondoRect.setAttribute('fill', '#1a1a1a');
-    svgEl.insertBefore(fondoRect, svgEl.firstChild);  // behind Rough.js elements
-
-    addText(13, INNER_H / 2,
-      'FONDO DEL ESCENARIO',
-      { 'font-size': '7', 'font-weight': 'bold', 'fill': '#fff', 'letter-spacing': '2',
-        'text-anchor': 'middle', 'transform': `rotate(-90, 13, ${INNER_H / 2})` });
-
-    // PÚBLICO strip (right) — vertical label
-    const pubRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    pubRect.setAttribute('x', String(752 - STRIP));
-    pubRect.setAttribute('y', '0');
-    pubRect.setAttribute('width', String(STRIP));
-    pubRect.setAttribute('height', String(INNER_H));
-    pubRect.setAttribute('fill', '#dc2626');
-    svgEl.appendChild(pubRect);
-
-    addText(752 - 13, INNER_H / 2,
-      'PÚBLICO',
-      { 'font-size': '7', 'font-weight': 'bold', 'fill': '#fff',
-        'text-anchor': 'middle', 'transform': `rotate(90, ${752 - 13}, ${INNER_H / 2})` });
-
-    // Column header labels at top
-    addText(STRIP + COL_W / 2, -5, 'FONDO',
-      { 'font-size': '8', 'fill': '#888', 'text-anchor': 'middle' });
-    addText(STRIP + COL_W + COL_W / 2, -5, 'FRENTE',
-      { 'font-size': '8', 'fill': '#888', 'text-anchor': 'middle' });
 
     return svgEl.outerHTML;
   }
@@ -523,13 +513,10 @@ export class EquipoComponent implements OnInit {
   h2 { font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #dc2626; padding-bottom: 4px; color: #dc2626; }
   .subtitle { color: #666; font-size: 11px; margin-bottom: 8px; }
 
-  /* ── STAGE PAGE ── */
-  .page-stage { page-break-after: always; }
-  .stage-header { padding: 4px 0 8px; display: flex; align-items: baseline; gap: 12px; }
-  .stage-header h1 { font-size: 18px; }
-  .stage-header .subtitle { margin: 0; }
-  .stage-svg-wrap { overflow: visible; }
-  .stage-svg-wrap svg { max-width: 100%; height: auto; }
+  /* ── STAGE PAGE — full bleed SVG ── */
+  .page-stage { page-break-after: always; break-after: page; }
+  .stage-svg-wrap { display: block; line-height: 0; }
+  .stage-svg-wrap svg { display: block; }
 
   /* ── CHANNEL LIST ── */
   table { width: 100%; border-collapse: collapse; font-size: 10px; }
@@ -553,16 +540,12 @@ export class EquipoComponent implements OnInit {
 </head>
 <body>
 
-<!-- PAGE 1: STAGE PLOT (Rough.js SVG) -->
+<!-- PAGE 1: STAGE PLOT (Rough.js SVG — full page) -->
 <div class="page-stage">
-  <div class="stage-header">
-    <h1>Rider Técnico — Blackout</h1>
-    <span class="subtitle">Stage Plot</span>
-  </div>
   <div class="stage-svg-wrap">
     ${stageSvg}
+    ${this.members.length === 0 ? '<text x="360" y="550" font-family="Arial" font-size="16" fill="#bbb" text-anchor="middle">Sin integrantes configurados</text>' : ''}
   </div>
-  ${this.members.length === 0 ? '<p style="padding:12px;color:#999">Sin integrantes configurados</p>' : ''}
 </div>
 
 <!-- PAGE 2: CHANNEL LIST -->
