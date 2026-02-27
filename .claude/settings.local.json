@@ -8,7 +8,13 @@
       "WebFetch(domain:tabler.io)",
       "WebFetch(domain:phosphoricons.com)",
       "WebFetch(domain:game-icons.net)",
-      "WebFetch(domain:www.svgrepo.com)"
+      "WebFetch(domain:www.svgrepo.com)",
+      "WebFetch(domain:www.figma.com)",
+      "WebFetch(domain:thornelabs.io)",
+      "WebFetch(domain:embed.figma.com)",
+      "Bash(node -e:*)",
+      "Bash(cargo check:*)",
+      "Bash(npx ng build:*)"
     ]
   }
 }

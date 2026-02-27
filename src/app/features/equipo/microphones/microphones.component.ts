@@ -7,7 +7,10 @@ import { heroPencil, heroTrash, heroPlus } from '@ng-icons/heroicons/outline';
 import { DatabaseService } from '../../../core/services/database.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog.component';
-import { Microphone, MIC_TYPE_LABELS, POLAR_LABELS } from '../../../core/models/equipment.model';
+import {
+  Microphone, BandMember, Amplifier, Instrument,
+  MIC_TYPE_LABELS, POLAR_LABELS,
+} from '../../../core/models/equipment.model';
 import { MicrophoneFormComponent, MicrophoneFormData } from './microphone-form/microphone-form.component';
 
 @Component({
@@ -26,7 +29,7 @@ import { MicrophoneFormComponent, MicrophoneFormData } from './microphone-form/m
     <div class="overflow-x-auto">
       <table class="table table-zebra table-sm w-full">
         <thead>
-          <tr><th>Nombre</th><th>Marca / Modelo</th><th>Tipo</th><th>Patrón</th><th>+48V</th><th>Notas</th><th></th></tr>
+          <tr><th>Nombre</th><th>Marca / Modelo</th><th>Tipo</th><th>Patrón</th><th>+48V</th><th>Destino</th><th>Notas</th><th></th></tr>
         </thead>
         <tbody>
           @for (m of filtered; track m.id) {
@@ -39,6 +42,7 @@ import { MicrophoneFormComponent, MicrophoneFormData } from './microphone-form/m
                 @if (m.phantomPower) { <span class="badge badge-sm badge-warning">+48V</span> }
                 @else { <span class="opacity-40">—</span> }
               </td>
+              <td class="text-sm">{{ getAssignmentLabel(m) }}</td>
               <td class="text-sm opacity-60">{{ m.notes }}</td>
               <td>
                 <div class="flex gap-1 justify-end">
@@ -48,7 +52,7 @@ import { MicrophoneFormComponent, MicrophoneFormData } from './microphone-form/m
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="7" class="text-center opacity-50 py-6">
+            <tr><td colspan="8" class="text-center opacity-50 py-6">
               {{ search ? 'Sin resultados' : 'No hay micrófonos. Añade el primero.' }}
             </td></tr>
           }
@@ -59,6 +63,9 @@ import { MicrophoneFormComponent, MicrophoneFormData } from './microphone-form/m
 })
 export class MicrophonesComponent {
   @Input() microphones: Microphone[] = [];
+  @Input() members: BandMember[] = [];
+  @Input() amplifiers: Amplifier[] = [];
+  @Input() instruments: Instrument[] = [];
   @Output() changed = new EventEmitter<void>();
 
   private dialog = inject(Dialog);
@@ -71,6 +78,23 @@ export class MicrophonesComponent {
 
   brandModel(brand?: string, model?: string): string { return [brand, model].filter(s => !!s).join(' ') || '—'; }
 
+  getAssignmentLabel(mic: Microphone): string {
+    if (!mic.assignedToType) return '—';
+    if (mic.assignedToType === 'member') {
+      const m = this.members.find(m => m.id === mic.assignedToId);
+      return m ? `Vocal: ${m.name}` : 'Vocal';
+    }
+    if (mic.assignedToType === 'amplifier') {
+      const a = this.amplifiers.find(a => a.id === mic.assignedToId);
+      return a ? `Ampli: ${a.name}` : 'Amplificador';
+    }
+    if (mic.assignedToType === 'instrument') {
+      const i = this.instruments.find(i => i.id === mic.assignedToId);
+      return i ? `Batería: ${i.name}` : 'Instrumento';
+    }
+    return '—';
+  }
+
   get filtered(): Microphone[] {
     const q = this.search.trim().toLowerCase();
     return q ? this.microphones.filter(m =>
@@ -81,7 +105,12 @@ export class MicrophonesComponent {
   openForm(mic: Microphone | null): void {
     const ref = this.dialog.open<Omit<Microphone, 'id'>>(MicrophoneFormComponent, {
       hasBackdrop: true, backdropClass: 'cdk-overlay-dark-backdrop', disableClose: true,
-      data: { microphone: mic } satisfies MicrophoneFormData,
+      data: {
+        microphone: mic,
+        members: this.members,
+        amplifiers: this.amplifiers,
+        instruments: this.instruments,
+      } satisfies MicrophoneFormData,
     });
     ref.closed.subscribe(async result => {
       if (!result) return;

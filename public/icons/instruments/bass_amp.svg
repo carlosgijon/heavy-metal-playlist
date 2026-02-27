@@ -1,0 +1,22 @@
+<svg width="115" height="103" viewBox="0 0 115 103" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M13.5 101.5L1 67V57.5V31.5L5 1H108.5L113.5 31.5V57.5V67L99.5 101.5H13.5Z" fill="#626161"/>
+<path d="M1 67L13.5 101.5H99.5L113.5 67M1 67H113.5M1 67V57.5M113.5 67V57.5M1 57.5H113.5M1 57.5V31.5M113.5 57.5V31.5M1 31.5H113.5M1 31.5L5 1H108.5L113.5 31.5" stroke="black" stroke-width="2"/>
+<path d="M7 71H107.5L97 98H16L7 71Z" fill="url(#paint0_linear_8_174)"/>
+<rect x="6" y="36" width="104" height="8" fill="#D9D9D9"/>
+<rect x="38" y="13" width="39" height="6" fill="black"/>
+<circle cx="12" cy="40" r="2.5" fill="white" stroke="black"/>
+<circle cx="21" cy="40" r="2.5" fill="white" stroke="black"/>
+<circle cx="30" cy="40" r="2.5" fill="white" stroke="black"/>
+<circle cx="105" cy="40" r="2.5" fill="white" stroke="black"/>
+<circle cx="96.9995" cy="40" r="2.5" fill="white" stroke="black"/>
+<circle cx="88.9995" cy="40" r="2.5" fill="white" stroke="black"/>
+<rect x="49" y="37" width="4" height="6" fill="black"/>
+<rect x="56" y="37" width="4" height="6" fill="black"/>
+<rect x="62.9995" y="37" width="4" height="6" fill="black"/>
+<defs>
+<linearGradient id="paint0_linear_8_174" x1="57" y1="98" x2="57" y2="71" gradientUnits="userSpaceOnUse">
+<stop offset="0.335017" stop-color="#5B5B5B"/>
+<stop offset="1" stop-color="#C1C1C1"/>
+</linearGradient>
+</defs>
+</svg>

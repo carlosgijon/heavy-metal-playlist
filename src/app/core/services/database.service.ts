@@ -165,6 +165,18 @@ export class DatabaseService {
     return invoke<void>('amplifiers_delete', { id });
   }
 
+  updateAmplifierInstrumentLink(ampId: string, instrumentId: string | null): Promise<void> {
+    return invoke<void>('amplifiers_update_instrument_link', { ampId, instrumentId });
+  }
+
+  setInstrumentMics(instrumentId: string, micIds: string[]): Promise<void> {
+    return invoke<void>('instrument_mics_set', { instrumentId, micIds });
+  }
+
+  setAmplifierMics(amplifierId: string, micIds: string[]): Promise<void> {
+    return invoke<void>('amplifier_mics_set', { amplifierId, micIds });
+  }
+
   // ── PA Equipment ───────────────────────────────────────────────────────────
 
   getPaEquipment(): Promise<PaEquipment[]> {

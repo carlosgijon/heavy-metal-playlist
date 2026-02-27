@@ -41,6 +41,25 @@ pub fn init_db(app: &AppHandle) -> Result<Connection, Box<dyn std::error::Error>
         "ALTER TABLE pa_equipment ADD COLUMN iem_wireless INTEGER NOT NULL DEFAULT 0",
         [],
     );
+    // DI flag for amplifiers
+    let _ = conn.execute(
+        "ALTER TABLE amplifiers ADD COLUMN uses_di INTEGER NOT NULL DEFAULT 0",
+        [],
+    );
+    // Mic assignment: where the mic is used (member/amplifier/instrument)
+    let _ = conn.execute("ALTER TABLE microphones ADD COLUMN assigned_to_type TEXT", []);
+    let _ = conn.execute("ALTER TABLE microphones ADD COLUMN assigned_to_id TEXT", []);
+    // Signal routing fields for instruments
+    let _ = conn.execute("ALTER TABLE instruments ADD COLUMN routing TEXT NOT NULL DEFAULT 'di'", []);
+    let _ = conn.execute("ALTER TABLE instruments ADD COLUMN amp_id TEXT REFERENCES amplifiers(id) ON DELETE SET NULL", []);
+    let _ = conn.execute("ALTER TABLE instruments ADD COLUMN mono_stereo TEXT NOT NULL DEFAULT 'mono'", []);
+    // Signal routing fields for amplifiers
+    let _ = conn.execute("ALTER TABLE amplifiers ADD COLUMN routing TEXT NOT NULL DEFAULT 'di'", []);
+    let _ = conn.execute("ALTER TABLE amplifiers ADD COLUMN mono_stereo TEXT NOT NULL DEFAULT 'mono'", []);
+    // Drum microphone assignment for instruments
+    let _ = conn.execute("ALTER TABLE instruments ADD COLUMN mic_id TEXT REFERENCES microphones(id) ON DELETE SET NULL", []);
+    // Mono/stereo for microphones
+    let _ = conn.execute("ALTER TABLE microphones ADD COLUMN mono_stereo TEXT NOT NULL DEFAULT 'mono'", []);
 
     Ok(conn)
 }

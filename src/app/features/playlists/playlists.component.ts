@@ -159,15 +159,25 @@ export class PlaylistsComponent implements OnInit {
 </style></head>
 <body><table>${rows}</table></body></html>`;
 
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const win = window.open(url, '_blank');
-      if (win) {
-        win.addEventListener('load', () => { win.print(); URL.revokeObjectURL(url); });
-      }
+      this.printHtml(html);
     } catch {
       this.toastr.danger('No se pudo generar el PDF', 'Error');
     }
+  }
+
+  private printHtml(html: string): void {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:0;';
+    document.body.appendChild(iframe);
+    iframe.addEventListener('load', () => {
+      URL.revokeObjectURL(url);
+      iframe.contentWindow!.focus();
+      iframe.contentWindow!.print();
+      setTimeout(() => iframe.remove(), 2000);
+    });
+    iframe.src = url;
   }
 
   private escapeHtml(text: string): string {

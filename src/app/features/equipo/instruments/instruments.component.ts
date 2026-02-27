@@ -7,8 +7,8 @@ import { heroPencil, heroTrash, heroPlus } from '@ng-icons/heroicons/outline';
 import { DatabaseService } from '../../../core/services/database.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog.component';
-import { Instrument, BandMember, Microphone, ROLE_LABELS } from '../../../core/models/equipment.model';
-import { InstrumentFormComponent, InstrumentFormData } from './instrument-form/instrument-form.component';
+import { Instrument, BandMember, Amplifier, Microphone, ROLE_LABELS } from '../../../core/models/equipment.model';
+import { InstrumentFormComponent, InstrumentFormData, InstrumentFormResult } from './instrument-form/instrument-form.component';
 
 const INSTRUMENT_TYPE_LABELS: Record<string, string> = {
   guitar: 'Guitarra', bass: 'Bajo', drums: 'Batería', keyboard: 'Teclado', other: 'Otro',
@@ -30,7 +30,7 @@ const INSTRUMENT_TYPE_LABELS: Record<string, string> = {
     <div class="overflow-x-auto">
       <table class="table table-zebra table-sm w-full">
         <thead>
-          <tr><th>Nombre</th><th>Tipo</th><th>Marca / Modelo</th><th>Integrante</th><th>Mic / DI</th><th>Ch.</th><th></th></tr>
+          <tr><th>Nombre</th><th>Tipo</th><th>Marca / Modelo</th><th>Integrante</th><th>Routing</th><th></th></tr>
         </thead>
         <tbody>
           @for (i of filtered; track i.id) {
@@ -40,11 +40,17 @@ const INSTRUMENT_TYPE_LABELS: Record<string, string> = {
               <td>{{ brandModel(i.brand, i.model) }}</td>
               <td>{{ getMemberName(i.memberId) }}</td>
               <td>
-                @if (i.usesDi) { <span class="badge badge-sm badge-info">DI</span> }
-                @else if (i.micId) { <span class="text-sm">{{ getMicName(i.micId) }}</span> }
-                @else { <span class="opacity-40">—</span> }
+                @if (i.type !== 'drums') {
+                  @switch (i.routing) {
+                    @case ('amp')  { <span class="badge badge-sm badge-warning">Ampli</span> }
+                    @case ('di')   { <span class="badge badge-sm badge-info">DI box</span> }
+                    @case ('mesa') { <span class="badge badge-sm badge-success">Mesa</span> }
+                    @default       { <span class="opacity-40">—</span> }
+                  }
+                } @else {
+                  <span class="opacity-40">—</span>
+                }
               </td>
-              <td class="text-sm opacity-60">{{ i.channelOrder }}</td>
               <td>
                 <div class="flex gap-1 justify-end">
                   <button class="btn btn-ghost btn-xs" (click)="openForm(i)"><ng-icon name="heroPencil" size="14" /></button>
@@ -53,7 +59,7 @@ const INSTRUMENT_TYPE_LABELS: Record<string, string> = {
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="7" class="text-center opacity-50 py-6">
+            <tr><td colspan="6" class="text-center opacity-50 py-6">
               {{ search ? 'Sin resultados' : 'No hay instrumentos. Añade el primero.' }}
             </td></tr>
           }
@@ -65,6 +71,7 @@ const INSTRUMENT_TYPE_LABELS: Record<string, string> = {
 export class InstrumentsComponent implements OnChanges {
   @Input() instruments: Instrument[] = [];
   @Input() members: BandMember[] = [];
+  @Input() amplifiers: Amplifier[] = [];
   @Input() microphones: Microphone[] = [];
   @Output() changed = new EventEmitter<void>();
 
@@ -77,11 +84,9 @@ export class InstrumentsComponent implements OnChanges {
   roleLabels = ROLE_LABELS;
 
   private memberMap = new Map<string, string>();
-  private micMap = new Map<string, string>();
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['members']) this.memberMap = new Map(this.members.map(m => [m.id, m.name]));
-    if (changes['microphones']) this.micMap = new Map(this.microphones.map(m => [m.id, m.name + (m.model ? ' · ' + m.model : '')]));
   }
 
   get filtered(): Instrument[] {
@@ -90,19 +95,29 @@ export class InstrumentsComponent implements OnChanges {
   }
 
   getMemberName(id?: string): string { return id ? (this.memberMap.get(id) ?? '—') : '—'; }
-  getMicName(id?: string): string { return id ? (this.micMap.get(id) ?? '—') : '—'; }
   brandModel(brand?: string, model?: string): string { return [brand, model].filter(s => !!s).join(' ') || '—'; }
 
   openForm(instrument: Instrument | null): void {
-    const ref = this.dialog.open<Omit<Instrument, 'id'>>(InstrumentFormComponent, {
+    const ref = this.dialog.open<InstrumentFormResult>(InstrumentFormComponent, {
       hasBackdrop: true, backdropClass: 'cdk-overlay-dark-backdrop', disableClose: true,
-      data: { instrument, members: this.members, microphones: this.microphones } satisfies InstrumentFormData,
+      data: { instrument, members: this.members, amplifiers: this.amplifiers, microphones: this.microphones } satisfies InstrumentFormData,
     });
-    ref.closed.subscribe(async result => {
+    ref.closed.subscribe(async r => {
+      const result = r as InstrumentFormResult | undefined;
       if (!result) return;
       try {
-        if (instrument) { await this.db.updateInstrument({ ...result, id: instrument.id }); this.toast.success(`"${result.name}" actualizado`); }
-        else { await this.db.createInstrument(result); this.toast.success(`"${result.name}" añadido`); }
+        const { micIds, ...instData } = result;
+        let savedId: string;
+        if (instrument) {
+          await this.db.updateInstrument({ ...instData, id: instrument.id });
+          savedId = instrument.id;
+          this.toast.success(`"${result.name}" actualizado`);
+        } else {
+          const created = await this.db.createInstrument(instData);
+          savedId = created.id;
+          this.toast.success(`"${result.name}" añadido`);
+        }
+        await this.db.setInstrumentMics(savedId, micIds);
         this.changed.emit();
       } catch { this.toast.danger('Error al guardar'); }
     });

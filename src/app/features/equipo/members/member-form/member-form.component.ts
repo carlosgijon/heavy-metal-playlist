@@ -17,7 +17,7 @@ export interface MemberFormData {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="modal-box w-11/12 max-w-lg">
+    <div class="modal-box w-11/12 max-w-5xl">
       <h3 class="font-bold text-lg mb-4">
         {{ data.member ? 'Editar integrante' : 'Nuevo integrante' }}
       </h3>
@@ -33,31 +33,51 @@ export interface MemberFormData {
           }
         </div>
 
-        <!-- Role -->
+        <!-- Roles (multi-select checkboxes) -->
         <div class="form-control mb-3">
-          <label class="label"><span class="label-text">Rol *</span></label>
-          <select class="select select-bordered select-sm" formControlName="role">
+          <label class="label"><span class="label-text">Roles *</span></label>
+          <div class="flex flex-wrap gap-3">
             @for (entry of roleEntries; track entry[0]) {
-              <option [value]="entry[0]">{{ entry[1] }}</option>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="checkbox checkbox-sm checkbox-primary"
+                       [checked]="selectedRoles.has(entry[0])"
+                       (change)="toggleRole(entry[0])" />
+                <span class="label-text">{{ entry[1] }}</span>
+              </label>
             }
-          </select>
+          </div>
+          @if (rolesError) {
+            <span class="text-error text-xs mt-1">Selecciona al menos un rol</span>
+          }
         </div>
 
-        <!-- Stage Position (3x3 grid picker) -->
+        <!-- Stage Position -->
         <div class="form-control mb-3">
           <label class="label"><span class="label-text">Posición en escenario</span></label>
-          <div class="grid grid-cols-3 gap-1 border border-base-300 rounded-lg p-2">
-            <div class="col-span-3 text-center text-xs opacity-50 mb-1">↑ FONDO ESCENARIO ↑</div>
-            @for (pos of stagePositions; track pos) {
-              <button type="button"
-                      class="btn btn-xs"
-                      [class.btn-primary]="form.get('stagePosition')?.value === pos"
-                      [class.btn-ghost]="form.get('stagePosition')?.value !== pos"
-                      (click)="selectPosition(pos)">
-                {{ positionLabels[pos] }}
-              </button>
-            }
-            <div class="col-span-3 text-center text-xs opacity-50 mt-1">↓ PÚBLICO ↓</div>
+          <div class="border border-base-300 rounded-lg overflow-hidden">
+            <!-- Cabeceras de columna (profundidad) -->
+            <div class="grid grid-cols-3 bg-base-200 text-xs opacity-60 text-center">
+              <div class="py-1">← Fondo</div>
+              <div class="py-1">Medio</div>
+              <div class="py-1">Frente →</div>
+            </div>
+            <!-- Botones 3×3 -->
+            <div class="grid grid-cols-3 gap-px bg-base-300 p-px">
+              @for (pos of stagePositions; track pos) {
+                <button type="button"
+                        class="btn btn-xs rounded-none"
+                        [class.btn-primary]="form.get('stagePosition')?.value === pos"
+                        [class.btn-ghost]="form.get('stagePosition')?.value !== pos"
+                        (click)="selectPosition(pos)">
+                  {{ positionLabels[pos] }}
+                </button>
+              }
+            </div>
+            <!-- Indicadores laterales -->
+            <div class="flex justify-between bg-base-200 text-xs opacity-50 px-2 py-1">
+              <span>↑ Stage Left</span>
+              <span>Stage Right ↓</span>
+            </div>
           </div>
         </div>
 
@@ -94,32 +114,44 @@ export class MemberFormComponent implements OnInit {
 
   form = this.fb.group({
     name: ['', Validators.required],
-    role: ['vocalist' as MemberRole],
     stagePosition: ['' as StagePosition | ''],
     vocalMicId: [''],
     notes: [''],
     sortOrder: [0],
   });
 
+  selectedRoles = new Set<MemberRole>(['vocalist']);
+  rolesError = false;
+
   roleEntries = Object.entries(ROLE_LABELS) as [MemberRole, string][];
   positionLabels = STAGE_POSITION_LABELS;
   stagePositions: StagePosition[] = [
-    'back-left', 'back-center', 'back-right',
-    'mid-left',  'mid-center',  'mid-right',
-    'front-left','front-center','front-right',
+    'back-left',   'mid-left',   'front-left',
+    'back-center', 'mid-center', 'front-center',
+    'back-right',  'mid-right',  'front-right',
   ];
 
   ngOnInit(): void {
     if (this.data.member) {
+      const m = this.data.member;
+      this.selectedRoles = new Set(m.roles as MemberRole[]);
       this.form.patchValue({
-        name: this.data.member.name,
-        role: this.data.member.role,
-        stagePosition: this.data.member.stagePosition ?? '',
-        vocalMicId: this.data.member.vocalMicId ?? '',
-        notes: this.data.member.notes ?? '',
-        sortOrder: this.data.member.sortOrder,
+        name: m.name,
+        stagePosition: m.stagePosition ?? '',
+        vocalMicId: m.vocalMicId ?? '',
+        notes: m.notes ?? '',
+        sortOrder: m.sortOrder,
       });
     }
+  }
+
+  toggleRole(role: MemberRole): void {
+    if (this.selectedRoles.has(role)) {
+      this.selectedRoles.delete(role);
+    } else {
+      this.selectedRoles.add(role);
+    }
+    this.rolesError = false;
   }
 
   selectPosition(pos: StagePosition): void {
@@ -129,10 +161,11 @@ export class MemberFormComponent implements OnInit {
 
   submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.selectedRoles.size === 0) { this.rolesError = true; return; }
     const v = this.form.getRawValue();
     this.dialogRef.close({
       name: v.name!,
-      role: v.role as MemberRole,
+      roles: [...this.selectedRoles],
       stagePosition: (v.stagePosition || undefined) as StagePosition | undefined,
       vocalMicId: v.vocalMicId || undefined,
       notes: v.notes || undefined,

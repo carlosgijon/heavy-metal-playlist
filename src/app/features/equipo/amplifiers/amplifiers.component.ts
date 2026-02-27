@@ -7,8 +7,8 @@ import { heroPencil, heroTrash, heroPlus } from '@ng-icons/heroicons/outline';
 import { DatabaseService } from '../../../core/services/database.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog.component';
-import { Amplifier, BandMember, Microphone, ROLE_LABELS, STAGE_POSITION_LABELS } from '../../../core/models/equipment.model';
-import { AmplifierFormComponent, AmplifierFormData } from './amplifier-form/amplifier-form.component';
+import { Amplifier, Instrument, BandMember, Microphone, ROLE_LABELS, STAGE_POSITION_LABELS } from '../../../core/models/equipment.model';
+import { AmplifierFormComponent, AmplifierFormData, AmplifierFormResult } from './amplifier-form/amplifier-form.component';
 
 const AMP_TYPE_LABELS: Record<string, string> = { guitar: 'Guitarra', bass: 'Bajo', keyboard: 'Teclado' };
 
@@ -28,7 +28,7 @@ const AMP_TYPE_LABELS: Record<string, string> = { guitar: 'Guitarra', bass: 'Baj
     <div class="overflow-x-auto">
       <table class="table table-zebra table-sm w-full">
         <thead>
-          <tr><th>Nombre</th><th>Tipo</th><th>Marca / Modelo</th><th>Integrante</th><th>Potencia</th><th>Micrófono</th><th>Posición</th><th>Notas</th><th></th></tr>
+          <tr><th>Nombre</th><th>Tipo</th><th>Marca / Modelo</th><th>Integrante</th><th>Potencia</th><th>Salida</th><th>Posición</th><th>Notas</th><th></th></tr>
         </thead>
         <tbody>
           @for (a of filtered; track a.id) {
@@ -38,7 +38,13 @@ const AMP_TYPE_LABELS: Record<string, string> = { guitar: 'Guitarra', bass: 'Baj
               <td>{{ brandModel(a.brand, a.model) }}</td>
               <td>{{ getMemberName(a.memberId) }}</td>
               <td>{{ a.wattage ? a.wattage + ' W' : '—' }}</td>
-              <td class="text-sm">{{ getMicName(a.micId) }}</td>
+              <td>
+                @switch (a.routing) {
+                  @case ('di')   { <span class="badge badge-sm badge-info">DI box</span> }
+                  @case ('mesa') { <span class="badge badge-sm badge-success">Mesa</span> }
+                  @default       { <span class="opacity-40">—</span> }
+                }
+              </td>
               <td class="text-sm">{{ getPositionLabel(a.stagePosition) }}</td>
               <td class="text-sm opacity-60">{{ a.notes }}</td>
               <td>
@@ -61,6 +67,7 @@ const AMP_TYPE_LABELS: Record<string, string> = { guitar: 'Guitarra', bass: 'Baj
 export class AmplifiersComponent implements OnChanges {
   @Input() amplifiers: Amplifier[] = [];
   @Input() members: BandMember[] = [];
+  @Input() instruments: Instrument[] = [];
   @Input() microphones: Microphone[] = [];
   @Output() changed = new EventEmitter<void>();
 
@@ -72,11 +79,9 @@ export class AmplifiersComponent implements OnChanges {
   typeLabels = AMP_TYPE_LABELS;
   roleLabels = ROLE_LABELS;
   private memberMap = new Map<string, string>();
-  private micMap = new Map<string, string>();
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['members']) this.memberMap = new Map(this.members.map(m => [m.id, m.name]));
-    if (changes['microphones']) this.micMap = new Map(this.microphones.map(m => [m.id, m.name + (m.model ? ' · ' + m.model : '')]));
   }
 
   get filtered(): Amplifier[] {
@@ -85,20 +90,31 @@ export class AmplifiersComponent implements OnChanges {
   }
 
   getMemberName(id?: string): string { return id ? (this.memberMap.get(id) ?? '—') : '—'; }
-  getMicName(id?: string): string { return id ? (this.micMap.get(id) ?? '—') : '—'; }
   getPositionLabel(pos?: string): string { return pos ? (STAGE_POSITION_LABELS[pos as keyof typeof STAGE_POSITION_LABELS] ?? pos) : '—'; }
   brandModel(brand?: string, model?: string): string { return [brand, model].filter(s => !!s).join(' ') || '—'; }
 
   openForm(amplifier: Amplifier | null): void {
-    const ref = this.dialog.open<Omit<Amplifier, 'id'>>(AmplifierFormComponent, {
+    const ref = this.dialog.open<AmplifierFormResult>(AmplifierFormComponent, {
       hasBackdrop: true, backdropClass: 'cdk-overlay-dark-backdrop', disableClose: true,
-      data: { amplifier, members: this.members, microphones: this.microphones } satisfies AmplifierFormData,
+      data: { amplifier, members: this.members, instruments: this.instruments, microphones: this.microphones } satisfies AmplifierFormData,
     });
-    ref.closed.subscribe(async result => {
+    ref.closed.subscribe(async r => {
+      const result = r as AmplifierFormResult | undefined;
       if (!result) return;
       try {
-        if (amplifier) { await this.db.updateAmplifier({ ...result, id: amplifier.id }); this.toast.success(`"${result.name}" actualizado`); }
-        else { await this.db.createAmplifier(result); this.toast.success(`"${result.name}" añadido`); }
+        const { instrumentId, micIds, ...ampData } = result;
+        let savedId: string;
+        if (amplifier) {
+          await this.db.updateAmplifier({ ...ampData, id: amplifier.id });
+          savedId = amplifier.id;
+          this.toast.success(`"${result.name}" actualizado`);
+        } else {
+          const created = await this.db.createAmplifier(ampData);
+          savedId = created.id;
+          this.toast.success(`"${result.name}" añadido`);
+        }
+        await this.db.updateAmplifierInstrumentLink(savedId, instrumentId ?? null);
+        await this.db.setAmplifierMics(savedId, micIds);
         this.changed.emit();
       } catch { this.toast.danger('Error al guardar'); }
     });

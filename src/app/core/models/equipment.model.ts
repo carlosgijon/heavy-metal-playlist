@@ -5,6 +5,10 @@ export type StagePosition =
   | 'mid-left'   | 'mid-center'   | 'mid-right'
   | 'back-left'  | 'back-center'  | 'back-right';
 
+export type InstrumentRouting = 'amp' | 'di' | 'mesa';
+export type AmpRouting        = 'mic' | 'di' | 'mesa';
+export type MonoStereo        = 'mono' | 'stereo';
+
 export type MicType = 'dynamic' | 'condenser' | 'ribbon';
 export type PolarPattern = 'cardioid' | 'supercardioid' | 'hypercardioid' | 'omnidirectional' | 'figure-8';
 export type InstrumentType = 'guitar' | 'bass' | 'drums' | 'keyboard' | 'other';
@@ -17,12 +21,14 @@ export type MonitorType = 'speaker' | 'iem';
 export interface BandMember {
   id: string;
   name: string;
-  role: MemberRole;
+  roles: MemberRole[];
   stagePosition?: StagePosition;
   vocalMicId?: string;
   notes?: string;
   sortOrder: number;
 }
+
+export type MicAssignmentType = 'member' | 'amplifier' | 'instrument';
 
 export interface Microphone {
   id: string;
@@ -32,8 +38,11 @@ export interface Microphone {
   type: MicType;
   polarPattern?: PolarPattern;
   phantomPower: boolean;
+  monoStereo: MonoStereo;
   notes?: string;
   usage?: MicUsage;
+  assignedToType?: MicAssignmentType;
+  assignedToId?: string;
 }
 
 export interface Instrument {
@@ -43,8 +52,9 @@ export interface Instrument {
   type: InstrumentType;
   brand?: string;
   model?: string;
-  micId?: string;
-  usesDi: boolean;
+  routing: InstrumentRouting;
+  ampId?: string;
+  monoStereo?: MonoStereo;
   channelOrder: number;
   notes?: string;
 }
@@ -57,7 +67,8 @@ export interface Amplifier {
   brand?: string;
   model?: string;
   wattage?: number;
-  micId?: string;
+  routing: AmpRouting;
+  monoStereo?: MonoStereo;
   stagePosition?: StagePosition;
   notes?: string;
   cabinetBrand?: string;
@@ -90,18 +101,19 @@ export interface ChannelEntry {
   micType?: string;
   polarPattern?: string;
   notes?: string;
+  memberId?: string;
 }
 
 export const STAGE_POSITION_LABELS: Record<StagePosition, string> = {
-  'back-left':    'Fondo Izq',
-  'back-center':  'Fondo Centro',
-  'back-right':   'Fondo Der',
-  'mid-left':     'Medio Izq',
-  'mid-center':   'Medio Centro',
-  'mid-right':    'Medio Der',
-  'front-left':   'Frente Izq',
-  'front-center': 'Frente Centro',
-  'front-right':  'Frente Der',
+  'back-left':    'Fdo.Izq',
+  'back-center':  'Fdo.Ctr',
+  'back-right':   'Fdo.Der',
+  'mid-left':     'Med.Izq',
+  'mid-center':   'Med.Ctr',
+  'mid-right':    'Med.Der',
+  'front-left':   'Fte.Izq',
+  'front-center': 'Fte.Ctr',
+  'front-right':  'Fte.Der',
 };
 
 export const ROLE_LABELS: Record<MemberRole, string> = {
@@ -166,4 +178,16 @@ export const SPEAKER_CONFIG_LABELS: Record<SpeakerConfig, string> = {
 export const MONITOR_TYPE_LABELS: Record<MonitorType, string> = {
   'speaker': 'Altavoz de escenario',
   'iem':     'In-Ear Monitor (IEM)',
+};
+
+export const INSTRUMENT_ROUTING_LABELS: Record<InstrumentRouting, string> = {
+  amp:  'Via Amplificador',
+  di:   'DI (Direct Injection)',
+  mesa: 'Directo a Mesa',
+};
+
+export const AMP_ROUTING_LABELS: Record<AmpRouting, string> = {
+  mic:  'Micrófono',
+  di:   'DI box (Direct Injection)',
+  mesa: 'Directo a Mesa',
 };

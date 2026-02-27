@@ -1,22 +1,19 @@
 <div class="songs-container">
 
   <!-- Header -->
-  <div class="songs-header">
-    <div class="songs-title-row">
-      <h2 class="songs-title">
-        <ng-icon name="heroMusicalNote" class="w-6 h-6"></ng-icon>
-        Librería de Canciones
-      </h2>
-      <span class="songs-count" *ngIf="songs.length > 0">{{ songs.length }} canciones</span>
+  <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div>
+      <h1 class="text-2xl font-bold">Librería de Canciones</h1>
+      <p class="text-sm opacity-60">{{ songs.length }} canciones en la librería</p>
     </div>
-    <div class="header-actions">
+    <div class="flex items-center gap-2">
       <input
-        class="input input-bordered search-input"
+        class="input input-bordered w-72"
         type="text"
         [(ngModel)]="searchQuery"
         placeholder="Buscar por título, artista o género..." />
-      <button class="btn btn-primary btn-sm" (click)="openCreateForm()">
-        <ng-icon name="heroPlus" class="w-4 h-4"></ng-icon>
+      <button class="btn btn-primary gap-2" (click)="openCreateForm()">
+        <ng-icon name="heroPlus" size="18"></ng-icon>
         Nueva canción
       </button>
     </div>

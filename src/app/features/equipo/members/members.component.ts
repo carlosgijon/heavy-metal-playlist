@@ -35,7 +35,7 @@ import { MemberFormComponent, MemberFormData } from './member-form/member-form.c
           @for (m of filtered; track m.id) {
             <tr>
               <td class="font-medium">{{ m.name }}</td>
-              <td>{{ roleLabels[m.role] }}</td>
+              <td>{{ getRoleNames(m) }}</td>
               <td>{{ m.stagePosition ? positionLabels[m.stagePosition] : '—' }}</td>
               <td>{{ getMicName(m.vocalMicId) }}</td>
               <td class="text-sm opacity-60">{{ m.notes }}</td>
@@ -87,6 +87,10 @@ export class MembersComponent implements OnChanges {
 
   getMicName(id?: string): string {
     return id ? (this.micMap.get(id) ?? '—') : '—';
+  }
+
+  getRoleNames(m: BandMember): string {
+    return m.roles.map(r => this.roleLabels[r] ?? r).join(', ') || '—';
   }
 
   openForm(member: BandMember | null): void {

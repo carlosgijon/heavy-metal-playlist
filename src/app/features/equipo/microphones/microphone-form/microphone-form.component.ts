@@ -3,11 +3,20 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import {
-  Microphone, MicType, MicUsage, PolarPattern,
-  MIC_TYPE_LABELS, MIC_USAGE_LABELS, POLAR_LABELS,
+  Microphone, MicType, MicUsage, PolarPattern, MicAssignmentType,
+  BandMember, Amplifier, Instrument,
+  MIC_TYPE_LABELS, POLAR_LABELS, ROLE_LABELS,
 } from '../../../../core/models/equipment.model';
 
-export interface MicrophoneFormData { microphone: Microphone | null; }
+export interface MicrophoneFormData {
+  microphone: Microphone | null;
+  members: BandMember[];
+  amplifiers: Amplifier[];
+  instruments: Instrument[];
+}
+
+// Combined UI value for "¿Dónde va este micrófono?"
+type DestinationType = '' | 'member' | 'amplifier' | 'instrument' | 'drums-kick' | 'drums-overhead' | 'drums-snare';
 
 @Component({
   selector: 'app-microphone-form',
@@ -57,13 +66,17 @@ export interface MicrophoneFormData { microphone: Microphone | null; }
           </div>
         </div>
         <div class="form-control mb-3">
-          <label class="label"><span class="label-text">Uso / Aplicación</span></label>
-          <select class="select select-bordered select-sm" formControlName="usage">
-            <option value="">— Sin especificar —</option>
-            @for (entry of usageEntries; track entry[0]) {
-              <option [value]="entry[0]">{{ entry[1] }}</option>
-            }
-          </select>
+          <label class="label"><span class="label-text">Canal</span></label>
+          <div class="flex gap-6">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" class="radio radio-sm" formControlName="monoStereo" value="mono" />
+              <span class="label-text">Mono</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" class="radio radio-sm" formControlName="monoStereo" value="stereo" />
+              <span class="label-text">Estéreo</span>
+            </label>
+          </div>
         </div>
         <div class="form-control mb-3">
           <label class="label cursor-pointer justify-start gap-3">
@@ -71,6 +84,63 @@ export interface MicrophoneFormData { microphone: Microphone | null; }
             <span class="label-text">Requiere alimentación fantasma (+48V)</span>
           </label>
         </div>
+
+        <!-- Destino / Asignación -->
+        <div class="divider text-xs opacity-60 my-2">Destino en la mesa</div>
+        <div class="form-control mb-3">
+          <label class="label"><span class="label-text">¿Dónde va este micrófono?</span></label>
+          <select class="select select-bordered select-sm" formControlName="destType"
+                  (change)="onDestTypeChange()">
+            <option value="">Ambiente / público (sin asignar)</option>
+            <option value="member">Micrófono vocal (integrante)</option>
+            <option value="amplifier">Amplificador</option>
+            <option value="instrument">Instrumento de batería (general)</option>
+            <option value="drums-kick">Micrófono de bombo</option>
+            <option value="drums-overhead">Micrófonos aéreos de batería (overhead)</option>
+            <option value="drums-snare">Micrófono de caja (snare)</option>
+          </select>
+        </div>
+
+        @if (form.get('destType')?.value === 'member') {
+          <div class="form-control mb-3">
+            <label class="label"><span class="label-text">Integrante (vocal)</span></label>
+            <select class="select select-bordered select-sm" formControlName="assignedToId">
+              <option value="">— Seleccionar integrante —</option>
+              @for (m of data.members; track m.id) {
+                <option [value]="m.id">{{ m.name }} ({{ getMemberRoles(m) }})</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (form.get('destType')?.value === 'amplifier') {
+          <div class="form-control mb-3">
+            <label class="label"><span class="label-text">Amplificador</span></label>
+            <select class="select select-bordered select-sm" formControlName="assignedToId">
+              <option value="">— Seleccionar amplificador —</option>
+              @for (a of data.amplifiers; track a.id) {
+                <option [value]="a.id">{{ a.name }}{{ a.brand ? ' · ' + a.brand : '' }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (form.get('destType')?.value === 'instrument') {
+          <div class="form-control mb-3">
+            <label class="label"><span class="label-text">Instrumento (batería)</span></label>
+            @if (drumInstruments.length === 0) {
+              <p class="text-xs opacity-60 mt-1">No hay instrumentos de batería. Añade uno en la pestaña Instrumentos.</p>
+            } @else {
+              <select class="select select-bordered select-sm" formControlName="assignedToId">
+                <option value="">— Seleccionar instrumento —</option>
+                @for (i of drumInstruments; track i.id) {
+                  <option [value]="i.id">{{ i.name }}{{ i.brand ? ' · ' + i.brand : '' }}</option>
+                }
+              </select>
+            }
+          </div>
+        }
+
         <div class="form-control mb-4">
           <label class="label"><span class="label-text">Notas</span></label>
           <textarea class="textarea textarea-bordered textarea-sm" formControlName="notes"
@@ -95,37 +165,95 @@ export class MicrophoneFormComponent implements OnInit {
     model: [''],
     type: ['dynamic' as MicType],
     polarPattern: ['' as PolarPattern | ''],
-    usage: ['' as MicUsage | ''],
     phantomPower: [false],
+    monoStereo: ['mono'],
     notes: [''],
+    destType: ['' as DestinationType],
+    assignedToId: [''],
   });
 
   micTypeEntries = Object.entries(MIC_TYPE_LABELS) as [MicType, string][];
   polarEntries = Object.entries(POLAR_LABELS) as [PolarPattern, string][];
-  usageEntries = Object.entries(MIC_USAGE_LABELS) as [MicUsage, string][];
+  private roleLabels = ROLE_LABELS;
+
+  get drumInstruments(): Instrument[] {
+    return this.data.instruments.filter(i => i.type === 'drums');
+  }
+
+  getMemberRoles(m: BandMember): string {
+    return m.roles.map(r => this.roleLabels[r] ?? r).join(', ') || '—';
+  }
 
   ngOnInit(): void {
     if (this.data.microphone) {
       const m = this.data.microphone;
+      // Reconstruct combined destType from assignedToType + usage
+      let destType: DestinationType = (m.assignedToType ?? '') as DestinationType;
+      if (m.assignedToType === 'instrument' && m.usage) {
+        if (['drums-kick', 'drums-overhead', 'drums-snare'].includes(m.usage)) {
+          destType = m.usage as DestinationType;
+        }
+      }
       this.form.patchValue({
         name: m.name, brand: m.brand ?? '', model: m.model ?? '',
         type: m.type, polarPattern: m.polarPattern ?? '',
-        usage: m.usage ?? '',
-        phantomPower: m.phantomPower, notes: m.notes ?? '',
+        phantomPower: m.phantomPower, monoStereo: m.monoStereo ?? 'mono',
+        notes: m.notes ?? '', destType,
+        assignedToId: m.assignedToId ?? '',
       });
     }
+  }
+
+  onDestTypeChange(): void {
+    this.form.patchValue({ assignedToId: '' });
   }
 
   submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const v = this.form.getRawValue();
+    const destType = v.destType as DestinationType;
+
+    // Derive real assignedToType + usage from combined destType
+    let assignedToType: MicAssignmentType | undefined;
+    let usage: MicUsage | undefined;
+    let assignedToId: string | undefined;
+
+    if (destType === 'member') {
+      assignedToType = 'member';
+      usage = 'vocal';
+      assignedToId = v.assignedToId || undefined;
+    } else if (destType === 'amplifier') {
+      assignedToType = 'amplifier';
+      usage = 'instrument';
+      assignedToId = v.assignedToId || undefined;
+    } else if (destType === 'instrument') {
+      assignedToType = 'instrument';
+      usage = 'instrument';
+      assignedToId = v.assignedToId || undefined;
+    } else if (destType === 'drums-kick') {
+      assignedToType = 'instrument';
+      usage = 'drums-kick';
+      assignedToId = v.assignedToId || undefined;
+    } else if (destType === 'drums-overhead') {
+      assignedToType = 'instrument';
+      usage = 'drums-overhead';
+      assignedToId = v.assignedToId || undefined;
+    } else if (destType === 'drums-snare') {
+      assignedToType = 'instrument';
+      usage = 'drums-snare';
+      assignedToId = v.assignedToId || undefined;
+    }
+
     this.dialogRef.close({
       name: v.name!, brand: v.brand || undefined, model: v.model || undefined,
       type: v.type as MicType,
       polarPattern: (v.polarPattern || undefined) as PolarPattern | undefined,
-      usage: (v.usage || undefined) as MicUsage | undefined,
+      usage,
       phantomPower: v.phantomPower ?? false,
+      monoStereo: (v.monoStereo as 'mono' | 'stereo') ?? 'mono',
       notes: v.notes || undefined,
+      assignedToType,
+      assignedToId,
     });
   }
 
