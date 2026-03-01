@@ -60,6 +60,11 @@ pub fn init_db(app: &AppHandle) -> Result<Connection, Box<dyn std::error::Error>
     let _ = conn.execute("ALTER TABLE instruments ADD COLUMN mic_id TEXT REFERENCES microphones(id) ON DELETE SET NULL", []);
     // Mono/stereo for microphones
     let _ = conn.execute("ALTER TABLE microphones ADD COLUMN mono_stereo TEXT NOT NULL DEFAULT 'mono'", []);
+    // Per-gig checklists: add checklist_id to existing rows (NULL = legacy global item)
+    let _ = conn.execute("ALTER TABLE checklist_items ADD COLUMN checklist_id TEXT", []);
+    // Follow-up reminder fields for gigs
+    let _ = conn.execute("ALTER TABLE gigs ADD COLUMN follow_up_date TEXT", []);
+    let _ = conn.execute("ALTER TABLE gigs ADD COLUMN follow_up_note TEXT", []);
 
     Ok(conn)
 }
@@ -160,6 +165,73 @@ fn create_schema(conn: &Connection) -> rusqlite::Result<()> {
             aux_sends INTEGER,
             wattage   INTEGER,
             notes     TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS venues (
+            id            TEXT PRIMARY KEY NOT NULL,
+            name          TEXT NOT NULL,
+            city          TEXT,
+            address       TEXT,
+            website       TEXT,
+            capacity      INTEGER,
+            booking_name  TEXT,
+            booking_email TEXT,
+            booking_phone TEXT,
+            notes         TEXT,
+            created_at    TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS gigs (
+            id              TEXT PRIMARY KEY NOT NULL,
+            venue_id        TEXT REFERENCES venues(id) ON DELETE SET NULL,
+            title           TEXT NOT NULL,
+            date            TEXT,
+            time            TEXT,
+            status          TEXT NOT NULL DEFAULT 'lead',
+            pay             TEXT,
+            load_in_time    TEXT,
+            soundcheck_time TEXT,
+            set_time        TEXT,
+            setlist_id      TEXT REFERENCES playlists(id) ON DELETE SET NULL,
+            notes           TEXT,
+            created_at      TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS calendar_events (
+            id         TEXT PRIMARY KEY NOT NULL,
+            type       TEXT NOT NULL,
+            title      TEXT NOT NULL,
+            date       TEXT NOT NULL,
+            end_date   TEXT,
+            member_id  TEXT REFERENCES band_members(id) ON DELETE CASCADE,
+            all_day    INTEGER NOT NULL DEFAULT 1,
+            notes      TEXT,
+            created_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS checklist_items (
+            id           TEXT PRIMARY KEY NOT NULL,
+            checklist_id TEXT REFERENCES gig_checklists(id) ON DELETE CASCADE,
+            category     TEXT NOT NULL DEFAULT 'otro',
+            text         TEXT NOT NULL,
+            done         INTEGER NOT NULL DEFAULT 0,
+            sort_order   INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS gig_checklists (
+            id         TEXT PRIMARY KEY NOT NULL,
+            gig_id     TEXT NOT NULL REFERENCES gigs(id) ON DELETE CASCADE,
+            name       TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS gig_contacts (
+            id           TEXT PRIMARY KEY NOT NULL,
+            gig_id       TEXT NOT NULL REFERENCES gigs(id) ON DELETE CASCADE,
+            date         TEXT NOT NULL,
+            contact_type TEXT NOT NULL DEFAULT 'call',
+            notes        TEXT,
+            created_at   TEXT NOT NULL
         );
         ",
     )

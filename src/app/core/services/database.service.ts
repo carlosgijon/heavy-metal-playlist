@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
 import { Song, Playlist, PlaylistWithStats, LibrarySong, PlaylistSongView } from '../models/song.model';
 import { BandMember, Microphone, Instrument, Amplifier, PaEquipment, ChannelEntry } from '../models/equipment.model';
+import { Venue, Gig, GigStatus, CalendarEvent, GigChecklist, ChecklistItem, GigContact } from '../models/gig.model';
 
 @Injectable({ providedIn: 'root' })
 export class DatabaseService {
@@ -199,5 +200,121 @@ export class DatabaseService {
 
   generateChannelList(): Promise<ChannelEntry[]> {
     return invoke<ChannelEntry[]>('channel_list_generate');
+  }
+
+  // ── Venues ─────────────────────────────────────────────────────────────────
+
+  getVenues(): Promise<Venue[]> {
+    return invoke<Venue[]>('venues_get_all');
+  }
+
+  createVenue(payload: Omit<Venue, 'id' | 'createdAt'>): Promise<Venue> {
+    return invoke<Venue>('venues_create', { payload });
+  }
+
+  updateVenue(venue: Venue): Promise<Venue> {
+    return invoke<Venue>('venues_update', { venue });
+  }
+
+  deleteVenue(id: string): Promise<void> {
+    return invoke<void>('venues_delete', { id });
+  }
+
+  // ── Gigs ───────────────────────────────────────────────────────────────────
+
+  getGigs(): Promise<Gig[]> {
+    return invoke<Gig[]>('gigs_get_all');
+  }
+
+  createGig(payload: Omit<Gig, 'id' | 'createdAt' | 'venueName'>): Promise<Gig> {
+    return invoke<Gig>('gigs_create', { payload });
+  }
+
+  updateGig(gig: Gig): Promise<Gig> {
+    return invoke<Gig>('gigs_update', { gig });
+  }
+
+  updateGigStatus(id: string, status: GigStatus): Promise<Gig> {
+    return invoke<Gig>('gigs_update_status', { id, status });
+  }
+
+  deleteGig(id: string): Promise<void> {
+    return invoke<void>('gigs_delete', { id });
+  }
+
+  // ── Calendar Events ────────────────────────────────────────────────────────
+
+  getCalendarEvents(): Promise<CalendarEvent[]> {
+    return invoke<CalendarEvent[]>('calendar_events_get_all');
+  }
+
+  getCalendarEventsByMonth(year: number, month: number): Promise<CalendarEvent[]> {
+    return invoke<CalendarEvent[]>('calendar_events_get_by_month', { year, month });
+  }
+
+  createCalendarEvent(payload: Omit<CalendarEvent, 'id' | 'createdAt' | 'memberName'>): Promise<CalendarEvent> {
+    return invoke<CalendarEvent>('calendar_events_create', { payload });
+  }
+
+  updateCalendarEvent(event: CalendarEvent): Promise<CalendarEvent> {
+    return invoke<CalendarEvent>('calendar_events_update', { event });
+  }
+
+  deleteCalendarEvent(id: string): Promise<void> {
+    return invoke<void>('calendar_events_delete', { id });
+  }
+
+  // ── GigChecklists ──────────────────────────────────────────────────────────
+
+  getGigChecklists(gigId: string): Promise<GigChecklist[]> {
+    return invoke<GigChecklist[]>('gig_checklists_get_by_gig', { gigId });
+  }
+
+  createGigChecklist(payload: { gigId: string; name: string }): Promise<GigChecklist> {
+    return invoke<GigChecklist>('gig_checklists_create', { payload });
+  }
+
+  deleteGigChecklist(id: string): Promise<void> {
+    return invoke<void>('gig_checklists_delete', { id });
+  }
+
+  // ── ChecklistItems ─────────────────────────────────────────────────────────
+
+  getChecklistByList(checklistId: string): Promise<ChecklistItem[]> {
+    return invoke<ChecklistItem[]>('checklist_get_by_list', { checklistId });
+  }
+
+  createChecklistItem(payload: Omit<ChecklistItem, 'id' | 'done'>): Promise<ChecklistItem> {
+    return invoke<ChecklistItem>('checklist_create', { payload });
+  }
+
+  updateChecklistItem(item: ChecklistItem): Promise<ChecklistItem> {
+    return invoke<ChecklistItem>('checklist_update', { item });
+  }
+
+  deleteChecklistItem(id: string): Promise<void> {
+    return invoke<void>('checklist_delete', { id });
+  }
+
+  resetChecklistByList(checklistId: string): Promise<void> {
+    return invoke<void>('checklist_reset_done_by_list', { checklistId });
+  }
+
+  // ── Gig Contacts ───────────────────────────────────────────────────────────
+
+  getGigContacts(gigId: string): Promise<GigContact[]> {
+    return invoke<GigContact[]>('gig_contacts_get_by_gig', { gigId });
+  }
+
+  createGigContact(payload: Omit<GigContact, 'id' | 'createdAt'>): Promise<GigContact> {
+    return invoke<GigContact>('gig_contacts_create', { payload });
+  }
+
+  deleteGigContact(id: string): Promise<void> {
+    return invoke<void>('gig_contacts_delete', { id });
+  }
+
+  updateGigFollowUp(id: string, followUpDate: string | undefined, followUpNote: string | undefined): Promise<void> {
+    return invoke<void>('gigs_update_follow_up', { id, followUpDate, followUpNote });
   }
 }
