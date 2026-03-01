@@ -6,6 +6,8 @@ import { PlaylistsComponent } from './features/playlists/playlists.component';
 import { PlaylistComponent } from './features/playlist/playlist.component';
 import { SongsComponent } from './features/songs/songs.component';
 import { EquipoComponent } from './features/equipo/equipo.component';
+import { ConciertosComponent } from './features/conciertos/conciertos.component';
+import { CalendarComponent } from './features/conciertos/calendar/calendar.component';
 import { ThemeSwitcherComponent } from './shared/theme-switcher/theme-switcher.component';
 import { SettingsDialogComponent } from './shared/settings-dialog/settings-dialog.component';
 import { PlaylistWithStats } from './core/models/song.model';
@@ -20,6 +22,8 @@ import { PlaylistWithStats } from './core/models/song.model';
     PlaylistComponent,
     SongsComponent,
     EquipoComponent,
+    ConciertosComponent,
+    CalendarComponent,
     ThemeSwitcherComponent,
   ],
   templateUrl: './app.component.html',
@@ -28,11 +32,11 @@ import { PlaylistWithStats } from './core/models/song.model';
 export class AppComponent {
   private readonly dialog = inject(Dialog);
 
-  view = signal<'songs' | 'playlists' | 'detail' | 'equipo'>('playlists');
+  view = signal<'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario'>('calendario');
   selectedPlaylist = signal<PlaylistWithStats | null>(null);
   sidebarExpanded = false;
 
-  setView(v: 'songs' | 'playlists' | 'equipo'): void {
+  setView(v: 'songs' | 'playlists' | 'equipo' | 'conciertos' | 'calendario'): void {
     this.view.set(v);
     this.selectedPlaylist.set(null);
   }
