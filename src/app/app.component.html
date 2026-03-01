@@ -11,6 +11,22 @@
       </button>
       <button
         class="nav-item"
+        [class.active]="view() === 'calendario'"
+        (click)="setView('calendario')"
+        title="Calendario">
+        <ng-icon name="heroCalendarDays" class="nav-icon"></ng-icon>
+        <span class="nav-label">Calendario</span>
+      </button>
+      <button
+        class="nav-item"
+        [class.active]="view() === 'conciertos'"
+        (click)="setView('conciertos')"
+        title="Conciertos">
+        <ng-icon name="heroStar" class="nav-icon"></ng-icon>
+        <span class="nav-label">Conciertos</span>
+      </button>
+      <button
+        class="nav-item"
         [class.active]="view() === 'songs'"
         (click)="setView('songs')"
         title="Canciones">
@@ -64,12 +80,16 @@
 
     <!-- Content -->
     <main class="main-content">
-      @if (view() === 'songs') {
+      @if (view() === 'calendario') {
+        <app-calendar class="p-4 h-full block overflow-auto" />
+      } @else if (view() === 'songs') {
         <app-songs />
       } @else if (view() === 'playlists') {
         <app-playlists (playlistSelected)="onPlaylistSelected($event)" />
       } @else if (view() === 'equipo') {
         <app-equipo />
+      } @else if (view() === 'conciertos') {
+        <app-conciertos />
       } @else {
         <app-playlist [playlist]="selectedPlaylist()!" (back)="onBack()" />
       }
