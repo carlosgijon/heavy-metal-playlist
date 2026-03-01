@@ -14,7 +14,8 @@
       "WebFetch(domain:embed.figma.com)",
       "Bash(node -e:*)",
       "Bash(cargo check:*)",
-      "Bash(npx ng build:*)"
+      "Bash(npx ng build:*)",
+      "Bash(git checkout -b feat/conciertos-calendar-contacts)"
     ]
   }
 }
