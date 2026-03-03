@@ -61,15 +61,15 @@ type EquipoTab =
       </div>
 
       <!-- Tabs -->
-      <div class="tabs tabs-bordered mb-4">
+      <div class="tabs tabs-bordered mb-4 overflow-x-auto flex-nowrap">
         @for (tab of tabs; track tab.id) {
           <button
-            class="tab gap-2"
+            class="tab gap-2 flex-shrink-0"
             [class.tab-active]="activeTab() === tab.id"
             (click)="activeTab.set(tab.id)"
           >
             {{ tab.label }}
-            <span class="badge badge-sm">{{ tab.count() }}</span>
+            <span class="badge badge-sm hidden sm:flex">{{ tab.count() }}</span>
           </button>
         }
       </div>

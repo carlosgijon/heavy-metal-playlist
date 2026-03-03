@@ -1,41 +1,60 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
-import { NgIconComponent } from '@ng-icons/core';
 import { DatabaseService } from '../../core/services/database.service';
-import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-settings-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconComponent],
+  imports: [FormsModule],
   template: `
-    <div class="modal-box w-96 max-w-[95vw]">
+    <div class="modal-box w-80 max-w-[95vw]">
       <h3 class="font-bold text-lg mb-4">Configuración</h3>
 
-      <!-- BPM API Key -->
-      <p class="section-label">BPM — AudD</p>
-      <label class="input input-bordered flex items-center gap-2 mb-1">
-        <input
-          [(ngModel)]="bpmApiKey"
-          [type]="showKey ? 'text' : 'password'"
-          placeholder="Token de audd.io"
-          class="grow" />
-        <button type="button" (click)="showKey = !showKey" class="opacity-60 hover:opacity-100">
-          <ng-icon [name]="showKey ? 'heroEyeSlash' : 'heroEye'" class="w-4 h-4"></ng-icon>
-        </button>
-      </label>
-      <p class="hint mb-3">
-        Obtén un token gratuito en <strong>audd.io</strong> → "Get API token".
-        Solo necesitas tu email, sin URLs ni datos adicionales.
-      </p>
-      <button class="btn btn-primary btn-sm w-full mb-4" type="button" (click)="saveBpmKey()">
-        <ng-icon name="heroArrowDownTray" class="w-4 h-4"></ng-icon>
-        Guardar token
-      </button>
+      <!-- Theme -->
+      <p class="section-label">Tema</p>
+      <select
+        class="select select-bordered select-sm w-full mb-4"
+        [(ngModel)]="currentTheme"
+        (ngModelChange)="changeTheme($event)">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="cupcake">Cupcake</option>
+        <option value="bumblebee">Bumblebee</option>
+        <option value="emerald">Emerald</option>
+        <option value="corporate">Corporate</option>
+        <option value="synthwave">Synthwave</option>
+        <option value="retro">Retro</option>
+        <option value="cyberpunk">Cyberpunk</option>
+        <option value="valentine">Valentine</option>
+        <option value="halloween">Halloween</option>
+        <option value="garden">Garden</option>
+        <option value="forest">Forest</option>
+        <option value="aqua">Aqua</option>
+        <option value="lofi">Lofi</option>
+        <option value="pastel">Pastel</option>
+        <option value="fantasy">Fantasy</option>
+        <option value="wireframe">Wireframe</option>
+        <option value="black">Black</option>
+        <option value="luxury">Luxury</option>
+        <option value="dracula">Dracula</option>
+        <option value="cmyk">CMYK</option>
+        <option value="autumn">Autumn</option>
+        <option value="business">Business</option>
+        <option value="acid">Acid</option>
+        <option value="lemonade">Lemonade</option>
+        <option value="night">Night</option>
+        <option value="coffee">Coffee</option>
+        <option value="winter">Winter</option>
+        <option value="dim">Dim</option>
+        <option value="nord">Nord</option>
+        <option value="sunset">Sunset</option>
+        <option value="caramellatte">Caramellatte</option>
+        <option value="abyss">Abyss</option>
+        <option value="silk">Silk</option>
+      </select>
 
-      <div class="modal-action mt-4">
+      <div class="modal-action mt-2">
         <button class="btn btn-sm" type="button" (click)="close()">Cerrar</button>
       </div>
     </div>
@@ -50,35 +69,26 @@ import { ToastService } from '../../core/services/toast.service';
       margin: 0 0 0.5rem;
       display: block;
     }
-    .hint {
-      font-size: 0.75rem;
-      opacity: 0.6;
-      line-height: 1.4;
-    }
   `],
 })
 export class SettingsDialogComponent implements OnInit {
   readonly dialogRef = inject(DialogRef);
   private readonly db = inject(DatabaseService);
-  private readonly toastr = inject(ToastService);
 
-  bpmApiKey = '';
-  showKey = false;
+  currentTheme = 'dark';
 
   async ngOnInit(): Promise<void> {
     try {
       const settings = await this.db.getSettings();
-      this.bpmApiKey = settings.bpmApiKey ?? '';
+      this.currentTheme = settings.theme ?? 'dark';
     } catch { /* non-critical */ }
   }
 
-  async saveBpmKey(): Promise<void> {
-    try {
-      await this.db.setSettings({ bpmApiKey: this.bpmApiKey.trim() });
-      this.toastr.success('API Key guardada', 'AudD');
-    } catch {
-      this.toastr.danger('No se pudo guardar', 'Error');
-    }
+  async changeTheme(theme: string): Promise<void> {
+    this.currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    await this.db.setSettings({ theme });
   }
 
   close(): void {

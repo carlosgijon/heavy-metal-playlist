@@ -1,3 +1,26 @@
+@if (!isAuthenticated()) {
+  <app-login />
+} @else if (isSuperAdmin()) {
+  <div class="app-shell">
+    <div class="main-area">
+      <header class="app-header">
+        <div class="header-left">
+          <ng-icon name="heroMusicalNote" class="w-5 h-5 text-primary"></ng-icon>
+          <span class="brand-name">Blackout ORM · Superadmin</span>
+        </div>
+        <div class="header-right">
+          <span class="text-xs opacity-50 hidden sm:inline">{{ currentUser()?.username }}</span>
+          <button class="btn btn-ghost btn-sm px-2" (click)="logout()" title="Cerrar sesión">
+            <ng-icon name="heroArrowRightOnRectangle" class="w-5 h-5"></ng-icon>
+          </button>
+        </div>
+      </header>
+      <main class="main-content overflow-auto">
+        <app-superadmin-panel />
+      </main>
+    </div>
+  </div>
+} @else {
 <div class="app-shell">
   <!-- Sidebar -->
   <aside class="sidebar" [class.expanded]="sidebarExpanded">
@@ -9,6 +32,21 @@
         <ng-icon [name]="sidebarExpanded ? 'heroXMark' : 'heroBars3'" class="nav-icon"></ng-icon>
         <span class="nav-label">Cerrar menú</span>
       </button>
+
+      <!-- Band logo / identity -->
+      @if (currentBand()) {
+        <div class="nav-item band-identity" [title]="currentBand()!.name">
+          @if (currentBand()!.logo) {
+            <img [src]="currentBand()!.logo" class="nav-icon rounded-full object-cover" alt="Logo" />
+          } @else {
+            <span class="nav-icon rounded-full bg-primary text-primary-content flex items-center justify-center text-xs font-bold">
+              {{ currentBand()!.name.charAt(0).toUpperCase() }}
+            </span>
+          }
+          <span class="nav-label font-semibold truncate">{{ currentBand()!.name }}</span>
+        </div>
+        <div class="divider my-0 px-2 opacity-20"></div>
+      }
       <button
         class="nav-item"
         [class.active]="view() === 'calendario'"
@@ -59,6 +97,24 @@
         </svg>
         <span class="nav-label">Rider</span>
       </button>
+      @if (isAdmin()) {
+        <button
+          class="nav-item"
+          [class.active]="view() === 'admin'"
+          (click)="setView('admin')"
+          title="Usuarios">
+          <ng-icon name="heroUsers" class="nav-icon"></ng-icon>
+          <span class="nav-label">Usuarios</span>
+        </button>
+        <button
+          class="nav-item"
+          [class.active]="view() === 'band-settings'"
+          (click)="setView('band-settings')"
+          title="Configuración del grupo">
+          <ng-icon name="heroBuildingOffice2" class="nav-icon"></ng-icon>
+          <span class="nav-label">Grupo</span>
+        </button>
+      }
     </nav>
   </aside>
 
@@ -71,10 +127,13 @@
         <span class="brand-name">Blackout ORM</span>
       </div>
       <div class="header-right">
+        <span class="text-xs opacity-50 hidden sm:inline">{{ currentUser()?.displayName || currentUser()?.username }}</span>
         <button class="btn btn-ghost btn-sm px-2" (click)="openSettings()" title="Configuración">
           <ng-icon name="heroCog6Tooth" class="w-5 h-5"></ng-icon>
         </button>
-        <app-theme-switcher></app-theme-switcher>
+        <button class="btn btn-ghost btn-sm px-2" (click)="logout()" title="Cerrar sesión">
+          <ng-icon name="heroArrowRightOnRectangle" class="w-5 h-5"></ng-icon>
+        </button>
       </div>
     </header>
 
@@ -90,6 +149,10 @@
         <app-equipo />
       } @else if (view() === 'conciertos') {
         <app-conciertos />
+      } @else if (view() === 'admin') {
+        <app-users />
+      } @else if (view() === 'band-settings') {
+        <app-band-settings />
       } @else {
         <app-playlist [playlist]="selectedPlaylist()!" (back)="onBack()" />
       }
@@ -100,4 +163,35 @@
       <span>Blackout ORM · Datos guardados localmente</span>
     </footer>
   </div>
+
+  <!-- Bottom nav (mobile only, hidden on desktop via CSS) -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item" [class.active]="view() === 'calendario'" (click)="setView('calendario')">
+      <ng-icon name="heroCalendarDays" class="bottom-nav-icon"></ng-icon>
+      <span>Calendario</span>
+    </button>
+    <button class="bottom-nav-item" [class.active]="view() === 'conciertos'" (click)="setView('conciertos')">
+      <ng-icon name="heroStar" class="bottom-nav-icon"></ng-icon>
+      <span>Conciertos</span>
+    </button>
+    <button class="bottom-nav-item" [class.active]="view() === 'songs'" (click)="setView('songs')">
+      <ng-icon name="heroMusicalNote" class="bottom-nav-icon"></ng-icon>
+      <span>Canciones</span>
+    </button>
+    <button class="bottom-nav-item" [class.active]="view() === 'playlists' || view() === 'detail'" (click)="setView('playlists')">
+      <ng-icon name="heroQueueList" class="bottom-nav-icon"></ng-icon>
+      <span>Playlists</span>
+    </button>
+    <button class="bottom-nav-item" [class.active]="view() === 'equipo'" (click)="setView('equipo')">
+      <svg class="bottom-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="11" rx="3"/>
+        <path d="M5 10 a7 7 0 0 0 14 0"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+        <line x1="9" y1="21" x2="15" y2="21"/>
+      </svg>
+      <span>Rider</span>
+    </button>
+  </nav>
 </div>
+}

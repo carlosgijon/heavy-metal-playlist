@@ -129,7 +129,7 @@ export class PlaylistComponent implements OnInit {
     ref.closed.subscribe(async (confirmed) => {
       if (!confirmed) return;
       try {
-        await this.db.delete(song.id);
+        await this.db.delete(song.id, song.playlistId);
         this.songs = this.songs.filter((s) => s.id !== song.id);
         this.toast.warning(`"${song.title}" eliminada`, 'Eliminado');
       } catch {
