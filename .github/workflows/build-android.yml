@@ -38,11 +38,11 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      # ── 6. Java 17 para Gradle ────────────────────────────────────────────────
+      # ── 6. Java 21 para Gradle (Capacitor requiere source release 21) ───────────
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       # ── 7. Caché Gradle ───────────────────────────────────────────────────────
