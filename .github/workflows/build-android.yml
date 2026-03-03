@@ -1,0 +1,69 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:   # permite lanzarlo manualmente desde GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js + caché npm ────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 3. Inyectar la URL del servidor desde GitHub Secrets ─────────────────
+      - name: Set API URL
+        run: |
+          sed -i "s|http://89.167.125.246/api|${{ secrets.API_URL }}|g" \
+            src/environments/environment.android.ts
+
+      # ── 4. Build Angular (configuración android) ──────────────────────────────
+      - name: Build Angular
+        run: npx ng build --configuration android
+
+      # ── 5. Sync Capacitor → copia el build a android/app/src/main/assets ─────
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      # ── 6. Java 17 para Gradle ────────────────────────────────────────────────
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # ── 7. Caché Gradle ───────────────────────────────────────────────────────
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      # ── 8. Build APK debug ────────────────────────────────────────────────────
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      # ── 9. Subir APK como artefacto descargable ───────────────────────────────
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: blackout-orm-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
