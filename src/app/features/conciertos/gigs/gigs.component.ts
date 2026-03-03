@@ -140,7 +140,7 @@ import { GigContactsDialogComponent, GigContactsDialogData } from './gig-contact
                  (cdkDropListDropped)="onDrop($event)">
               @for (gig of gigsByStatus[status]; track gig.id) {
                 <div class="card bg-base-100 shadow-sm cursor-grab active:cursor-grabbing select-none"
-                     cdkDrag [cdkDragData]="gig">
+                     cdkDrag [cdkDragData]="gig" [cdkDragStartDelay]="150">
                   <div class="p-3">
                     <p class="font-medium text-sm leading-tight">{{ gig.title }}</p>
                     @if (gig.venueName) {

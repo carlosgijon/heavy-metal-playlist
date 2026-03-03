@@ -1,21 +1,19 @@
-import { Injectable } from '@angular/core';
-import { Observable, from, of } from 'rxjs';
-import { invoke } from '@tauri-apps/api/core';
+import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class BpmService {
-  /**
-   * Looks up BPM via Deezer's public API, routed through the Tauri Rust backend
-   * (reqwest — no CORS restrictions).
-   * Returns null if the song is not found or BPM is unavailable.
-   */
+  private readonly http = inject(HttpClient);
+
   getBpm(title: string, artist: string): Observable<number | null> {
     if (!title?.trim()) return of(null);
-    return from(
-      invoke<number | null>('bpm_lookup', {
-        title: title.trim(),
-        artist: artist.trim(),
-      }),
-    );
+    return this.http
+      .get<{ bpm: number | null }>(`${environment.apiUrl}/bpm-lookup`, {
+        params: { title: title.trim(), artist: artist.trim() },
+      })
+      .pipe(map((r) => r.bpm));
   }
 }

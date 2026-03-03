@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
 import { NgIconComponent } from '@ng-icons/core';
@@ -8,9 +8,16 @@ import { SongsComponent } from './features/songs/songs.component';
 import { EquipoComponent } from './features/equipo/equipo.component';
 import { ConciertosComponent } from './features/conciertos/conciertos.component';
 import { CalendarComponent } from './features/conciertos/calendar/calendar.component';
-import { ThemeSwitcherComponent } from './shared/theme-switcher/theme-switcher.component';
+import { LoginComponent } from './features/auth/login/login.component';
+import { UsersComponent } from './features/auth/users/users.component';
+import { SuperadminPanelComponent } from './features/superadmin/superadmin-panel.component';
+import { BandSettingsComponent } from './features/band-settings/band-settings.component';
 import { SettingsDialogComponent } from './shared/settings-dialog/settings-dialog.component';
+import { AuthService } from './core/services/auth.service';
+import { DatabaseService } from './core/services/database.service';
 import { PlaylistWithStats } from './core/models/song.model';
+
+type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario' | 'admin' | 'band-settings';
 
 @Component({
   selector: 'app-root',
@@ -24,19 +31,47 @@ import { PlaylistWithStats } from './core/models/song.model';
     EquipoComponent,
     ConciertosComponent,
     CalendarComponent,
-    ThemeSwitcherComponent,
+    LoginComponent,
+    UsersComponent,
+    SuperadminPanelComponent,
+    BandSettingsComponent,
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   private readonly dialog = inject(Dialog);
+  private readonly auth = inject(AuthService);
+  private readonly db = inject(DatabaseService);
 
-  view = signal<'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario'>('calendario');
+  readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly isAdmin = this.auth.isAdmin;
+  readonly isSuperAdmin = this.auth.isSuperAdmin;
+  readonly currentUser = this.auth.currentUser;
+  readonly currentBand = this.auth.currentBand;
+
+  view = signal<AppView>('calendario');
   selectedPlaylist = signal<PlaylistWithStats | null>(null);
   sidebarExpanded = false;
 
-  setView(v: 'songs' | 'playlists' | 'equipo' | 'conciertos' | 'calendario'): void {
+  async ngOnInit(): Promise<void> {
+    // Apply cached theme immediately to avoid flash of default theme
+    const cachedTheme = localStorage.getItem('theme');
+    if (cachedTheme) {
+      document.documentElement.setAttribute('data-theme', cachedTheme);
+    }
+    await this.auth.init();
+    // Confirm theme from server (keeps localStorage cache in sync)
+    try {
+      const settings = await this.db.getSettings();
+      if (settings.theme) {
+        document.documentElement.setAttribute('data-theme', settings.theme);
+        localStorage.setItem('theme', settings.theme);
+      }
+    } catch { /* non-critical */ }
+  }
+
+  setView(v: AppView): void {
     this.view.set(v);
     this.selectedPlaylist.set(null);
   }
@@ -60,5 +95,10 @@ export class AppComponent {
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-dark-backdrop',
     });
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.view.set('calendario');
   }
 }
