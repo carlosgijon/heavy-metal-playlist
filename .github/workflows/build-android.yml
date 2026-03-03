@@ -58,7 +58,9 @@ jobs:
       # ── 8. Build APK debug ────────────────────────────────────────────────────
       - name: Build APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       # ── 9. Subir APK como artefacto descargable ───────────────────────────────
       - name: Upload APK
