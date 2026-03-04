@@ -199,7 +199,14 @@
     padding: 0.5rem 0.25rem;
     transition: color 0.15s, background 0.15s;
     -webkit-tap-highlight-color: transparent;
-    --ng-icon__size: 1.375rem;
+
+    svg {
+      display: block;
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      overflow: visible;
+    }
 
     &.active {
       color: oklch(var(--p));
