@@ -53,6 +53,7 @@
   text-align: left;
   font-size: 0.875rem;
   font-weight: 500;
+  --ng-icon__size: 1.25rem;
 
   &:hover {
     background-color: oklch(var(--b3));
@@ -145,8 +146,64 @@
   flex-shrink: 0;
 }
 
-// ── Bottom nav — never shown (sidebar used on all screen sizes) ────
+// ── Mobile bottom nav ──────────────────────────────────────────────
 
 .bottom-nav {
   display: none;
+}
+
+@media (max-width: 767px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .app-footer {
+    display: none;
+  }
+
+  .main-area {
+    padding-bottom: 4rem;
+  }
+
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4rem;
+    background-color: oklch(var(--b2));
+    border-top: 1px solid oklch(var(--b3));
+    z-index: 50;
+    align-items: stretch;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: none;
+    background: transparent;
+    color: oklch(var(--bc) / 0.6);
+    cursor: pointer;
+    font-size: 0.6rem;
+    font-weight: 500;
+    padding: 0.5rem 0.25rem;
+    transition: color 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    --ng-icon__size: 1.375rem;
+
+    &.active {
+      color: oklch(var(--p));
+      background-color: oklch(var(--p) / 0.1);
+    }
+  }
 }
