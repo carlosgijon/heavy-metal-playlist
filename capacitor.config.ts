@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Blackout ORM',
   webDir: 'dist/blackout-orm/browser',
   server: {
-    androidScheme: 'https',
+    androidScheme: 'http',
   },
 };
 
