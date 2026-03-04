@@ -167,19 +167,19 @@
   <!-- Bottom nav (mobile only, hidden on desktop via CSS) -->
   <nav class="bottom-nav">
     <button class="bottom-nav-item" [class.active]="view() === 'calendario'" (click)="setView('calendario')">
-      <ng-icon name="heroCalendarDays" class="bottom-nav-icon"></ng-icon>
+      <ng-icon name="heroCalendarDays" size="22px"></ng-icon>
       <span>Calendario</span>
     </button>
     <button class="bottom-nav-item" [class.active]="view() === 'conciertos'" (click)="setView('conciertos')">
-      <ng-icon name="heroStar" class="bottom-nav-icon"></ng-icon>
+      <ng-icon name="heroStar" size="22px"></ng-icon>
       <span>Conciertos</span>
     </button>
     <button class="bottom-nav-item" [class.active]="view() === 'songs'" (click)="setView('songs')">
-      <ng-icon name="heroMusicalNote" class="bottom-nav-icon"></ng-icon>
+      <ng-icon name="heroMusicalNote" size="22px"></ng-icon>
       <span>Canciones</span>
     </button>
     <button class="bottom-nav-item" [class.active]="view() === 'playlists' || view() === 'detail'" (click)="setView('playlists')">
-      <ng-icon name="heroQueueList" class="bottom-nav-icon"></ng-icon>
+      <ng-icon name="heroQueueList" size="22px"></ng-icon>
       <span>Playlists</span>
     </button>
     <button class="bottom-nav-item" [class.active]="view() === 'equipo'" (click)="setView('equipo')">
