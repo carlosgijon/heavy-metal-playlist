@@ -29,7 +29,7 @@
         class="nav-item nav-toggle"
         (click)="toggleSidebar()"
         [title]="sidebarExpanded ? 'Cerrar menú' : 'Abrir menú'">
-        <ng-icon [name]="sidebarExpanded ? 'heroXMark' : 'heroBars3'" class="nav-icon"></ng-icon>
+        <ng-icon [name]="sidebarExpanded ? 'heroXMark' : 'heroBars3'" size="20px"></ng-icon>
         <span class="nav-label">Cerrar menú</span>
       </button>
 
@@ -52,7 +52,7 @@
         [class.active]="view() === 'calendario'"
         (click)="setView('calendario')"
         title="Calendario">
-        <ng-icon name="heroCalendarDays" class="nav-icon"></ng-icon>
+        <ng-icon name="heroCalendarDays" size="20px"></ng-icon>
         <span class="nav-label">Calendario</span>
       </button>
       <button
@@ -60,7 +60,7 @@
         [class.active]="view() === 'conciertos'"
         (click)="setView('conciertos')"
         title="Conciertos">
-        <ng-icon name="heroStar" class="nav-icon"></ng-icon>
+        <ng-icon name="heroStar" size="20px"></ng-icon>
         <span class="nav-label">Conciertos</span>
       </button>
       <button
@@ -68,7 +68,7 @@
         [class.active]="view() === 'songs'"
         (click)="setView('songs')"
         title="Canciones">
-        <ng-icon name="heroMusicalNote" class="nav-icon"></ng-icon>
+        <ng-icon name="heroMusicalNote" size="20px"></ng-icon>
         <span class="nav-label">Canciones</span>
       </button>
       <button
@@ -76,7 +76,7 @@
         [class.active]="view() === 'playlists' || view() === 'detail'"
         (click)="setView('playlists')"
         title="Playlists">
-        <ng-icon name="heroQueueList" class="nav-icon"></ng-icon>
+        <ng-icon name="heroQueueList" size="20px"></ng-icon>
         <span class="nav-label">Playlists</span>
       </button>
       <button
@@ -103,7 +103,7 @@
           [class.active]="view() === 'admin'"
           (click)="setView('admin')"
           title="Usuarios">
-          <ng-icon name="heroUsers" class="nav-icon"></ng-icon>
+          <ng-icon name="heroUsers" size="20px"></ng-icon>
           <span class="nav-label">Usuarios</span>
         </button>
         <button
@@ -111,7 +111,7 @@
           [class.active]="view() === 'band-settings'"
           (click)="setView('band-settings')"
           title="Configuración del grupo">
-          <ng-icon name="heroBuildingOffice2" class="nav-icon"></ng-icon>
+          <ng-icon name="heroBuildingOffice2" size="20px"></ng-icon>
           <span class="nav-label">Grupo</span>
         </button>
       }
