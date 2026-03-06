@@ -8,6 +8,7 @@ import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SongLibraryFormComponent } from './song-library-form/song-library-form.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { MetronomeDialogComponent } from '../../shared/metronome-dialog/metronome-dialog.component';
 
 @Component({
   selector: 'app-songs',
@@ -172,6 +173,14 @@ export class SongsComponent implements OnInit {
     } finally {
       this.addingInProgress = false;
     }
+  }
+
+  openMetronome(song: LibrarySong): void {
+    this.dialog.open(MetronomeDialogComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      data: { bpm: song.tempo, title: song.title },
+    });
   }
 
   formatDuration(seconds?: number): string {
