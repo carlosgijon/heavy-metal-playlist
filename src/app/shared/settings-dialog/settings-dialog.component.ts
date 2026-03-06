@@ -40,6 +40,7 @@ import { DatabaseService } from '../../core/services/database.service';
         </optgroup>
         <optgroup label="── Retro ────────────">
           <option value="win95">Windows 95</option>
+          <option value="winxp">Windows XP Luna</option>
         </optgroup>
         <optgroup label="── DaisyUI ─────────">
           <option value="light">Light</option>
