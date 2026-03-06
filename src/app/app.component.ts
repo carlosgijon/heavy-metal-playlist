@@ -52,7 +52,6 @@ export class AppComponent implements OnInit {
 
   view = signal<AppView>('calendario');
   selectedPlaylist = signal<PlaylistWithStats | null>(null);
-  sidebarExpanded = false;
 
   async ngOnInit(): Promise<void> {
     // Apply cached theme immediately to avoid flash of default theme
@@ -84,10 +83,6 @@ export class AppComponent implements OnInit {
   onBack(): void {
     this.view.set('playlists');
     this.selectedPlaylist.set(null);
-  }
-
-  toggleSidebar(): void {
-    this.sidebarExpanded = !this.sidebarExpanded;
   }
 
   openSettings(): void {

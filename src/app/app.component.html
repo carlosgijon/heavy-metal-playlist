@@ -23,15 +23,8 @@
 } @else {
 <div class="app-shell">
   <!-- Sidebar -->
-  <aside class="sidebar" [class.expanded]="sidebarExpanded">
+  <aside class="sidebar expanded">
     <nav class="sidebar-nav">
-      <button
-        class="nav-item nav-toggle"
-        (click)="toggleSidebar()"
-        [title]="sidebarExpanded ? 'Cerrar menú' : 'Abrir menú'">
-        <ng-icon [name]="sidebarExpanded ? 'heroXMark' : 'heroBars3'" class="nav-icon"></ng-icon>
-        <span class="nav-label">Cerrar menú</span>
-      </button>
 
       <!-- Band logo / identity -->
       @if (currentBand()) {

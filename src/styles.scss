@@ -56,13 +56,9 @@ html, body {
     }
 
     &.active {
-      background-color: rgba(255, 255, 255, 0.28);
-      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.28) !important;
+      color: #ffffff !important;
     }
-  }
-
-  .nav-toggle {
-    border-bottom-color: rgba(255, 255, 255, 0.2);
   }
 
   .bottom-nav-item {

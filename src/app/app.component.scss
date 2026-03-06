@@ -9,20 +9,14 @@
 // ── Sidebar ────────────────────────────────────────────────────────
 
 .sidebar {
-  width: 3.5rem;
-  min-width: 3.5rem;
-  transition: width 0.2s ease, min-width 0.2s ease;
+  width: 12rem;
+  min-width: 12rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   background-color: oklch(var(--b2));
   border-right: 1px solid oklch(var(--b3));
   flex-shrink: 0;
-
-  &.expanded {
-    width: 12rem;
-    min-width: 12rem;
-  }
 }
 
 .sidebar-nav {
@@ -30,12 +24,6 @@
   flex-direction: column;
   padding: 0.5rem 0;
   gap: 0.25rem;
-}
-
-.nav-toggle {
-  border-bottom: 1px solid oklch(var(--b3));
-  margin-bottom: 0.25rem;
-  padding-bottom: 0.75rem;
 }
 
 .nav-item {
@@ -71,18 +59,6 @@
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
-}
-
-.nav-label {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s;
-  overflow: hidden;
-}
-
-.sidebar.expanded .nav-label {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 // ── Main area ─────────────────────────────────────────────────────
