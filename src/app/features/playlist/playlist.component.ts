@@ -8,6 +8,7 @@ import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SongFormComponent } from './song-form/song-form.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { MetronomeDialogComponent } from '../../shared/metronome-dialog/metronome-dialog.component';
 
 @Component({
   selector: 'app-playlist',
@@ -157,6 +158,14 @@ export class PlaylistComponent implements OnInit {
     } catch {
       this.toast.danger('No se pudo guardar el cambio', 'Error');
     }
+  }
+
+  openMetronome(song: Song): void {
+    this.dialog.open(MetronomeDialogComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      data: { bpm: song.tempo, title: song.title },
+    });
   }
 
   songNumber(index: number): number {
