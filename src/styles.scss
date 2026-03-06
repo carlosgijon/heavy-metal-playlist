@@ -30,3 +30,53 @@ html, body {
 .cdk-drag-animating {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
+
+// ── WinXP theme overrides ─────────────────────────────────────────
+
+[data-theme="winxp"] {
+  .app-header,
+  .sidebar,
+  .bottom-nav {
+    background: linear-gradient(180deg, #2b6dd4 0%, #1e56c8 60%, #1848a8 100%);
+    border-color: #0e3a8a;
+    color: #ffffff;
+  }
+
+  .brand-name {
+    color: #ffffff;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  }
+
+  .nav-item {
+    color: rgba(255, 255, 255, 0.85);
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+    }
+
+    &.active {
+      background-color: rgba(255, 255, 255, 0.28);
+      color: #ffffff;
+    }
+  }
+
+  .nav-toggle {
+    border-bottom-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .bottom-nav-item {
+    color: rgba(255, 255, 255, 0.8);
+
+    &.active {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .app-footer {
+    background-color: #d4d0c8;
+    border-top-color: #aca899;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
