@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/carlosPC/**)",
+      "Bash(npm install @nestjs/jwt @nestjs/config @nestjs/passport passport passport-jwt @prisma/client bcrypt class-validator class-transformer)",
+      "Bash(npx prisma init)",
+      "Bash(/c/Users/carlosPC/blackout-orm-api/.env.example:*)",
+      "Bash(__NEW_LINE_819052256de92032__ cat)",
+      "Bash(__NEW_LINE_9ea31e346d294658__ cat)",
+      "Bash(__NEW_LINE_b0a51a9b42bab6ac__ cat)",
+      "Bash(npx prisma generate)",
+      "Bash(/c/Users/carlosPC/blackout-orm-api/prisma/schema.prisma:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\carlosPC\\blackout-orm-api\\prisma",
+      "C:\\Users\\carlosPC\\blackout-orm-api"
+    ]
+  }
+}

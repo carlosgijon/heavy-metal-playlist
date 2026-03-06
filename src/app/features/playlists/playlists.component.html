@@ -26,8 +26,8 @@
     </div>
   </div>
 
-  <!-- Tabla de playlists -->
-  <div class="table-wrapper" *ngIf="!loading && playlists.length > 0">
+  <!-- Tabla de playlists (desktop) -->
+  <div class="table-wrapper hidden md:block" *ngIf="!loading && playlists.length > 0">
     <table class="playlists-table">
       <thead>
         <tr>
@@ -81,6 +81,40 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- Lista de playlists (mobile) -->
+  <div class="mobile-list md:hidden" *ngIf="!loading && playlists.length > 0">
+    <div class="mobile-card" *ngFor="let playlist of playlists" (click)="selectPlaylist(playlist)">
+      <div class="mc-row1">
+        <span class="mc-name">
+          <ng-icon name="heroMusicalNote" class="w-4 h-4"></ng-icon>
+          {{ playlist.name }}
+        </span>
+        <span class="song-count">{{ playlist.songCount }}</span>
+      </div>
+      <div class="mc-row2" *ngIf="playlist.description">
+        <span class="mc-desc">{{ playlist.description }}</span>
+      </div>
+      <div class="mc-row3">
+        <span class="mc-meta">
+          <span *ngIf="playlist.totalDuration" class="cell-duration">{{ formatDuration(playlist.totalDuration) }}</span>
+          <span *ngIf="playlist.totalDuration"> · </span>
+          {{ formatDate(playlist.createdAt) }}
+        </span>
+        <div class="mc-actions" (click)="$event.stopPropagation()">
+          <button class="btn btn-ghost btn-xs" (click)="exportPlaylistToPdf(playlist, $event)">
+            <ng-icon name="heroPrinter" class="w-4 h-4"></ng-icon>
+          </button>
+          <button class="btn btn-ghost btn-xs" (click)="openEditForm(playlist, $event)">
+            <ng-icon name="heroPencil" class="w-4 h-4"></ng-icon>
+          </button>
+          <button class="btn btn-ghost btn-xs text-error" (click)="deletePlaylist(playlist, $event)">
+            <ng-icon name="heroTrash" class="w-4 h-4"></ng-icon>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>

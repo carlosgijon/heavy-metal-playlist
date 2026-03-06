@@ -21,6 +21,25 @@ import { DatabaseService } from '../../core/services/database.service';
           <option value="slack-aubergine">Slack Aubergine</option>
           <option value="slack-light">Slack Light</option>
           <option value="slack-dark">Slack Dark</option>
+          <option value="slack-ocean">Slack Ocean</option>
+          <option value="slack-tomato">Slack Tomato</option>
+          <option value="slack-evergreen">Slack Evergreen</option>
+          <option value="slack-warm">Slack Warm</option>
+        </optgroup>
+        <optgroup label="── Apps ────────────">
+          <option value="github-dark">GitHub Dark</option>
+          <option value="discord">Discord</option>
+          <option value="spotify">Spotify</option>
+          <option value="netflix">Netflix</option>
+          <option value="vscode">VS Code</option>
+          <option value="notion-dark">Notion Dark</option>
+          <option value="twitter-x">X (Twitter)</option>
+          <option value="supabase">Supabase</option>
+          <option value="linear">Linear</option>
+          <option value="figma-dark">Figma Dark</option>
+        </optgroup>
+        <optgroup label="── Retro ────────────">
+          <option value="win95">Windows 95</option>
         </optgroup>
         <optgroup label="── DaisyUI ─────────">
           <option value="light">Light</option>

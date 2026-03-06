@@ -147,3 +147,80 @@
 .cell-actions {
   white-space: nowrap;
 }
+
+// ── Mobile card list ─────────────────────────────────────────────
+
+.mobile-list {
+  border-radius: 0.5rem;
+  border: 1px solid oklch(var(--b3));
+  overflow: hidden;
+}
+
+.mobile-card {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid oklch(var(--b3));
+  background: oklch(var(--b1));
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: oklch(var(--b2)); }
+}
+
+.mc-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.mc-row2 {
+  margin-bottom: 0.15rem;
+}
+
+.mc-row3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mc-name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+  color: oklch(var(--p));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.mc-desc {
+  font-size: 0.78rem;
+  opacity: 0.6;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.mc-meta {
+  font-size: 0.78rem;
+  opacity: 0.6;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mc-actions {
+  display: flex;
+  gap: 0.1rem;
+  flex-shrink: 0;
+}
