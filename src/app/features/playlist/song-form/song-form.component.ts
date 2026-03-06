@@ -229,6 +229,8 @@ export class SongFormComponent implements OnInit, OnDestroy {
     if (this.isEvent) {
       result['type']   = 'event';
       result['artist'] = '';
+    } else {
+      result['type'] = 'song';
     }
 
     this.dialogRef.close(result);
