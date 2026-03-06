@@ -15,7 +15,7 @@
         </h2>
       </div>
       <span class="playlist-stats" *ngIf="songs.length > 0">
-        {{ songs.length }} elementos
+        {{ songOnlyCount }} {{ songOnlyCount === 1 ? 'canción' : 'canciones' }}
         <span *ngIf="totalDuration"> · {{ totalDuration }}</span>
       </span>
     </div>

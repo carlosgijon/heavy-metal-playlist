@@ -181,6 +181,10 @@ export class PlaylistComponent implements OnInit {
     return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
+  get songOnlyCount(): number {
+    return this.songs.filter((s) => s.type !== 'event').length;
+  }
+
   get totalDuration(): string {
     const total = this.songs
       .filter((s) => s.type !== 'event')

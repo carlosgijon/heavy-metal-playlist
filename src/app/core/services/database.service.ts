@@ -182,7 +182,7 @@ export class DatabaseService {
 
   create(song: Omit<Song, 'id' | 'position'>): Promise<Song> {
     const { playlistId, ...rest } = song;
-    return this.post(`/playlists/${playlistId}/songs`, { type: 'event', ...rest });
+    return this.post(`/playlists/${playlistId}/songs`, { type: 'song', ...rest });
   }
 
   update(song: Song): Promise<Song> {

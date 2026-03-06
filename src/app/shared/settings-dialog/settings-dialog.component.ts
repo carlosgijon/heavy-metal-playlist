@@ -52,6 +52,11 @@ import { DatabaseService } from '../../core/services/database.service';
         <option value="caramellatte">Caramellatte</option>
         <option value="abyss">Abyss</option>
         <option value="silk">Silk</option>
+        <optgroup label="── Slack ──────────">
+          <option value="slack-aubergine">Slack Aubergine</option>
+          <option value="slack-light">Slack Light</option>
+          <option value="slack-dark">Slack Dark</option>
+        </optgroup>
       </select>
 
       <div class="modal-action mt-2">
