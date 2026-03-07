@@ -6,6 +6,8 @@ import { AuthResponse, MeResponse, SelectBandResponse, User, UserPayload, UserUp
 import { Song, Playlist, PlaylistWithStats, LibrarySong, PlaylistSongView } from '../models/song.model';
 import { BandMember, Microphone, Instrument, Amplifier, PaEquipment, ChannelEntry } from '../models/equipment.model';
 import { Venue, Gig, GigStatus, CalendarEvent, GigChecklist, ChecklistItem, GigContact } from '../models/gig.model';
+import { Transaction, WishListItem } from '../models/finance.model';
+import { MerchItem, MerchSaleDto, MerchRestockDto } from '../models/merch.model';
 
 @Injectable({ providedIn: 'root' })
 export class DatabaseService {
@@ -420,5 +422,67 @@ export class DatabaseService {
 
   deleteGigContact(id: string): Promise<void> {
     return this.del(`/gigs/contacts/${id}`);
+  }
+
+  // -- Finance: Transactions --------------------------------------------------
+
+  getTransactions(): Promise<Transaction[]> {
+    return this.get('/finance/transactions');
+  }
+
+  createTransaction(dto: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction> {
+    return this.post('/finance/transactions', dto);
+  }
+
+  updateTransaction(dto: Transaction): Promise<Transaction> {
+    return this.put(`/finance/transactions/${dto.id}`, dto);
+  }
+
+  deleteTransaction(id: string): Promise<void> {
+    return this.del(`/finance/transactions/${id}`);
+  }
+
+  // -- Finance: Wish List -----------------------------------------------------
+
+  getWishList(): Promise<WishListItem[]> {
+    return this.get('/finance/wish-list');
+  }
+
+  createWishListItem(dto: Omit<WishListItem, 'id' | 'createdAt'>): Promise<WishListItem> {
+    return this.post('/finance/wish-list', dto);
+  }
+
+  updateWishListItem(dto: WishListItem & { finalPrice?: number }): Promise<WishListItem> {
+    return this.put(`/finance/wish-list/${dto.id}`, dto);
+  }
+
+  deleteWishListItem(id: string): Promise<void> {
+    return this.del(`/finance/wish-list/${id}`);
+  }
+
+  // -- Merch ------------------------------------------------------------------
+
+  getMerchItems(): Promise<MerchItem[]> {
+    return this.get('/merch');
+  }
+
+  createMerchItem(dto: Omit<MerchItem, 'id' | 'createdAt'>): Promise<MerchItem> {
+    return this.post('/merch', dto);
+  }
+
+  updateMerchItem(dto: MerchItem): Promise<MerchItem> {
+    return this.put(`/merch/${dto.id}`, dto);
+  }
+
+  deleteMerchItem(id: string): Promise<void> {
+    return this.del(`/merch/${id}`);
+  }
+
+  sellMerchItem(id: string, dto: MerchSaleDto): Promise<{ item: MerchItem; transaction: any }> {
+    return this.post(`/merch/${id}/sell`, dto);
+  }
+
+  restockMerchItem(id: string, dto: MerchRestockDto): Promise<MerchItem> {
+    return this.put(`/merch/${id}/stock`, dto);
   }
 }

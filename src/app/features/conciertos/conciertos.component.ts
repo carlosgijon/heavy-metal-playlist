@@ -14,10 +14,13 @@ type ConciertosTab = 'gigs' | 'venues';
   standalone: true,
   imports: [CommonModule, GigsComponent, VenuesComponent],
   template: `
-    <div class="p-4 h-full flex flex-col">
+    <div class="page-container h-full flex flex-col">
       <!-- Page title -->
-      <div class="flex items-center justify-between mb-4">
-        <h1 class="text-xl font-bold">Conciertos</h1>
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Conciertos</h1>
+          <p class="page-subtitle">Gestión de bolos, salas y contactos</p>
+        </div>
         @if (loading) {
           <span class="loading loading-spinner loading-sm"></span>
         }

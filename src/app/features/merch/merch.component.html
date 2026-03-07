@@ -1,0 +1,414 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Merchandising</h1>
+      <p class="page-subtitle">Catálogo · Stock · TPV</p>
+    </div>
+    <div class="page-header-actions">
+      @if (tab === 'catalogo') {
+        <button class="btn btn-primary btn-sm gap-1" (click)="openCreate()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Añadir producto
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div role="tablist" class="tabs tabs-bordered mb-6">
+    <button role="tab" class="tab" [class.tab-active]="tab === 'catalogo'" (click)="setTab('catalogo')">
+      Catálogo
+    </button>
+    <button role="tab" class="tab" [class.tab-active]="tab === 'stock'" (click)="setTab('stock')">
+      Stock
+    </button>
+    <button role="tab" class="tab" [class.tab-active]="tab === 'tpv'" (click)="setTab('tpv')">
+      TPV
+    </button>
+  </div>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="flex justify-center py-16">
+      <span class="loading loading-spinner loading-lg"></span>
+    </div>
+  }
+
+  <!-- ═══════════════════════════════ TAB: CATÁLOGO ════════════════════════════ -->
+  @else if (tab === 'catalogo') {
+    @if (items.length === 0) {
+      <div class="merch-empty">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.5" width="48" height="48" class="opacity-30">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z"/>
+        </svg>
+        <p class="mt-3 font-semibold opacity-60">Sin productos de merch</p>
+        <p class="text-sm opacity-40">Añade un producto para calcular su punto de equilibrio</p>
+        <button class="btn btn-primary btn-sm mt-4" (click)="openCreate()">Añadir producto</button>
+      </div>
+    } @else {
+      <div class="merch-grid">
+        @for (item of items; track item.id) {
+          @let a = analysis(item);
+          <div class="merch-card" (click)="openDetail(item)">
+            <!-- Card header -->
+            <div class="mc-header">
+              <div class="mc-type-badge">{{ typeLabel(item.type) }}</div>
+              <div class="mc-actions" (click)="$event.stopPropagation()">
+                <button class="btn btn-success btn-xs gap-1" title="Vender" (click)="openSell(item, $event)"
+                  [disabled]="item.stock === 0">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    width="12" height="12">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </button>
+                <button class="btn btn-ghost btn-xs" title="Editar" (click)="openEdit(item, $event)">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    width="14" height="14">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button class="btn btn-ghost btn-xs text-error" title="Eliminar" (click)="deleteItem(item, $event)">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    width="14" height="14">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                    <path d="M10 11v6"/><path d="M14 11v6"/>
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Name + Stock badge -->
+            <div class="mc-name-row">
+              <h3 class="mc-name">{{ item.name }}</h3>
+              <span class="mc-stock-badge"
+                [class.mc-stock-ok]="item.stock > 5"
+                [class.mc-stock-low]="item.stock > 0 && item.stock <= 5"
+                [class.mc-stock-empty]="item.stock === 0">
+                {{ item.stock === 0 ? 'Sin stock' : item.stock + ' en stock' }}
+              </span>
+            </div>
+
+            <!-- Price row -->
+            <div class="mc-prices">
+              <span class="mc-price-item">
+                <span class="mc-label">Coste</span>
+                <span class="mc-val">{{ fmt(item.productionCost) }} €</span>
+              </span>
+              <span class="mc-price-sep">→</span>
+              <span class="mc-price-item">
+                <span class="mc-label">PVP</span>
+                <span class="mc-val mc-val-pvp">{{ fmt(item.sellingPrice) }} €</span>
+              </span>
+              <span class="mc-price-sep">·</span>
+              <span class="mc-price-item">
+                <span class="mc-label">Tirada</span>
+                <span class="mc-val">{{ item.batchSize }} uds</span>
+              </span>
+            </div>
+
+            <!-- KPI row -->
+            <div class="mc-kpis">
+              <div class="mc-kpi">
+                <span class="mc-kpi-label">Break-even</span>
+                <span class="mc-kpi-val mc-be"
+                  [class.mc-be-ok]="a.breakEvenUnits !== Infinity && a.breakEvenUnits <= item.batchSize"
+                  [class.mc-be-warn]="a.breakEvenUnits === Infinity || a.breakEvenUnits > item.batchSize">
+                  {{ a.breakEvenUnits === Infinity ? '∞' : a.breakEvenUnits + ' uds' }}
+                </span>
+              </div>
+              <div class="mc-kpi">
+                <span class="mc-kpi-label">Beneficio 100%</span>
+                <span class="mc-kpi-val"
+                  [class.text-success]="a.profitAtFull > 0"
+                  [class.text-error]="a.profitAtFull <= 0">
+                  {{ a.profitAtFull > 0 ? '+' : '' }}{{ fmt(a.profitAtFull) }} €
+                </span>
+              </div>
+              <div class="mc-kpi">
+                <span class="mc-kpi-label">ROI</span>
+                <span class="mc-kpi-val"
+                  [class.text-success]="a.roiAtFull > 0"
+                  [class.text-error]="a.roiAtFull <= 0">
+                  {{ a.roiAtFull.toFixed(1) }}%
+                </span>
+              </div>
+            </div>
+
+            <!-- BE progress bar -->
+            @if (a.breakEvenUnits !== Infinity) {
+              <div class="mc-progress-wrap">
+                <div class="mc-progress-bar">
+                  <div class="mc-progress-fill"
+                    [style.width.%]="Math.min(100, (a.breakEvenUnits / item.batchSize) * 100)">
+                  </div>
+                </div>
+                <span class="mc-progress-label">
+                  {{ Math.min(100, Math.round((a.breakEvenUnits / item.batchSize) * 100)) }}% de la tirada hasta BE
+                </span>
+              </div>
+            }
+
+            <p class="mc-hint">Toca para ver análisis completo</p>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- ═══════════════════════════════ TAB: STOCK ═══════════════════════════════ -->
+  @else if (tab === 'stock') {
+    @if (items.length === 0) {
+      <div class="merch-empty">
+        <p class="font-semibold opacity-60">Sin productos</p>
+        <p class="text-sm opacity-40">Crea productos en la pestaña Catálogo</p>
+      </div>
+    } @else {
+      <div class="stock-list">
+        @for (item of items; track item.id) {
+          <div class="stock-card" [class.stock-card-editing]="restockingItem?.id === item.id">
+            <!-- Header -->
+            <div class="stock-card-header">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="mc-type-badge">{{ typeLabel(item.type) }}</span>
+                <span class="font-semibold truncate">{{ item.name }}</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <!-- Total stock badge -->
+                <span class="stock-total-badge"
+                  [class.stock-ok]="item.stock > 5"
+                  [class.stock-low]="item.stock > 0 && item.stock <= 5"
+                  [class.stock-empty]="item.stock === 0">
+                  {{ item.stock }} uds
+                </span>
+                @if (restockingItem?.id !== item.id) {
+                  <button class="btn btn-sm btn-outline gap-1" (click)="startRestock(item)">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" width="14" height="14" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    </svg>
+                    Actualizar stock
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Per-size breakdown (read mode) -->
+            @if (item.hasSizes && item.stockSizes && restockingItem?.id !== item.id) {
+              <div class="size-grid">
+                @for (size of MERCH_SIZES; track size) {
+                  @let qty = sizeStock(item, size);
+                  <div class="size-cell" [class.size-cell-empty]="qty === 0" [class.size-cell-low]="qty > 0 && qty <= 3">
+                    <span class="size-label">{{ size }}</span>
+                    <span class="size-qty">{{ qty }}</span>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Restock form (edit mode) -->
+            @if (restockingItem?.id === item.id) {
+              <div class="restock-form">
+                @if (item.hasSizes) {
+                  <p class="text-sm opacity-60 mb-2">Establece el stock actual por talla:</p>
+                  <div class="size-grid-edit">
+                    @for (size of MERCH_SIZES; track size) {
+                      <div class="flex flex-col gap-1 items-center">
+                        <span class="text-xs font-bold opacity-60">{{ size }}</span>
+                        <input class="input input-bordered input-sm w-full text-center" type="number" min="0" step="1"
+                          [ngModel]="restockValues[size]"
+                          (ngModelChange)="restockValues[size] = +$event" />
+                      </div>
+                    }
+                  </div>
+                  <p class="text-sm opacity-50 mt-2">Total: <strong>{{ restockTotal }}</strong> uds</p>
+                } @else {
+                  <p class="text-sm opacity-60 mb-2">Stock actual:</p>
+                  <div class="flex items-center gap-3">
+                    <button class="btn btn-square btn-sm btn-ghost"
+                      [disabled]="restockValues['_total'] <= 0"
+                      (click)="restockDelta(-1)">−</button>
+                    <input class="input input-bordered w-24 text-center font-bold" type="number" min="0"
+                      [ngModel]="restockValues['_total']"
+                      (ngModelChange)="restockValues['_total'] = +$event" />
+                    <button class="btn btn-square btn-sm btn-ghost"
+                      (click)="restockDelta(1)">+</button>
+                    <span class="opacity-50 text-sm">uds</span>
+                  </div>
+                }
+                <div class="flex gap-2 mt-3">
+                  <button class="btn btn-ghost btn-sm" (click)="cancelRestock()">Cancelar</button>
+                  <button class="btn btn-primary btn-sm" [disabled]="restocking" (click)="saveRestock()">
+                    @if (restocking) { <span class="loading loading-spinner loading-xs"></span> }
+                    Guardar
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- ═══════════════════════════════ TAB: TPV ════════════════════════════════ -->
+  @else if (tab === 'tpv') {
+    <div class="tpv-layout">
+
+      <!-- Left: Product grid -->
+      <div class="tpv-products">
+        <!-- Size picker overlay -->
+        @if (tpvPendingItem) {
+          <div class="tpv-size-picker">
+            <p class="font-semibold mb-1">{{ tpvPendingItem.name }}</p>
+            <p class="text-sm opacity-60 mb-3">Elige una talla:</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              @for (size of MERCH_SIZES; track size) {
+                @let stock = tpvSizeStock(tpvPendingItem, size);
+                <button type="button" class="tpv-size-btn"
+                  [class.tpv-size-selected]="tpvPendingSize === size"
+                  [class.tpv-size-empty]="stock === 0"
+                  [disabled]="stock === 0"
+                  (click)="tpvPendingSize = size">
+                  <span class="tpv-size-name">{{ size }}</span>
+                  <span class="tpv-size-stock">{{ stock }}</span>
+                </button>
+              }
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-ghost btn-sm" (click)="tpvPendingItem = null; tpvPendingSize = undefined">
+                Cancelar
+              </button>
+              <button class="btn btn-primary btn-sm" [disabled]="!tpvPendingSize" (click)="tpvConfirmSize()">
+                Añadir al carrito
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (tpvAvailableItems().length === 0) {
+          <div class="merch-empty">
+            <p class="font-semibold opacity-60">Sin stock disponible</p>
+            <p class="text-sm opacity-40">Actualiza el stock en la pestaña Stock</p>
+          </div>
+        } @else {
+          <div class="tpv-grid">
+            @for (item of tpvAvailableItems(); track item.id) {
+              <button type="button" class="tpv-product-card"
+                [class.tpv-product-dimmed]="tpvPendingItem !== null && tpvPendingItem.id !== item.id"
+                (click)="tpvSelectItem(item)">
+                <!-- Type icon area -->
+                <div class="tpv-product-icon">
+                  @switch (item.type) {
+                    @case ('t-shirt') { 👕 }
+                    @case ('hoodie') { 🧥 }
+                    @case ('vinyl') { 💿 }
+                    @case ('cd') { 📀 }
+                    @case ('poster') { 🖼️ }
+                    @case ('sticker') { 🏷️ }
+                    @case ('hat') { 🧢 }
+                    @case ('patch') { 🔖 }
+                    @default { 🛍️ }
+                  }
+                </div>
+                <div class="tpv-product-name">{{ item.name }}</div>
+                <div class="tpv-product-price">{{ fmt(item.sellingPrice) }} €</div>
+                <div class="tpv-product-stock"
+                  [class.tpv-stock-low]="item.stock <= 5">
+                  {{ item.stock }} en stock
+                </div>
+                @if (item.hasSizes) {
+                  <div class="tpv-product-sizes">
+                    @for (size of MERCH_SIZES; track size) {
+                      @if (tpvSizeStock(item, size) > 0) {
+                        <span class="tpv-size-chip">{{ size }}</span>
+                      }
+                    }
+                  </div>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Right: Cart -->
+      <div class="tpv-cart">
+        <div class="tpv-cart-header">
+          <span class="font-bold text-base">Carrito</span>
+          @if (!cartIsEmpty) {
+            <button class="btn btn-ghost btn-xs text-error" (click)="cart = []">Vaciar</button>
+          }
+        </div>
+
+        @if (cartIsEmpty) {
+          <div class="tpv-cart-empty">
+            <span class="text-3xl opacity-30">🛒</span>
+            <p class="text-sm opacity-50 mt-2">Selecciona un producto</p>
+          </div>
+        } @else {
+          <div class="tpv-cart-items">
+            @for (entry of cart; track entry) {
+              <div class="tpv-cart-row">
+                <div class="tpv-cart-row-info">
+                  <span class="tpv-cart-item-name">{{ entry.item.name }}</span>
+                  @if (entry.size) {
+                    <span class="tpv-cart-size-badge">{{ entry.size }}</span>
+                  }
+                  <span class="tpv-cart-unit-price">{{ fmt(entry.item.sellingPrice) }} €/ud</span>
+                </div>
+                <div class="tpv-cart-row-controls">
+                  <button class="btn btn-square btn-xs btn-ghost" (click)="cartChangeQty(entry, -1)">−</button>
+                  <span class="tpv-cart-qty">{{ entry.quantity }}</span>
+                  <button class="btn btn-square btn-xs btn-ghost" (click)="cartChangeQty(entry, 1)">+</button>
+                  <span class="tpv-cart-subtotal">{{ fmt(entry.item.sellingPrice * entry.quantity) }} €</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Total -->
+          <div class="tpv-cart-total">
+            <span class="opacity-60 text-sm">Total</span>
+            <span class="tpv-total-amount">{{ fmt(cartTotal) }} €</span>
+          </div>
+        }
+
+        <!-- Fecha + notas + botón cobrar -->
+        <div class="tpv-cart-footer">
+          <div class="form-control">
+            <label class="label py-1"><span class="label-text text-xs font-semibold opacity-60">Fecha</span></label>
+            <input class="input input-bordered input-sm w-full" type="date" [(ngModel)]="tpvSaleDate" />
+          </div>
+          <div class="form-control mt-1">
+            <label class="label py-1"><span class="label-text text-xs font-semibold opacity-60">Nota</span></label>
+            <input class="input input-bordered input-sm w-full" type="text" [(ngModel)]="tpvNotes"
+              placeholder="Concierto, evento..." />
+          </div>
+          <button class="btn btn-success w-full mt-3 gap-2" [disabled]="cartIsEmpty || tpvSelling"
+            (click)="tpvCheckout()">
+            @if (tpvSelling) {
+              <span class="loading loading-spinner loading-sm"></span>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" width="18" height="18" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            }
+            Cobrar {{ cartIsEmpty ? '' : fmt(cartTotal) + ' €' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

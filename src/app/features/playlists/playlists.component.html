@@ -1,15 +1,17 @@
-<div class="playlists-container">
+<div class="page-container">
 
   <!-- Header -->
-  <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div class="page-header">
     <div>
-      <h1 class="text-2xl font-bold">Mis Playlists</h1>
-      <p class="text-sm opacity-60">Gestión de setlists y conciertos</p>
+      <h1 class="page-title">Mis Playlists</h1>
+      <p class="page-subtitle">Gestión de setlists y conciertos</p>
     </div>
-    <button class="btn btn-primary gap-2" (click)="openCreateForm()">
-      <ng-icon name="heroPlus" size="18"></ng-icon>
-      Nueva playlist
-    </button>
+    <div class="page-header-actions">
+      <button class="btn btn-primary gap-2" (click)="openCreateForm()">
+        <ng-icon name="heroPlus" size="18"></ng-icon>
+        Nueva playlist
+      </button>
+    </div>
   </div>
 
   <!-- Loading -->

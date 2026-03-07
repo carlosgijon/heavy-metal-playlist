@@ -1,7 +1,11 @@
 .playlist-container {
-  padding: 1.5rem;
-  max-width: 1200px;
+  padding: 1.5rem 2rem;
+  max-width: 1600px;
   margin: 0 auto;
+
+  @media (max-width: 767px) {
+    padding: 1rem 0.75rem;
+  }
 }
 
 .playlist-header {

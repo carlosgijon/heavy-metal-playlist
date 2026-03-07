@@ -13,11 +13,13 @@ import { UsersComponent } from './features/auth/users/users.component';
 import { SuperadminPanelComponent } from './features/superadmin/superadmin-panel.component';
 import { BandSettingsComponent } from './features/band-settings/band-settings.component';
 import { SettingsDialogComponent } from './shared/settings-dialog/settings-dialog.component';
+import { FinanzasComponent } from './features/finanzas/finanzas.component';
+import { MerchComponent } from './features/merch/merch.component';
 import { AuthService } from './core/services/auth.service';
 import { DatabaseService } from './core/services/database.service';
 import { PlaylistWithStats } from './core/models/song.model';
 
-type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario' | 'admin' | 'band-settings';
+type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario' | 'admin' | 'band-settings' | 'finanzas' | 'merch';
 
 @Component({
   selector: 'app-root',
@@ -35,6 +37,8 @@ type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'cal
     UsersComponent,
     SuperadminPanelComponent,
     BandSettingsComponent,
+    FinanzasComponent,
+    MerchComponent,
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

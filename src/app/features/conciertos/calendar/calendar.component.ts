@@ -32,14 +32,54 @@ interface CalCell {
     <div class="flex flex-col h-full">
 
     <!-- Header: month nav -->
-    <div class="flex items-center justify-between mb-2">
+    <div class="flex items-center justify-between mb-2" style="position:relative">
       <button class="btn btn-sm btn-ghost" (click)="prevMonth()">
         <ng-icon name="heroChevronLeft" size="16" />
       </button>
-      <h2 class="text-base font-semibold capitalize">{{ monthLabel }}</h2>
+
+      <!-- Clickable month label -->
+      <button class="btn btn-sm btn-ghost font-semibold capitalize gap-1" (click)="toggleMonthPicker()">
+        {{ monthLabel }}
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
       <button class="btn btn-sm btn-ghost" (click)="nextMonth()">
         <ng-icon name="heroChevronRight" size="16" />
       </button>
+
+      <!-- Month/year picker dropdown -->
+      @if (showMonthPicker) {
+        <!-- Backdrop -->
+        <div style="position:fixed;inset:0;z-index:40" (click)="closeMonthPicker()"></div>
+        <!-- Picker panel -->
+        <div style="position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);z-index:50;min-width:220px"
+             class="bg-base-200 border border-base-300 rounded-xl shadow-xl p-3">
+          <!-- Year nav -->
+          <div class="flex items-center justify-between mb-2">
+            <button class="btn btn-xs btn-ghost" (click)="pickerPrevYear(); $event.stopPropagation()">
+              <ng-icon name="heroChevronLeft" size="12" />
+            </button>
+            <span class="font-bold text-sm">{{ pickerYear }}</span>
+            <button class="btn btn-xs btn-ghost" (click)="pickerNextYear(); $event.stopPropagation()">
+              <ng-icon name="heroChevronRight" size="12" />
+            </button>
+          </div>
+          <!-- Month grid 4×3 -->
+          <div class="grid grid-cols-4 gap-1">
+            @for (m of pickerMonths; track $index) {
+              <button class="btn btn-xs"
+                [class.btn-primary]="pickerYear === viewYear && $index === viewMonth"
+                [class.btn-ghost]="!(pickerYear === viewYear && $index === viewMonth)"
+                (click)="selectPickerMonth($index); $event.stopPropagation()">
+                {{ m }}
+              </button>
+            }
+          </div>
+        </div>
+      }
     </div>
 
     <!-- Legend -->
@@ -154,6 +194,7 @@ export class CalendarComponent implements OnInit {
   readonly dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
   readonly gigBadge = GIG_STATUS_BADGE;
   readonly gigStatusLabels = GIG_STATUS_LABELS;
+  readonly pickerMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
   today = new Date();
   todayIso = this.isoDate(this.today);
@@ -161,6 +202,9 @@ export class CalendarComponent implements OnInit {
   viewMonth = this.today.getMonth(); // 0-based
   cells: CalCell[] = [];
   selectedCell: CalCell | null = null;
+
+  showMonthPicker = false;
+  pickerYear = this.today.getFullYear();
 
   private events: CalendarEvent[] = [];
   private gigs: Gig[] = [];
@@ -184,6 +228,26 @@ export class CalendarComponent implements OnInit {
       ]);
       this.buildCells();
     } catch { this.toast.danger('Error al cargar el calendario'); }
+  }
+
+  toggleMonthPicker(): void {
+    this.pickerYear = this.viewYear;
+    this.showMonthPicker = !this.showMonthPicker;
+  }
+
+  closeMonthPicker(): void {
+    this.showMonthPicker = false;
+  }
+
+  pickerPrevYear(): void { this.pickerYear--; }
+  pickerNextYear(): void { this.pickerYear++; }
+
+  selectPickerMonth(monthIndex: number): void {
+    this.viewYear = this.pickerYear;
+    this.viewMonth = monthIndex;
+    this.showMonthPicker = false;
+    this.selectedCell = null;
+    this.buildCells();
   }
 
   prevMonth(): void {

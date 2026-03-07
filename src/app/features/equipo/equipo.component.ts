@@ -43,21 +43,23 @@ type EquipoTab =
   ],
   providers: [provideIcons({ heroDocumentText })],
   template: `
-    <div class="p-4 h-full flex flex-col">
+    <div class="page-container h-full flex flex-col">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <div class="page-header">
         <div>
-          <h1 class="text-2xl font-bold">Equipoboard</h1>
-          <p class="text-sm opacity-60">Gestión de equipo técnico y rider</p>
+          <h1 class="page-title">Equipoboard</h1>
+          <p class="page-subtitle">Gestión de equipo técnico y rider</p>
         </div>
-        <button
-          class="btn btn-primary gap-2"
-          (click)="generateRider()"
-          [disabled]="generatingPdf"
-        >
-          <ng-icon name="heroDocumentText" size="18" />
-          {{ generatingPdf ? 'Generando...' : 'Exportar Rider PDF' }}
-        </button>
+        <div class="page-header-actions">
+          <button
+            class="btn btn-primary gap-2"
+            (click)="generateRider()"
+            [disabled]="generatingPdf"
+          >
+            <ng-icon name="heroDocumentText" size="18" />
+            {{ generatingPdf ? 'Generando...' : 'Exportar Rider PDF' }}
+          </button>
+        </div>
       </div>
 
       <!-- Tabs -->
