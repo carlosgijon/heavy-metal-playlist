@@ -115,8 +115,30 @@ export class MicrophonesComponent {
     ref.closed.subscribe(async result => {
       if (!result) return;
       try {
-        if (mic) { await this.db.updateMicrophone({ ...result, id: mic.id }); this.toast.success(`"${result.name}" actualizado`); }
-        else { await this.db.createMicrophone(result); this.toast.success(`"${result.name}" añadido`); }
+        const savedMic = mic
+          ? await this.db.updateMicrophone({ ...result, id: mic.id })
+          : await this.db.createMicrophone(result);
+        this.toast.success(`"${result.name}" ${mic ? 'actualizado' : 'añadido'}`);
+
+        // Sync BandMember.vocalMicId bidirectionally
+        const prevMemberId = mic?.assignedToType === 'member' ? mic.assignedToId : undefined;
+        const newMemberId = result.assignedToType === 'member' ? result.assignedToId : undefined;
+
+        // Clear old member's vocalMicId if assignment changed
+        if (prevMemberId && prevMemberId !== newMemberId) {
+          const oldMember = this.members.find(m => m.id === prevMemberId);
+          if (oldMember) {
+            await this.db.updateMember({ ...oldMember, vocalMicId: undefined });
+          }
+        }
+        // Set new member's vocalMicId
+        if (newMemberId) {
+          const newMember = this.members.find(m => m.id === newMemberId);
+          if (newMember) {
+            await this.db.updateMember({ ...newMember, vocalMicId: savedMic.id });
+          }
+        }
+
         this.changed.emit();
       } catch { this.toast.danger('Error al guardar'); }
     });
