@@ -423,14 +423,14 @@ export class EquipoComponent implements OnInit {
       if (n === 1) return [[0, 0]];
       if (n === 2)
         return [
-          [-90, 0],
-          [90, 0],
+          [0, -90],
+          [0, 90],
         ];
       if (n === 3)
         return [
-          [-120, 0],
+          [0, -120],
           [0, 0],
-          [120, 0],
+          [0, 120],
         ];
       if (n === 4)
         return [
@@ -663,26 +663,40 @@ export class EquipoComponent implements OnInit {
       const base = posCoords[pos];
       if (!base) return;
       const offsets = clusterOffsets(slots.length);
+      const instIconMap: Record<string, string> = {
+        guitar: 'guitar', bass: 'bass', drums: 'drums', keyboard: 'keyboard',
+      };
+
+      // Draw icons
       slots.forEach((slot, idx) => {
         const sx = base[0] + offsets[idx][0],
           sy = base[1] + offsets[idx][1];
-        const instIconMap: Record<string, string> = {
-          guitar: 'guitar',
-          bass: 'bass',
-          drums: 'drums',
-          keyboard: 'keyboard',
-        };
-        const icoKey =
-          slot.kind === 'inst'
-            ? (instIconMap[slot.inst.type] ?? 'guitar')
-            : 'vocal-mic';
+        const icoKey = slot.kind === 'inst'
+          ? (instIconMap[slot.inst.type] ?? 'guitar')
+          : 'vocal-mic';
         const icoSvg = icons[icoKey] ?? '';
         const isDrum = slot.kind === 'inst' && slot.inst.type === 'drums';
         const sz = isDrum ? DRUM_SZ : ICON_SZ;
-        if (icoSvg)
-          addImg(icoSvg, sx - sz / 2, sy - sz / 2, sz, sz, -90);
-        drawChip(sx - sz / 2 - 11, sy, slot.member.name);
+        if (icoSvg) addImg(icoSvg, sx - sz / 2, sy - sz / 2, sz, sz, -90);
       });
+
+      // One chip per member, centred between their items
+      const memberChips = new Map<string, { name: string; ySum: number; count: number; leftX: number }>();
+      slots.forEach((slot, idx) => {
+        const sx = base[0] + offsets[idx][0],
+          sy = base[1] + offsets[idx][1];
+        const isDrum = slot.kind === 'inst' && slot.inst.type === 'drums';
+        const sz = isDrum ? DRUM_SZ : ICON_SZ;
+        const mid = memberChips.get(slot.member.id);
+        if (!mid) {
+          memberChips.set(slot.member.id, { name: slot.member.name, ySum: sy, count: 1, leftX: sx - sz / 2 - 11 });
+        } else {
+          mid.ySum += sy;
+          mid.count++;
+          mid.leftX = Math.min(mid.leftX, sx - sz / 2 - 11);
+        }
+      });
+      memberChips.forEach(({ name, ySum, count, leftX }) => drawChip(leftX, ySum / count, name));
     });
 
     // ── Pass 2: Amplifier icons + chips ──
@@ -690,20 +704,33 @@ export class EquipoComponent implements OnInit {
       const base = posCoords[pos];
       if (!base) return;
       const offsets = clusterOffsets(amps.length);
+
+      // Draw icons
       amps.forEach((amp, idx) => {
         const ax = base[0] + offsets[idx][0],
           ay = base[1] + offsets[idx][1];
-        const ampSvg =
-          icons[amp.type === 'bass' ? 'bass-amp' : 'guitar-amp'] ?? '';
-        if (ampSvg)
-          addImg(ampSvg, ax - AMP_SZ / 2, ay - AMP_SZ / 2, AMP_SZ, AMP_SZ, -90);
-        const owner = amp.memberId ? memberMap.get(amp.memberId) : undefined;
-        drawChip(
-          ax - AMP_SZ / 2 - 11,
-          ay,
-          owner ? owner.name.split(' ')[0] + ' amp' : amp.name,
-        );
+        const ampSvg = icons[amp.type === 'bass' ? 'bass-amp' : 'guitar-amp'] ?? '';
+        if (ampSvg) addImg(ampSvg, ax - AMP_SZ / 2, ay - AMP_SZ / 2, AMP_SZ, AMP_SZ, -90);
       });
+
+      // One chip per owner, centred between their amps
+      const ownerChips = new Map<string, { label: string; ySum: number; count: number; leftX: number }>();
+      amps.forEach((amp, idx) => {
+        const ax = base[0] + offsets[idx][0],
+          ay = base[1] + offsets[idx][1];
+        const owner = amp.memberId ? memberMap.get(amp.memberId) : undefined;
+        const key = amp.memberId ?? amp.id;
+        const label = owner ? owner.name.split(' ')[0] + ' amp' : amp.name;
+        const mid = ownerChips.get(key);
+        if (!mid) {
+          ownerChips.set(key, { label, ySum: ay, count: 1, leftX: ax - AMP_SZ / 2 - 11 });
+        } else {
+          mid.ySum += ay;
+          mid.count++;
+          mid.leftX = Math.min(mid.leftX, ax - AMP_SZ / 2 - 11);
+        }
+      });
+      ownerChips.forEach(({ label, ySum, count, leftX }) => drawChip(leftX, ySum / count, label));
     });
 
     // ── Pass 3: DI box to the RIGHT of instruments, rotated +90° ──
