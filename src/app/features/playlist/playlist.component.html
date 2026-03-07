@@ -143,7 +143,7 @@
 
             <td class="col-actions">
               <button
-                *ngIf="song.tempo"
+                [style.visibility]="song.tempo ? 'visible' : 'hidden'"
                 class="btn btn-ghost btn-xs tooltip"
                 data-tip="Metrónomo"
                 (click)="openMetronome(song)">
@@ -230,7 +230,7 @@
             <div class="msc-row2">
               <span class="msc-meta">{{ song.artist }}<ng-container *ngIf="song.tempo"> · {{ song.tempo }} bpm</ng-container><ng-container *ngIf="song.duration"> · {{ formatDuration(song.duration) }}</ng-container></span>
               <div class="msc-actions">
-                <button *ngIf="song.tempo" class="btn btn-ghost btn-xs" (click)="openMetronome(song)">
+                <button [style.visibility]="song.tempo ? 'visible' : 'hidden'" class="btn btn-ghost btn-xs" (click)="openMetronome(song)">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 21h6M12 21V9M7 3l10 18H7L17 3"/>
                     <line x1="12" y1="11" x2="17" y2="16"/>
