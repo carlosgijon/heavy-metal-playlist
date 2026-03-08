@@ -83,7 +83,12 @@ import { GigContactsDialogComponent, GigContactsDialogData } from './gig-contact
                     }
                   </button>
                 </td>
-                <td class="text-sm">{{ g.pay || '—' }}</td>
+                <td class="text-sm">
+                  {{ g.pay || '—' }}
+                  @if (g.status === 'played') {
+                    <span class="badge badge-xs badge-warning ml-1" title="Pendiente de cobrar">€ pendiente</span>
+                  }
+                </td>
                 <td class="text-xs whitespace-nowrap">
                   @if (g.followUpDate) {
                     <span class="badge badge-xs gap-1"
@@ -213,7 +218,8 @@ export class GigsComponent implements OnChanges {
 
   readonly badgeToBtn: Record<GigStatus, string> = {
     lead: 'btn-neutral', contacted: 'btn-info', negotiating: 'btn-warning',
-    hold: 'btn-primary', confirmed: 'btn-success', played: 'btn-neutral', cancelled: 'btn-error',
+    hold: 'btn-primary', confirmed: 'btn-success', played: 'btn-neutral',
+    cobrado: 'btn-accent', cancelled: 'btn-error',
   };
 
   ngOnChanges(changes: SimpleChanges): void {

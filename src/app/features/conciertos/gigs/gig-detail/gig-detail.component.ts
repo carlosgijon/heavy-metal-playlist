@@ -650,7 +650,7 @@ export class GigDetailComponent implements OnInit, OnChanges, AfterViewInit, OnD
 
   async toggleItem(checklistId: string, item: ChecklistItem): Promise<void> {
     try {
-      const updated = await this.db.updateChecklistItem(item.id, { ...item, done: !item.done });
+      const updated = await this.db.updateChecklistItem({ ...item, done: !item.done });
       this.checklistItems[checklistId] = (this.checklistItems[checklistId] ?? []).map(i => i.id === updated.id ? updated : i);
     } catch { this.toast.danger('Error al actualizar'); }
   }

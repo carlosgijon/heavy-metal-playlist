@@ -422,21 +422,6 @@
             <input class="input input-bordered input-sm w-full" type="text" [(ngModel)]="tpvNotes"
               placeholder="Concierto, evento..." />
           </div>
-          <!-- No-gig alert -->
-          @if (showNoGigAlert) {
-            <div class="alert alert-warning mt-3 p-3 flex-col items-start gap-2">
-              <p class="text-sm font-semibold">Sin concierto seleccionado</p>
-              <p class="text-xs opacity-80">La venta no quedará asociada a ningún concierto.</p>
-              <div class="flex gap-2 mt-1 w-full">
-                <button class="btn btn-xs btn-ghost flex-1" (click)="showNoGigAlert = false; tpvShowGigPicker = true">
-                  Seleccionar concierto
-                </button>
-                <button class="btn btn-xs btn-warning flex-1" (click)="tpvContinueWithoutGig()">
-                  Continuar sin concierto
-                </button>
-              </div>
-            </div>
-          }
 
           <button class="btn btn-success w-full mt-3 gap-2" [disabled]="cartIsEmpty || tpvSelling"
             (click)="tpvCheckout()">
@@ -456,3 +441,28 @@
     </div>
   }
 </div>
+
+<!-- ── Blocking modal: no gig selected ──────────────────────────────────── -->
+@if (showNoGigAlert) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="alert alert-info flex-col items-start gap-3 w-full max-w-sm mx-4 shadow-2xl rounded-2xl p-6">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke-width="1.5" stroke="currentColor" width="22" height="22" class="shrink-0">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/>
+        </svg>
+        <p class="font-semibold text-base">Sin concierto seleccionado</p>
+      </div>
+      <p class="text-sm opacity-90">La venta no quedará vinculada a ningún concierto. ¿Quieres seleccionar uno o continuar de todas formas?</p>
+      <div class="flex gap-2 w-full mt-1">
+        <button class="btn btn-sm btn-ghost flex-1" (click)="showNoGigAlert = false; tpvShowGigPicker = true">
+          Seleccionar concierto
+        </button>
+        <button class="btn btn-sm btn-info flex-1" (click)="tpvContinueWithoutGig()">
+          Continuar sin concierto
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -5,6 +5,7 @@ export type GigStatus =
   | 'hold'
   | 'confirmed'
   | 'played'
+  | 'cobrado'
   | 'cancelled';
 
 export type CalendarEventType = 'rehearsal' | 'unavailable' | 'other';
@@ -17,6 +18,7 @@ export const GIG_STATUS_LABELS: Record<GigStatus, string> = {
   hold: 'En espera',
   confirmed: 'Confirmado',
   played: 'Tocado',
+  cobrado: 'Cobrado',
   cancelled: 'Cancelado',
 };
 
@@ -27,6 +29,7 @@ export const GIG_STATUS_BADGE: Record<GigStatus, string> = {
   hold: 'badge-primary',
   confirmed: 'badge-success',
   played: 'badge-neutral',
+  cobrado: 'badge-accent',
   cancelled: 'badge-error',
 };
 
@@ -37,12 +40,13 @@ export const GIG_STATUS_NEXT: Record<GigStatus, GigStatus> = {
   negotiating: 'hold',
   hold: 'confirmed',
   confirmed: 'played',
-  played: 'played',
+  played: 'cobrado',
+  cobrado: 'cobrado',
   cancelled: 'cancelled',
 };
 
 export const GIG_STATUSES: GigStatus[] = [
-  'lead', 'contacted', 'negotiating', 'hold', 'confirmed', 'played', 'cancelled',
+  'lead', 'contacted', 'negotiating', 'hold', 'confirmed', 'played', 'cobrado', 'cancelled',
 ];
 
 export const EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
