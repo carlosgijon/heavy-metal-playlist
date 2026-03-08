@@ -414,7 +414,8 @@ export class EquipoComponent implements OnInit {
       DRUM_SZ = 190,   // drums are the largest item on stage
       AMP_SZ = 110,
       DI_SZ = 44,
-      MIC_SZ = 36;
+      MIC_SZ = 36,
+      VOCAL_MIC_SZ = 72;  // vocal mics are larger so they're clearly visible
 
     const clusterOffsets = (n: number): [number, number][] => {
       if (n === 1) return [[0, 0]];
@@ -711,9 +712,9 @@ export class EquipoComponent implements OnInit {
       if (count === 0) return;
       avgY /= count;
       const micSvg = icons['vocal-mic'] ?? '';
-      const micX = maxX + ICON_SZ / 2 + MIC_SZ / 2 + 8;
-      if (micSvg) addImg(micSvg, micX - MIC_SZ / 2, avgY - MIC_SZ / 2, MIC_SZ, MIC_SZ, -90);
-      drawMesaArrow(micX + MIC_SZ / 2, avgY, 'a mesa');
+      const micX = maxX + ICON_SZ / 2 + VOCAL_MIC_SZ / 2 + 8;
+      if (micSvg) addImg(micSvg, micX - VOCAL_MIC_SZ / 2, avgY - VOCAL_MIC_SZ / 2, VOCAL_MIC_SZ, VOCAL_MIC_SZ, -90);
+      drawMesaArrow(micX + VOCAL_MIC_SZ / 2, avgY, 'a mesa');
     });
 
     // ── Pass 6: Drum mic icons (2 per kit: below + above) + arrows ──
