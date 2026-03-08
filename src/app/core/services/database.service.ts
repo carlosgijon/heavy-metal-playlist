@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { AuthResponse, MeResponse, SelectBandResponse, User, UserPayload, UserUpdate } from '../models/auth.model';
 import { Song, Playlist, PlaylistWithStats, LibrarySong, PlaylistSongView } from '../models/song.model';
 import { BandMember, Microphone, Instrument, Amplifier, PaEquipment, ChannelEntry } from '../models/equipment.model';
-import { Venue, Gig, GigStatus, CalendarEvent, GigChecklist, ChecklistItem, GigContact } from '../models/gig.model';
+import { Venue, Gig, GigStatus, GigSummary, CalendarEvent, GigChecklist, ChecklistItem, GigContact } from '../models/gig.model';
 import { Transaction, WishListItem } from '../models/finance.model';
 import { MerchItem, MerchSaleDto, MerchRestockDto } from '../models/merch.model';
 
@@ -120,11 +120,11 @@ export class DatabaseService {
 
   // -- Settings --------------------------------------------------------------
 
-  getSettings(): Promise<{ theme: string; bpmApiKey?: string }> {
+  getSettings(): Promise<{ theme: string; bpmApiKey?: string; groqApiKey?: string }> {
     return this.get('/settings');
   }
 
-  setSettings(partial: { theme?: string; bpmApiKey?: string }): Promise<void> {
+  setSettings(partial: { theme?: string; bpmApiKey?: string; groqApiKey?: string }): Promise<void> {
     return this.post('/settings', partial);
   }
 
@@ -484,5 +484,34 @@ export class DatabaseService {
 
   restockMerchItem(id: string, dto: MerchRestockDto): Promise<MerchItem> {
     return this.put(`/merch/${id}/stock`, dto);
+  }
+
+  // Aliases used by GigDetailComponent
+  getChecklistItems(checklistId: string): Promise<ChecklistItem[]> {
+    return this.getChecklistByList(checklistId);
+  }
+
+  deleteGigChecklistById(id: string): Promise<void> {
+    return this.deleteGigChecklist(id);
+  }
+
+  resetChecklistItems(checklistId: string): Promise<void> {
+    return this.resetChecklistByList(checklistId);
+  }
+
+  deleteChecklistItemById(id: string): Promise<void> {
+    return this.deleteChecklistItem(id);
+  }
+
+  // -- Gig summary ------------------------------------------------------------
+
+  getGigSummary(gigId: string): Promise<GigSummary> {
+    return this.get(`/gigs/${gigId}/summary`);
+  }
+
+  // -- AI ---------------------------------------------------------------------
+
+  generateSetlist(songs: any[], preferences: string): Promise<{ orderedIds: string[]; explanation: string }> {
+    return this.post('/ai/setlist', { songs, preferences });
   }
 }

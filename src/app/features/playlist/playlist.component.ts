@@ -1,5 +1,6 @@
 import { Component, inject, Input, OnInit, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Dialog } from '@angular/cdk/dialog';
 import { NgIconComponent } from '@ng-icons/core';
@@ -15,6 +16,7 @@ import { MetronomeDialogComponent } from '../../shared/metronome-dialog/metronom
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     DragDropModule,
     NgIconComponent,
   ],
@@ -31,6 +33,11 @@ export class PlaylistComponent implements OnInit {
 
   songs: Song[] = [];
   loading = true;
+
+  showAiPanel = false;
+  aiPreferences = '';
+  isGenerating = false;
+  aiExplanation = '';
 
   async ngOnInit(): Promise<void> {
     await this.loadSongs();
@@ -166,6 +173,39 @@ export class PlaylistComponent implements OnInit {
       backdropClass: 'cdk-overlay-dark-backdrop',
       data: { bpm: song.tempo, title: song.title },
     });
+  }
+
+  async generateWithAi(): Promise<void> {
+    const songItems = this.songs.filter(s => s.type !== 'event');
+    if (songItems.length < 2) {
+      this.toast.warning('Necesitas al menos 2 canciones para generar un setlist');
+      return;
+    }
+    this.isGenerating = true;
+    try {
+      const result = await this.db.generateSetlist(
+        songItems.map(s => ({ id: s.id, title: s.title, artist: s.artist, tempo: s.tempo, style: s.style, notes: s.notes })),
+        this.aiPreferences,
+      );
+      const orderedSongs = result.orderedIds
+        .map(id => songItems.find(s => s.id === id))
+        .filter((s): s is Song => !!s);
+      if (orderedSongs.length === songItems.length) {
+        let songIdx = 0;
+        const newSongs = this.songs.map(s => s.type === 'event' ? s : orderedSongs[songIdx++]);
+        const ids = newSongs.map(s => s.id);
+        this.songs = await this.db.reorder(this.playlist.id, ids);
+        this.aiExplanation = result.explanation;
+        this.toast.success('Setlist reordenado por IA');
+        this.showAiPanel = false;
+      } else {
+        this.toast.warning('La IA no devolvió un orden completo');
+      }
+    } catch {
+      this.toast.danger('Error al generar el setlist con IA', 'Error');
+    } finally {
+      this.isGenerating = false;
+    }
   }
 
   songNumber(index: number): number {

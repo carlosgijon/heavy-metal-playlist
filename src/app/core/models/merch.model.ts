@@ -25,6 +25,7 @@ export interface MerchSaleDto {
   date: string;
   size?: string;
   notes?: string;
+  gigId?: string;
 }
 
 export interface MerchRestockDto {

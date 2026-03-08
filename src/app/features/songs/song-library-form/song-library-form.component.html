@@ -132,6 +132,23 @@
         placeholder="Notas generales sobre la canción..."></textarea>
     </div>
 
+    <div class="divider text-xs opacity-50">Para IA de setlist</div>
+
+    <div class="row-fields">
+      <div class="field-group">
+        <label class="field-label">Nota inicial</label>
+        <input class="input input-bordered w-full" formControlName="startNote"
+          placeholder="Ej: Mi menor, riff intro..." autocomplete="off" />
+        <p class="field-hint">Con qué empieza la canción</p>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Nota final</label>
+        <input class="input input-bordered w-full" formControlName="endNote"
+          placeholder="Ej: La mayor, fade out..." autocomplete="off" />
+        <p class="field-hint">Con qué termina la canción</p>
+      </div>
+    </div>
+
   </form>
 
   <div class="modal-action">

@@ -20,6 +20,7 @@ import {
 } from '../../core/models/finance.model';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
+import { Gig } from '../../core/models/gig.model';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { TransactionFormComponent, TransactionFormData } from './transaction-form/transaction-form.component';
 import { WishListItemFormComponent, WishListFormData } from './wishlist-item-form/wishlist-item-form.component';
@@ -48,6 +49,7 @@ export class FinanzasComponent implements OnInit, AfterViewInit, OnDestroy {
 
   transactions: Transaction[] = [];
   wishList: WishListItem[] = [];
+  gigs: Gig[] = [];
 
   // Filters for transactions tab
   filterType = 'all';
@@ -82,9 +84,10 @@ export class FinanzasComponent implements OnInit, AfterViewInit, OnDestroy {
   async load(): Promise<void> {
     try {
       this.loading = true;
-      [this.transactions, this.wishList] = await Promise.all([
+      [this.transactions, this.wishList, this.gigs] = await Promise.all([
         this.db.getTransactions(),
         this.db.getWishList(),
+        this.db.getGigs(),
       ]);
     } catch {
       this.toast.danger('Error al cargar los datos financieros', 'Error');
@@ -186,7 +189,7 @@ export class FinanzasComponent implements OnInit, AfterViewInit, OnDestroy {
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-dark-backdrop',
       disableClose: true,
-      data: { transaction } satisfies TransactionFormData,
+      data: { transaction, gigs: this.gigs } satisfies TransactionFormData,
     });
     ref.closed.subscribe(async result => {
       if (!result) return;

@@ -576,3 +576,64 @@
   padding: 0.75rem 1rem 1rem;
   border-top: 1px solid oklch(var(--b3) / 0.5);
 }
+
+// ── TPV Gig banner ────────────────────────────────────────────────────────
+
+.tpv-gig-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  flex-wrap: wrap;
+
+  &.tpv-gig-active {
+    background: oklch(var(--su) / 0.12);
+    border: 1px solid oklch(var(--su) / 0.3);
+  }
+  &.tpv-gig-none {
+    background: oklch(var(--b2));
+    border: 1px dashed oklch(var(--b3));
+  }
+}
+
+.tpv-gig-label { font-weight: 600; opacity: 0.7; }
+.tpv-gig-name  { font-weight: 700; }
+
+.tpv-gig-picker {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  background: oklch(var(--b1));
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.tpv-gig-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.15s;
+
+  &:hover { background: oklch(var(--b2)); }
+
+  &.tpv-gig-option-active {
+    background: oklch(var(--p) / 0.15);
+    font-weight: 600;
+  }
+  &.tpv-gig-option-none {
+    opacity: 0.6;
+    font-style: italic;
+  }
+}

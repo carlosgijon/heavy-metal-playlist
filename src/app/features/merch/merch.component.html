@@ -262,6 +262,34 @@
 
   <!-- ═══════════════════════════════ TAB: TPV ════════════════════════════════ -->
   @else if (tab === 'tpv') {
+
+    <!-- Gig banner -->
+    <div class="tpv-gig-banner" [class.tpv-gig-active]="!!tpvSession.gig()" [class.tpv-gig-none]="!tpvSession.gig()">
+      @if (tpvSession.gig(); as gig) {
+        <span class="tpv-gig-label">Concierto activo:</span>
+        <span class="tpv-gig-name">{{ gig.title }}{{ gig.date ? ' · ' + formatGigDate(gig.date) : '' }}</span>
+        <button class="btn btn-xs btn-ghost ml-auto" (click)="tpvShowGigPicker = !tpvShowGigPicker">Cambiar</button>
+        <button class="btn btn-xs btn-ghost text-error" (click)="tpvSelectGig(null)">Quitar</button>
+      } @else {
+        <span class="tpv-gig-label opacity-60">Sin concierto seleccionado</span>
+        <button class="btn btn-xs btn-outline ml-auto" (click)="tpvShowGigPicker = !tpvShowGigPicker">Seleccionar concierto</button>
+      }
+    </div>
+
+    <!-- Gig picker dropdown -->
+    @if (tpvShowGigPicker) {
+      <div class="tpv-gig-picker">
+        <button class="tpv-gig-option tpv-gig-option-none" (click)="tpvSelectGig(null)">Sin concierto</button>
+        @for (g of gigs; track g.id) {
+          <button class="tpv-gig-option" [class.tpv-gig-option-active]="tpvSession.gig()?.id === g.id"
+            (click)="tpvSelectGig(g)">
+            <span class="font-medium">{{ g.title }}</span>
+            @if (g.date) { <span class="text-xs opacity-60 ml-1">{{ formatGigDate(g.date) }}</span> }
+          </button>
+        }
+      </div>
+    }
+
     <div class="tpv-layout">
 
       <!-- Left: Product grid -->
@@ -394,6 +422,22 @@
             <input class="input input-bordered input-sm w-full" type="text" [(ngModel)]="tpvNotes"
               placeholder="Concierto, evento..." />
           </div>
+          <!-- No-gig alert -->
+          @if (showNoGigAlert) {
+            <div class="alert alert-warning mt-3 p-3 flex-col items-start gap-2">
+              <p class="text-sm font-semibold">Sin concierto seleccionado</p>
+              <p class="text-xs opacity-80">La venta no quedará asociada a ningún concierto.</p>
+              <div class="flex gap-2 mt-1 w-full">
+                <button class="btn btn-xs btn-ghost flex-1" (click)="showNoGigAlert = false; tpvShowGigPicker = true">
+                  Seleccionar concierto
+                </button>
+                <button class="btn btn-xs btn-warning flex-1" (click)="tpvContinueWithoutGig()">
+                  Continuar sin concierto
+                </button>
+              </div>
+            </div>
+          }
+
           <button class="btn btn-success w-full mt-3 gap-2" [disabled]="cartIsEmpty || tpvSelling"
             (click)="tpvCheckout()">
             @if (tpvSelling) {

@@ -80,6 +80,48 @@ import { ToastService } from '../../core/services/toast.service';
             </div>
           </div>
         </div>
+
+        <!-- API Keys -->
+        <div class="card bg-base-200 shadow mt-4">
+          <div class="card-body gap-5">
+            <h2 class="card-title text-base">
+              <ng-icon name="heroKey" class="w-5 h-5 text-primary" />
+              Claves de API
+            </h2>
+
+            <label class="form-control">
+              <div class="label">
+                <span class="label-text">BPM API Key <span class="opacity-40 text-xs">(AcousticBrainz / GetSongBPM)</span></span>
+              </div>
+              <input type="password" class="input input-bordered font-mono text-sm"
+                [(ngModel)]="bpmApiKey" [disabled]="savingKeys()"
+                placeholder="Deja vacío para no usar" autocomplete="off" />
+            </label>
+
+            <label class="form-control">
+              <div class="label">
+                <span class="label-text">Groq API Key <span class="opacity-40 text-xs">(generación de setlist con IA)</span></span>
+              </div>
+              <input type="password" class="input input-bordered font-mono text-sm"
+                [(ngModel)]="groqApiKey" [disabled]="savingKeys()"
+                placeholder="gsk_..." autocomplete="off" />
+              <div class="label">
+                <span class="label-text-alt opacity-40">Consigue una clave gratis en console.groq.com</span>
+              </div>
+            </label>
+
+            @if (saveKeysError()) {
+              <div class="alert alert-error py-2 text-sm">{{ saveKeysError() }}</div>
+            }
+
+            <div class="card-actions justify-end">
+              <button class="btn btn-primary" (click)="saveKeys()" [disabled]="savingKeys()">
+                @if (savingKeys()) { <span class="loading loading-spinner loading-xs"></span> }
+                Guardar claves
+              </button>
+            </div>
+          </div>
+        </div>
       }
     </div>
   `,
@@ -92,17 +134,26 @@ export class BandSettingsComponent implements OnInit {
   loading = signal(true);
   saving = signal(false);
   saveError = signal('');
+  savingKeys = signal(false);
+  saveKeysError = signal('');
   name = '';
   slug = signal('');
   previewLogo = signal<string | null>(null);
+  bpmApiKey = '';
+  groqApiKey = '';
   private _logoChanged = false;
 
   async ngOnInit() {
     try {
-      const band = await this.db.getMyBand();
+      const [band, settings] = await Promise.all([
+        this.db.getMyBand(),
+        this.db.getSettings(),
+      ]);
       this.name = band.name;
       this.slug.set(band.slug);
       if (band.logo) this.previewLogo.set(band.logo);
+      this.bpmApiKey = settings.bpmApiKey ?? '';
+      this.groqApiKey = settings.groqApiKey ?? '';
     } catch {
       this.toast.danger('Error al cargar el grupo');
     } finally {
@@ -152,6 +203,22 @@ export class BandSettingsComponent implements OnInit {
       this.saveError.set(String(err));
     } finally {
       this.saving.set(false);
+    }
+  }
+
+  async saveKeys(): Promise<void> {
+    this.saveKeysError.set('');
+    this.savingKeys.set(true);
+    try {
+      await this.db.setSettings({
+        bpmApiKey: this.bpmApiKey || undefined,
+        groqApiKey: this.groqApiKey || undefined,
+      });
+      this.toast.success('Claves de API guardadas');
+    } catch (err: any) {
+      this.saveKeysError.set(String(err));
+    } finally {
+      this.savingKeys.set(false);
     }
   }
 

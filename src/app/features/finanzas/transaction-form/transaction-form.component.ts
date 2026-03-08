@@ -7,9 +7,13 @@ import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
 } from '../../../core/models/finance.model';
+import { Gig } from '../../../core/models/gig.model';
 
 export interface TransactionFormData {
   transaction: Partial<Transaction> | null;
+  gigs?: Gig[];
+  /** If set, gigId is pre-selected and locked (opened from gig detail) */
+  lockedGigId?: string;
 }
 
 @Component({
@@ -69,6 +73,27 @@ export interface TransactionFormData {
           <input class="input input-bordered w-full" type="text" [(ngModel)]="form.description"
             placeholder="Descripción opcional..." />
         </div>
+
+        <!-- Concierto asociado -->
+        @if (data.lockedGigId) {
+          <div class="form-control">
+            <label class="label"><span class="label-text font-semibold">Concierto</span></label>
+            <input class="input input-bordered w-full input-disabled" [value]="lockedGigName" readonly />
+          </div>
+        } @else if (data.gigs && data.gigs.length > 0) {
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Concierto asociado</span>
+              <span class="label-text-alt opacity-60">Opcional</span>
+            </label>
+            <select class="select select-bordered w-full" [(ngModel)]="form.gigId">
+              <option value="">— Sin concierto —</option>
+              @for (g of data.gigs; track g.id) {
+                <option [value]="g.id">{{ g.title }}{{ g.date ? ' · ' + formatDate(g.date) : '' }}</option>
+              }
+            </select>
+          </div>
+        }
       </div>
 
       <div class="modal-action mt-6">
@@ -93,6 +118,7 @@ export class TransactionFormComponent implements OnInit {
     amount: undefined,
     date: new Date().toISOString().slice(0, 10),
     description: '',
+    gigId: undefined,
   };
 
   get isEdit(): boolean {
@@ -103,14 +129,28 @@ export class TransactionFormComponent implements OnInit {
     return this.form.type === 'income' ? this.incomeCategories : this.expenseCategories;
   }
 
+  get lockedGigName(): string {
+    const gig = this.data.gigs?.find(g => g.id === this.data.lockedGigId);
+    return gig ? `${gig.title}${gig.date ? ' · ' + this.formatDate(gig.date) : ''}` : '—';
+  }
+
   ngOnInit(): void {
+    if (this.data.lockedGigId) {
+      this.form.gigId = this.data.lockedGigId;
+    }
     if (this.data.transaction) {
       this.form = { ...this.data.transaction };
+      if (this.data.lockedGigId) this.form.gigId = this.data.lockedGigId;
     }
   }
 
   onTypeChange(): void {
     this.form.category = this.form.type === 'income' ? 'gig' : 'equipment';
+  }
+
+  formatDate(d: string): string {
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y}`;
   }
 
   isValid(): boolean {
@@ -119,6 +159,8 @@ export class TransactionFormComponent implements OnInit {
 
   submit(): void {
     if (!this.isValid()) return;
+    // Normalize empty gigId to undefined
+    if (!this.form.gigId) this.form.gigId = undefined;
     this.dialogRef.close(this.form);
   }
 

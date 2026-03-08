@@ -6,8 +6,10 @@ import {
   MerchItem, MerchSaleDto, MERCH_TYPES, MERCH_SIZES, SIZED_MERCH_TYPES,
   calcMerchAnalysis,
 } from '../../core/models/merch.model';
+import { Gig } from '../../core/models/gig.model';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
+import { TpvSessionService } from '../../core/services/tpv-session.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { MerchItemFormComponent, MerchItemFormData } from './merch-item-form/merch-item-form.component';
 import { MerchDetailDialogComponent } from './merch-detail-dialog/merch-detail-dialog.component';
@@ -32,10 +34,16 @@ export class MerchComponent implements OnInit {
   private readonly db = inject(DatabaseService);
   private readonly toast = inject(ToastService);
   private readonly dialog = inject(Dialog);
+  readonly tpvSession = inject(TpvSessionService);
 
   items: MerchItem[] = [];
+  gigs: Gig[] = [];
   loading = true;
   tab: MerchTab = 'catalogo';
+
+  // TPV gig picker state
+  tpvShowGigPicker = false;
+  showNoGigAlert = false;
 
   // --- TPV state ---
   cart: CartItem[] = [];
@@ -61,7 +69,10 @@ export class MerchComponent implements OnInit {
 
   private async load(): Promise<void> {
     try {
-      this.items = await this.db.getMerchItems();
+      [this.items, this.gigs] = await Promise.all([
+        this.db.getMerchItems(),
+        this.db.getGigs(),
+      ]);
     } catch (e) {
       this.toast.danger('Error cargando productos de merch');
     } finally {
@@ -73,6 +84,25 @@ export class MerchComponent implements OnInit {
     this.tab = t;
     this.tpvPendingItem = null;
     this.tpvPendingSize = undefined;
+    this.showNoGigAlert = false;
+    this.tpvShowGigPicker = false;
+  }
+
+  // TPV gig helpers
+  formatGigDate(d: string): string {
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y}`;
+  }
+
+  tpvSelectGig(gig: Gig | null): void {
+    this.tpvSession.setGig(gig);
+    this.tpvShowGigPicker = false;
+    this.showNoGigAlert = false;
+  }
+
+  tpvContinueWithoutGig(): void {
+    this.showNoGigAlert = false;
+    this.doCheckout();
   }
 
   typeLabel(type: string): string {
@@ -304,10 +334,19 @@ export class MerchComponent implements OnInit {
     return this.cart.length === 0;
   }
 
-  async tpvCheckout(): Promise<void> {
+  tpvCheckout(): void {
     if (this.cartIsEmpty || this.tpvSelling) return;
+    if (!this.tpvSession.gig()) {
+      this.showNoGigAlert = true;
+      return;
+    }
+    this.doCheckout();
+  }
+
+  private async doCheckout(): Promise<void> {
     this.tpvSelling = true;
     try {
+      const gigId = this.tpvSession.gig()?.id;
       for (const entry of this.cart) {
         const dto: MerchSaleDto = {
           quantity: entry.quantity,
@@ -315,6 +354,7 @@ export class MerchComponent implements OnInit {
           date: this.tpvSaleDate,
           size: entry.size,
           notes: this.tpvNotes || undefined,
+          gigId,
         };
         const { item: updated } = await this.db.sellMerchItem(entry.item.id, dto);
         this.items = this.items.map(i => i.id === updated.id ? updated : i);

@@ -111,9 +111,29 @@ export interface Gig {
   setTime?: string;
   setlistId?: string;
   notes?: string;
+  attendance?: number;
   createdAt: string;
   followUpDate?: string;
   followUpNote?: string;
+}
+
+export interface GigMerchSale {
+  id: string;
+  amount: number;
+  date: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface GigSummaryTransaction {
+  id: string; type: string; category: string; amount: number;
+  date: string; description?: string; gigId?: string; createdAt: string;
+}
+
+export interface GigSummary {
+  gig: Gig;
+  transactions: GigSummaryTransaction[];
+  merchSales: GigMerchSale[];
 }
 
 export interface GigContact {

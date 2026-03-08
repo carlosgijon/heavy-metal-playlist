@@ -20,6 +20,8 @@ export interface LibrarySong {
   tempo?: number;    // BPM
   style?: string;
   notes?: string;
+  startNote?: string; // e.g. "Em", "A#"
+  endNote?: string;   // e.g. "G", "Db"
 }
 
 /** Entry linking a playlist to a library song (or an inline event) */

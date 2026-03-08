@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Dialog } from '@angular/cdk/dialog';
 import { CdkDragDrop, CdkDrag, CdkDropList, CdkDropListGroup, transferArrayItem } from '@angular/cdk/drag-drop';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { heroPencil, heroTrash, heroPlus, heroChevronRight, heroCheckCircle, heroPhone } from '@ng-icons/heroicons/outline';
+import { heroPencil, heroTrash, heroPlus, heroChevronRight, heroCheckCircle, heroPhone, heroArrowTopRightOnSquare } from '@ng-icons/heroicons/outline';
 import { DatabaseService } from '../../../core/services/database.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog.component';
@@ -20,7 +20,7 @@ import { GigContactsDialogComponent, GigContactsDialogData } from './gig-contact
   selector: 'app-gigs',
   standalone: true,
   imports: [CommonModule, FormsModule, NgIconComponent, CdkDrag, CdkDropList, CdkDropListGroup],
-  providers: [provideIcons({ heroPencil, heroTrash, heroPlus, heroChevronRight, heroCheckCircle, heroPhone })],
+  providers: [provideIcons({ heroPencil, heroTrash, heroPlus, heroChevronRight, heroCheckCircle, heroPhone, heroArrowTopRightOnSquare })],
   template: `
     <!-- Toolbar -->
     <div class="flex items-center justify-between mb-3">
@@ -66,7 +66,11 @@ import { GigContactsDialogComponent, GigContactsDialogData } from './gig-contact
             @for (g of filtered; track g.id) {
               <tr>
                 <td class="whitespace-nowrap text-sm">{{ g.date ? formatDate(g.date) : '—' }}</td>
-                <td class="font-medium">{{ g.title }}</td>
+                <td>
+                  <button class="font-medium hover:underline text-left" (click)="selectGig.emit(g)">
+                    {{ g.title }}
+                  </button>
+                </td>
                 <td class="text-sm opacity-70">{{ g.venueName || '—' }}</td>
                 <td>
                   <button class="badge badge-sm gap-1 cursor-pointer hover:opacity-80"
@@ -157,6 +161,9 @@ import { GigContactsDialogComponent, GigContactsDialogData } from './gig-contact
                       </span>
                     }
                     <div class="flex gap-0.5 mt-2 pt-1 border-t border-base-200 justify-end">
+                      <button class="btn btn-ghost btn-xs" title="Ver detalle" (click)="selectGig.emit(gig)">
+                        <ng-icon name="heroArrowTopRightOnSquare" size="12" />
+                      </button>
                       <button class="btn btn-ghost btn-xs" title="Seguimiento" (click)="openContacts(gig)">
                         <ng-icon name="heroPhone" size="12" />
                       </button>
@@ -187,6 +194,7 @@ export class GigsComponent implements OnChanges {
   @Input() venues: Venue[] = [];
   @Input() playlists: PlaylistWithStats[] = [];
   @Output() changed = new EventEmitter<void>();
+  @Output() selectGig = new EventEmitter<Gig>();
 
   private dialog = inject(Dialog);
   private db = inject(DatabaseService);

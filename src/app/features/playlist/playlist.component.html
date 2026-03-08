@@ -28,6 +28,14 @@
         <ng-icon name="heroPrinter" class="w-4 h-4"></ng-icon>
         Exportar PDF
       </button>
+      <button
+        class="btn btn-ghost btn-sm tooltip"
+        data-tip="Generar orden con IA (Groq)"
+        *ngIf="songs.length >= 2"
+        (click)="showAiPanel = !showAiPanel">
+        <ng-icon name="heroSparkles" class="w-4 h-4"></ng-icon>
+        IA Setlist
+      </button>
       <button class="btn btn-ghost btn-sm" (click)="openAddEvent()">
         <ng-icon name="heroStar" class="w-4 h-4"></ng-icon>
         Añadir evento
@@ -37,6 +45,46 @@
         Nueva canción
       </button>
     </div>
+  </div>
+
+  <!-- AI Setlist panel -->
+  <div *ngIf="showAiPanel" class="ai-panel">
+    <div class="ai-panel-header">
+      <ng-icon name="heroSparkles" class="w-4 h-4 text-primary"></ng-icon>
+      <span>Generar orden de setlist con IA</span>
+    </div>
+    <p class="ai-panel-hint">
+      La IA analizará el tempo, género y notas de cada canción para sugerir el mejor orden.
+      Puedes añadir preferencias adicionales (opcional).
+    </p>
+    <textarea
+      class="textarea textarea-bordered w-full text-sm"
+      rows="2"
+      [(ngModel)]="aiPreferences"
+      placeholder="Ej: Empezar fuerte y terminar con épico, alternar rápidas y lentas...">
+    </textarea>
+    <div class="ai-panel-actions">
+      <button class="btn btn-ghost btn-sm" (click)="showAiPanel = false" [disabled]="isGenerating">
+        Cancelar
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="generateWithAi()" [disabled]="isGenerating">
+        <span *ngIf="isGenerating" class="loading loading-spinner loading-xs"></span>
+        <ng-icon *ngIf="!isGenerating" name="heroSparkles" class="w-4 h-4"></ng-icon>
+        {{ isGenerating ? 'Generando...' : 'Generar setlist' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- AI explanation -->
+  <div *ngIf="aiExplanation && !showAiPanel" class="alert alert-info ai-explanation">
+    <ng-icon name="heroSparkles" class="w-4 h-4 shrink-0"></ng-icon>
+    <div>
+      <p class="text-sm font-medium">Orden generado por IA</p>
+      <p class="text-xs opacity-80">{{ aiExplanation }}</p>
+    </div>
+    <button class="btn btn-ghost btn-xs ml-auto" (click)="aiExplanation = ''">
+      <ng-icon name="heroXMark" class="w-3 h-3"></ng-icon>
+    </button>
   </div>
 
   <!-- Loading -->

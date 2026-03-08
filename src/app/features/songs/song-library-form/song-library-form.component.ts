@@ -68,13 +68,15 @@ export class SongLibraryFormComponent implements OnInit, OnDestroy {
     }
 
     this.form = this.fb.group({
-      title:    [this.song?.title    ?? '', Validators.required],
-      artist:   [this.song?.artist   ?? '', Validators.required],
-      album:    [this.song?.album    ?? ''],
-      duration: [this.song?.duration ?? null, Validators.required],
-      tempo:    [this.song?.tempo    ?? null],
-      style:    [this.song?.style    ?? ''],
-      notes:    [this.song?.notes    ?? ''],
+      title:     [this.song?.title     ?? '', Validators.required],
+      artist:    [this.song?.artist    ?? '', Validators.required],
+      album:     [this.song?.album     ?? ''],
+      duration:  [this.song?.duration  ?? null, Validators.required],
+      tempo:     [this.song?.tempo     ?? null],
+      style:     [this.song?.style     ?? ''],
+      notes:     [this.song?.notes     ?? ''],
+      startNote: [this.song?.startNote ?? ''],
+      endNote:   [this.song?.endNote   ?? ''],
     });
 
     this.searchControl.valueChanges.pipe(
