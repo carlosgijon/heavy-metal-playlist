@@ -511,7 +511,7 @@ export class DatabaseService {
 
   // -- AI ---------------------------------------------------------------------
 
-  generateSetlist(songs: any[], preferences: string): Promise<{ orderedIds: string[]; explanation: string }> {
+  generateSetlist(songs: any[], preferences: string): Promise<{ orderedIds: string[]; joinAfter: string[]; bisAfterSongId: string | null; explanation: string }> {
     return this.post('/ai/setlist', { songs, preferences });
   }
 }

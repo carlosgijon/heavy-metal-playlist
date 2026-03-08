@@ -190,17 +190,46 @@ export class PlaylistComponent implements OnInit {
       const orderedSongs = result.orderedIds
         .map(id => songItems.find(s => s.id === id))
         .filter((s): s is Song => !!s);
-      if (orderedSongs.length === songItems.length) {
-        let songIdx = 0;
-        const newSongs = this.songs.map(s => s.type === 'event' ? s : orderedSongs[songIdx++]);
-        const ids = newSongs.map(s => s.id);
-        this.songs = await this.db.reorder(this.playlist.id, ids);
-        this.aiExplanation = result.explanation;
-        this.toast.success('Setlist reordenado por IA');
-        this.showAiPanel = false;
-      } else {
+      if (orderedSongs.length !== songItems.length) {
         this.toast.warning('La IA no devolvió un orden completo');
+        return;
       }
+
+      // 1. Apply joinWithNext to each song based on AI suggestion
+      const joinSet = new Set(result.joinAfter ?? []);
+      const joinUpdates = orderedSongs
+        .filter(s => s.joinWithNext !== joinSet.has(s.id))
+        .map(s => this.db.update({ ...s, joinWithNext: joinSet.has(s.id) }));
+      if (joinUpdates.length) await Promise.all(joinUpdates);
+
+      // 2. Separate BIS events from other events
+      const existingBis = this.songs.find(s => s.type === 'event' && s.title?.toUpperCase() === 'BIS');
+      const otherEvents = this.songs.filter(s => s.type === 'event' && s.title?.toUpperCase() !== 'BIS');
+
+      // 3. Build the new order starting with non-BIS events then songs
+      const newOrder: Song[] = [...otherEvents, ...orderedSongs];
+
+      // 4. Insert or reuse BIS event at the position suggested by AI
+      if (result.bisAfterSongId) {
+        let bisEvent: Song;
+        if (existingBis) {
+          bisEvent = existingBis;
+        } else {
+          bisEvent = await this.db.create({
+            playlistId: this.playlist.id, type: 'event', title: 'BIS',
+            artist: '', position: 0, joinWithNext: false,
+          } as any);
+        }
+        const insertIdx = newOrder.findIndex(s => s.id === result.bisAfterSongId);
+        newOrder.splice(insertIdx >= 0 ? insertIdx + 1 : newOrder.length, 0, bisEvent);
+      } else if (existingBis) {
+        await this.db.delete(existingBis.id, this.playlist.id);
+      }
+
+      this.songs = await this.db.reorder(this.playlist.id, newOrder.map(s => s.id));
+      this.aiExplanation = result.explanation;
+      this.toast.success('Setlist reordenado por IA');
+      this.showAiPanel = false;
     } catch {
       this.toast.danger('Error al generar el setlist con IA', 'Error');
     } finally {
