@@ -120,11 +120,11 @@ export class DatabaseService {
 
   // -- Settings --------------------------------------------------------------
 
-  getSettings(): Promise<{ theme: string; bpmApiKey?: string; groqApiKey?: string }> {
+  getSettings(): Promise<{ theme: string }> {
     return this.get('/settings');
   }
 
-  setSettings(partial: { theme?: string; bpmApiKey?: string; groqApiKey?: string }): Promise<void> {
+  setSettings(partial: { theme?: string }): Promise<void> {
     return this.post('/settings', partial);
   }
 
