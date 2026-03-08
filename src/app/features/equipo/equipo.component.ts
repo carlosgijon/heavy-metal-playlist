@@ -415,7 +415,7 @@ export class EquipoComponent implements OnInit {
       AMP_SZ = 110,
       DI_SZ = 44,
       MIC_SZ = 36,
-      VOCAL_MIC_SZ = 72;  // vocal mics are larger so they're clearly visible
+      VOCAL_MIC_SZ = 110;  // vocal mics are larger so they're clearly visible
 
     const clusterOffsets = (n: number): [number, number][] => {
       if (n === 1) return [[0, 0]];
