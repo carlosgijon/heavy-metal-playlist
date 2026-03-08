@@ -662,10 +662,10 @@ export class EquipoComponent implements OnInit {
       ownerChips.forEach(({ label, ySum, count, leftX }) => drawChip(leftX, ySum / count, label));
     });
 
-    // ── Pass 2b: Mesa arrows for amps without a mic ──
+    // ── Pass 2b: Mesa arrow only for amps going direct to desk ──
     this.amplifiers.forEach((amp) => {
       const slot = ampSlots.get(amp.id);
-      if (!slot || amp.routing === 'mic') return;
+      if (!slot || amp.routing !== 'mesa') return;
       const [ax, ay] = slot;
       drawMesaArrow(ax + AMP_SZ / 2, ay, 'a mesa');
     });
