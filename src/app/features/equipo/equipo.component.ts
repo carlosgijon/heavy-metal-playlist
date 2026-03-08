@@ -416,9 +416,6 @@ export class EquipoComponent implements OnInit {
       DI_SZ = 44,
       MIC_SZ = 36;
 
-    // Cable trunk: all signal cables route horizontally to trunkX, then a vertical spine exits rightward
-    const trunkX = SX + SW - 22; // near right edge of stage
-
     const clusterOffsets = (n: number): [number, number][] => {
       if (n === 1) return [[0, 0]];
       if (n === 2)
@@ -532,133 +529,61 @@ export class EquipoComponent implements OnInit {
       );
     });
 
-    // ── Precompute drum mic positions (ALL on right side, alternating below/above center) ──
-    // Even index → below drum centre; odd index → above drum centre (mirrored icon).
-    const drumMicSlots: Array<{ micCX: number; micCY: number; drumCX: number; flipY: boolean }> = [];
-    this.instruments.forEach((inst) => {
-      if (inst.type !== 'drums') return;
-      const slot = instSlots.get(inst.id);
-      if (!slot) return;
-      const [dx, dy] = slot;
-      const assignedMics = this.microphones.filter(
-        (m) => m.assignedToType === 'instrument' && m.assignedToId === inst.id,
-      );
-      assignedMics.forEach((_, micIdx) => {
-        const pairIdx = Math.floor(micIdx / 2);
-        const isAbove = micIdx % 2 === 1; // even → below, odd → above
-        const baseVOffset = DRUM_SZ / 3;
-        const extraVOffset = pairIdx * 45;
-        const micCY = isAbove
-          ? dy - baseVOffset - extraVOffset
-          : dy + baseVOffset + extraVOffset;
-        const micCX = dx + DRUM_SZ / 2 + MIC_SZ / 2 + 4; // always on right side
-        drumMicSlots.push({ micCX, micCY, drumCX: dx, flipY: isAbove });
+    // ── Helper: rightward "a mesa" arrow + label ──
+    const drawMesaArrow = (fromX: number, fromY: number, label: string): void => {
+      const len = 38;
+      add('line', { x1: fromX, y1: fromY, x2: fromX + len - 8, y2: fromY, stroke: '#111', 'stroke-width': '1.5' });
+      add('polygon', {
+        points: `${fromX + len},${fromY} ${fromX + len - 9},${fromY - 4} ${fromX + len - 9},${fromY + 4}`,
+        fill: '#111',
       });
-    });
+      addTxt(fromX + len / 2, fromY - 5, label, {
+        'font-size': '7.5', 'text-anchor': 'middle', fill: '#333', 'font-weight': 'bold',
+      });
+    };
 
-    // ── PRE-DRAW: All cables (drawn BEFORE icons so icons render on top) ──
-
-    // Instrument→amp cables: dashed gray (signal going to physical amp)
+    // ── PRE-DRAW: Instrument→amp cables (dashed curved, direction-aware) ──
     const ampCableAttrs: Record<string, string | number> = {
-      fill: 'none',
-      stroke: '#777',
-      'stroke-width': '1.5',
-      'stroke-dasharray': '6,3',
+      fill: 'none', stroke: '#777', 'stroke-width': '1.5', 'stroke-dasharray': '6,3',
     };
-    // To-mesa cables: solid black (signal going to mixing desk)
-    const mesaCableAttrs: Record<string, string | number> = {
-      fill: 'none',
-      stroke: '#111',
-      'stroke-width': '1.5',
-    };
-
-    // Instrument→amp cables: smooth cubic bezier curve (dashed gray)
     this.instruments.forEach((inst) => {
       if (inst.routing !== 'amp' || !inst.ampId) return;
       const iSlot = instSlots.get(inst.id);
       const aSlot = ampSlots.get(inst.ampId);
       if (!iSlot || !aSlot) return;
-      const [ix, iy] = iSlot,
-        [ax, ay] = aSlot;
+      const [ix, iy] = iSlot, [ax, ay] = aSlot;
       const startX = ix + ICON_SZ / 2, startY = iy;
       const endX = ax, endY = ay - AMP_SZ / 2;
-      // Cubic bezier: horizontal tangent from instrument right, vertical tangent into amp top
       const ctrl = Math.max(Math.abs(endX - startX), Math.abs(endY - startY)) * 0.5 + 60;
+      // Curve direction depends on vertical stage side:
+      //   Stage Left (top, low Y)  → curve downward  (c2Y = endY + ctrl)
+      //   Stage Right (bottom, high Y) → curve upward (c2Y = endY - ctrl)
+      //   Center → no vertical bias
+      const c2Y = iy < cy_center - 60 ? endY + ctrl
+               : iy > cy_center + 60 ? endY - ctrl
+               : endY;
       add('path', {
-        d: `M ${startX},${startY} C ${startX + ctrl},${startY} ${endX},${endY - ctrl} ${endX},${endY}`,
+        d: `M ${startX},${startY} C ${startX + ctrl},${startY} ${endX},${c2Y} ${endX},${endY}`,
         ...ampCableAttrs,
       });
     });
 
-    // Instrument to-mesa cables: solid black L-shape converging at Mesa exit point
+    // ── Drum mic slots: exactly 2 (below + above) as miking indicator ──
+    const drumMicSlots: Array<{ micCX: number; micCY: number; drumCX: number; flipY: boolean }> = [];
     this.instruments.forEach((inst) => {
-      if (inst.type === 'drums' || inst.routing === 'amp') return;
+      if (inst.type !== 'drums') return;
       const slot = instSlots.get(inst.id);
       if (!slot) return;
-      const [cx, cy] = slot;
-      // When routing='di', cable starts after the DI box; for 'mesa', from icon right
-      const startX =
-        inst.routing === 'di' ? cx + ICON_SZ / 2 + 6 + DI_SZ : cx + ICON_SZ / 2;
-      // Right-angle: horizontal to trunk column, then vertical to Mesa exit
-      add('polyline', {
-        points: `${startX},${cy} ${trunkX},${cy} ${trunkX},${cy_center}`,
-        ...mesaCableAttrs,
-      });
+      const hasMics = this.microphones.some(m => m.assignedToType === 'instrument' && m.assignedToId === inst.id);
+      if (!hasMics) return;
+      const [dx, dy] = slot;
+      const offset = DRUM_SZ / 3;
+      const micCX = dx + DRUM_SZ / 2 + MIC_SZ / 2 + 4;
+      drumMicSlots.push({ micCX, micCY: dy + offset, drumCX: dx, flipY: false }); // below
+      drumMicSlots.push({ micCX, micCY: dy - offset, drumCX: dx, flipY: true });  // above
     });
 
-    // Amplifier to-mesa cables: solid black L-shape converging at Mesa exit point
-    this.amplifiers.forEach((amp) => {
-      const slot = ampSlots.get(amp.id);
-      if (!slot) return;
-      const [ax, ay] = slot;
-      let sourceX: number, sourceY: number;
-      if (amp.routing === 'mic') {
-        const micCX = ax + AMP_SZ / 2 + MIC_SZ / 2 + 2;
-        sourceX = micCX + MIC_SZ / 2;
-        sourceY = ay + AMP_SZ / 3;
-      } else {
-        sourceX = ax + AMP_SZ / 2;
-        sourceY = ay;
-      }
-      add('polyline', {
-        points: `${sourceX},${sourceY} ${trunkX},${sourceY} ${trunkX},${cy_center}`,
-        ...mesaCableAttrs,
-      });
-    });
-
-    // Drum mic cables: all on right side — short line drum right face → mic, then L-shape to mesa
-    drumMicSlots.forEach(({ micCX, micCY, drumCX }) => {
-      // Short line: drum right face → mic capsule
-      add('line', { x1: drumCX + DRUM_SZ / 2, y1: micCY, x2: micCX - MIC_SZ / 2, y2: micCY, stroke: '#111', 'stroke-width': '1.5' });
-      // Cable: mic base (right end) → trunk → center
-      add('polyline', { points: `${micCX + MIC_SZ / 2},${micCY} ${trunkX},${micCY} ${trunkX},${cy_center}`, ...mesaCableAttrs });
-    });
-
-    // ── Mesa exit arrow (always drawn at center-right of stage) ──
-    add('line', {
-      x1: trunkX,
-      y1: cy_center,
-      x2: SX + SW - 4,
-      y2: cy_center,
-      stroke: '#111',
-      'stroke-width': '3',
-    });
-    add('polygon', {
-      points: `${SX + SW},${cy_center} ${SX + SW - 10},${cy_center - 5} ${SX + SW - 10},${cy_center + 5}`,
-      fill: '#111',
-    });
-    const lbl = add('text', {
-      x: trunkX - 4,
-      y: cy_center - 6,
-      'font-family': 'Arial, sans-serif',
-      'font-size': '8',
-      fill: '#111',
-      'font-weight': 'bold',
-      'text-anchor': 'end',
-    });
-    lbl.textContent = 'Mesa →';
-
-    // ── Pass 1: Instrument icons + name chips ──
+    // ── Pass 1: Instrument icons + chips ──
     slotsByPos.forEach((slots, pos) => {
       const base = posCoords[pos];
       if (!base) return;
@@ -667,24 +592,21 @@ export class EquipoComponent implements OnInit {
         guitar: 'guitar', bass: 'bass', drums: 'drums', keyboard: 'keyboard',
       };
 
-      // Draw icons
+      // Draw icons; pure-vocal slots get a mesa arrow too
       slots.forEach((slot, idx) => {
-        const sx = base[0] + offsets[idx][0],
-          sy = base[1] + offsets[idx][1];
-        const icoKey = slot.kind === 'inst'
-          ? (instIconMap[slot.inst.type] ?? 'guitar')
-          : 'vocal-mic';
+        const sx = base[0] + offsets[idx][0], sy = base[1] + offsets[idx][1];
+        const icoKey = slot.kind === 'inst' ? (instIconMap[slot.inst.type] ?? 'guitar') : 'vocal-mic';
         const icoSvg = icons[icoKey] ?? '';
         const isDrum = slot.kind === 'inst' && slot.inst.type === 'drums';
         const sz = isDrum ? DRUM_SZ : ICON_SZ;
         if (icoSvg) addImg(icoSvg, sx - sz / 2, sy - sz / 2, sz, sz, -90);
+        if (slot.kind === 'vocal') drawMesaArrow(sx + ICON_SZ / 2, sy, 'a mesa');
       });
 
       // One chip per member, centred between their items
       const memberChips = new Map<string, { name: string; ySum: number; count: number; leftX: number }>();
       slots.forEach((slot, idx) => {
-        const sx = base[0] + offsets[idx][0],
-          sy = base[1] + offsets[idx][1];
+        const sx = base[0] + offsets[idx][0], sy = base[1] + offsets[idx][1];
         const isDrum = slot.kind === 'inst' && slot.inst.type === 'drums';
         const sz = isDrum ? DRUM_SZ : ICON_SZ;
         const mid = memberChips.get(slot.member.id);
@@ -699,6 +621,15 @@ export class EquipoComponent implements OnInit {
       memberChips.forEach(({ name, ySum, count, leftX }) => drawChip(leftX, ySum / count, name));
     });
 
+    // ── Pass 1b: Direct-to-mesa arrows for non-drum, non-amp instruments ──
+    this.instruments.forEach((inst) => {
+      if (inst.type === 'drums' || inst.routing === 'amp' || inst.routing === 'di') return;
+      const slot = instSlots.get(inst.id);
+      if (!slot) return;
+      const [cx, cy] = slot;
+      drawMesaArrow(cx + ICON_SZ / 2, cy, 'a mesa');
+    });
+
     // ── Pass 2: Amplifier icons + chips ──
     ampsByPos.forEach((amps, pos) => {
       const base = posCoords[pos];
@@ -707,8 +638,7 @@ export class EquipoComponent implements OnInit {
 
       // Draw icons
       amps.forEach((amp, idx) => {
-        const ax = base[0] + offsets[idx][0],
-          ay = base[1] + offsets[idx][1];
+        const ax = base[0] + offsets[idx][0], ay = base[1] + offsets[idx][1];
         const ampSvg = icons[amp.type === 'bass' ? 'bass-amp' : 'guitar-amp'] ?? '';
         if (ampSvg) addImg(ampSvg, ax - AMP_SZ / 2, ay - AMP_SZ / 2, AMP_SZ, AMP_SZ, -90);
       });
@@ -716,8 +646,7 @@ export class EquipoComponent implements OnInit {
       // One chip per owner, centred between their amps
       const ownerChips = new Map<string, { label: string; ySum: number; count: number; leftX: number }>();
       amps.forEach((amp, idx) => {
-        const ax = base[0] + offsets[idx][0],
-          ay = base[1] + offsets[idx][1];
+        const ax = base[0] + offsets[idx][0], ay = base[1] + offsets[idx][1];
         const owner = amp.memberId ? memberMap.get(amp.memberId) : undefined;
         const key = amp.memberId ?? amp.id;
         const label = owner ? owner.name.split(' ')[0] + ' amp' : amp.name;
@@ -733,27 +662,28 @@ export class EquipoComponent implements OnInit {
       ownerChips.forEach(({ label, ySum, count, leftX }) => drawChip(leftX, ySum / count, label));
     });
 
-    // ── Pass 3: DI box to the RIGHT of instruments, rotated +90° ──
+    // ── Pass 2b: Mesa arrows for amps without a mic ──
+    this.amplifiers.forEach((amp) => {
+      const slot = ampSlots.get(amp.id);
+      if (!slot || amp.routing === 'mic') return;
+      const [ax, ay] = slot;
+      drawMesaArrow(ax + AMP_SZ / 2, ay, 'a mesa');
+    });
+
+    // ── Pass 3: DI box + "DI box a mesa" arrow ──
     this.instruments.forEach((inst) => {
       if (inst.type === 'drums' || inst.routing !== 'di') return;
       const slot = instSlots.get(inst.id);
       if (!slot) return;
       const [cx, cy] = slot;
       const diSvg = icons['di'] ?? '';
-      const diX = cx + ICON_SZ / 2 + 6; // left edge of DI icon
-      // Short connecting line from instrument right edge to DI box
-      add('line', {
-        x1: cx + ICON_SZ / 2,
-        y1: cy,
-        x2: diX,
-        y2: cy,
-        stroke: '#111',
-        'stroke-width': '1.5',
-      });
+      const diX = cx + ICON_SZ / 2 + 6;
+      add('line', { x1: cx + ICON_SZ / 2, y1: cy, x2: diX, y2: cy, stroke: '#111', 'stroke-width': '1.5' });
       if (diSvg) addImg(diSvg, diX, cy - DI_SZ / 2, DI_SZ, DI_SZ, 90);
+      drawMesaArrow(diX + DI_SZ, cy, 'DI box a mesa');
     });
 
-    // ── Pass 4: Amp mic — to the right of amp (enfrente), rotated -90° ──
+    // ── Pass 4: Amp mic icon + "a mesa" arrow ──
     this.amplifiers.forEach((amp) => {
       const hasMic = this.microphones.some(m => m.assignedToType === 'amplifier' && m.assignedToId === amp.id);
       if (amp.routing !== 'mic' || !hasMic) return;
@@ -761,36 +691,38 @@ export class EquipoComponent implements OnInit {
       if (!slot) return;
       const [ax, ay] = slot;
       const micSvg = icons['amp-mic'] || icons['vocal-mic'] || '';
-      // Mic capsule points left (at amp speakers), base sticks out right ("por fuera")
       const micCX = ax + AMP_SZ / 2 + MIC_SZ / 2 + 2;
       const micCY = ay + AMP_SZ / 3;
-      // Short horizontal line from amp right face to mic capsule
-      add('line', {
-        x1: ax + AMP_SZ / 2,
-        y1: micCY,
-        x2: micCX - MIC_SZ / 2,
-        y2: micCY,
-        stroke: '#111',
-        'stroke-width': '1.5',
-      });
-      if (micSvg)
-        addImg(
-          micSvg,
-          micCX - MIC_SZ / 2,
-          micCY - MIC_SZ / 2,
-          MIC_SZ,
-          MIC_SZ,
-          -90,
-        );
+      add('line', { x1: ax + AMP_SZ / 2, y1: micCY, x2: micCX - MIC_SZ / 2, y2: micCY, stroke: '#111', 'stroke-width': '1.5' });
+      if (micSvg) addImg(micSvg, micCX - MIC_SZ / 2, micCY - MIC_SZ / 2, MIC_SZ, MIC_SZ, -90);
+      drawMesaArrow(micCX + MIC_SZ / 2, micCY, 'a mesa');
     });
 
-    // ── Pass 5: Drum mic icons (all on right side, -90°; above-centre ones get flipY for mirror effect) ──
-    const drumMicSvg = icons['amp-mic'] || icons['vocal-mic'] || '';
-    if (drumMicSvg) {
-      drumMicSlots.forEach(({ micCX, micCY, flipY }) => {
-        addImg(drumMicSvg, micCX - MIC_SZ / 2, micCY - MIC_SZ / 2, MIC_SZ, MIC_SZ, -90, flipY);
+    // ── Pass 5: Vocal mic for instrumentalists (to the right of their instruments) ──
+    this.members.forEach((member) => {
+      if (!member.vocalMicId || !member.stagePosition) return;
+      const memberInsts = this.instruments.filter(i => i.memberId === member.id);
+      if (memberInsts.length === 0) return; // pure vocalists already in Pass 1
+      let maxX = 0, avgY = 0, count = 0;
+      memberInsts.forEach(inst => {
+        const s = instSlots.get(inst.id);
+        if (s) { maxX = Math.max(maxX, s[0]); avgY += s[1]; count++; }
       });
-    }
+      if (count === 0) return;
+      avgY /= count;
+      const micSvg = icons['vocal-mic'] ?? '';
+      const micX = maxX + ICON_SZ / 2 + MIC_SZ / 2 + 8;
+      if (micSvg) addImg(micSvg, micX - MIC_SZ / 2, avgY - MIC_SZ / 2, MIC_SZ, MIC_SZ, -90);
+      drawMesaArrow(micX + MIC_SZ / 2, avgY, 'a mesa');
+    });
+
+    // ── Pass 6: Drum mic icons (2 per kit: below + above) + arrows ──
+    const drumMicSvg = icons['amp-mic'] || icons['vocal-mic'] || '';
+    drumMicSlots.forEach(({ micCX, micCY, drumCX, flipY }) => {
+      add('line', { x1: drumCX + DRUM_SZ / 2, y1: micCY, x2: micCX - MIC_SZ / 2, y2: micCY, stroke: '#111', 'stroke-width': '1.5' });
+      if (drumMicSvg) addImg(drumMicSvg, micCX - MIC_SZ / 2, micCY - MIC_SZ / 2, MIC_SZ, MIC_SZ, -90, flipY);
+      drawMesaArrow(micCX + MIC_SZ / 2, micCY, 'a mesa');
+    });
 
     return svgEl.outerHTML;
   }
