@@ -116,7 +116,54 @@
               </span>
             </div>
 
-            <!-- KPI row -->
+            <!-- Sales status -->
+            <div class="mc-sales">
+              <div class="mc-sales-row">
+                <span class="mc-sales-count">
+                  <span class="mc-sales-sold">{{ soldUnits(item) }}</span>&nbsp;/&nbsp;{{ item.batchSize }} vendidas
+                </span>
+                @if (soldUnits(item) > 0) {
+                  <span class="mc-sales-pnl"
+                    [class.mc-pnl-loss]="pnlStatus(item) === 'loss'"
+                    [class.mc-pnl-even]="pnlStatus(item) === 'even'"
+                    [class.mc-pnl-profit]="pnlStatus(item) === 'profit'">
+                    {{ currentPnL(item) >= 0 ? '+' : '' }}{{ fmt(currentPnL(item)) }} €
+                  </span>
+                } @else {
+                  <span class="mc-sales-none">Sin ventas aún</span>
+                }
+              </div>
+              <div class="mc-sales-bar">
+                <div class="mc-sales-fill"
+                  [class.mc-fill-loss]="pnlStatus(item) === 'loss' || pnlStatus(item) === 'none'"
+                  [class.mc-fill-profit]="pnlStatus(item) === 'profit' || pnlStatus(item) === 'even'"
+                  [style.width.%]="soldPct(item)">
+                </div>
+                @if (a.breakEvenUnits !== Infinity && a.breakEvenUnits <= item.batchSize) {
+                  <div class="mc-sales-be-marker" [style.left.%]="bePct(item)"></div>
+                }
+              </div>
+              @if (soldUnits(item) > 0) {
+                <span class="mc-sales-msg"
+                  [class.mc-msg-loss]="pnlStatus(item) === 'loss'"
+                  [class.mc-msg-even]="pnlStatus(item) === 'even'"
+                  [class.mc-msg-profit]="pnlStatus(item) === 'profit'">
+                  @if (pnlStatus(item) === 'loss') {
+                    @if (a.breakEvenUnits !== Infinity) {
+                      Faltan {{ unitsToBreakEven(item) }} ud{{ unitsToBreakEven(item) !== 1 ? 's' : '' }} para cubrir costes
+                    } @else {
+                      El PVP no cubre los costes de producción
+                    }
+                  } @else if (pnlStatus(item) === 'even') {
+                    ¡En el punto de equilibrio!
+                  } @else {
+                    ¡Cubriendo costes! Beneficio activo
+                  }
+                </span>
+              }
+            </div>
+
+            <!-- KPI row (theoretical) -->
             <div class="mc-kpis">
               <div class="mc-kpi">
                 <span class="mc-kpi-label">Break-even</span>
@@ -143,20 +190,6 @@
                 </span>
               </div>
             </div>
-
-            <!-- BE progress bar -->
-            @if (a.breakEvenUnits !== Infinity) {
-              <div class="mc-progress-wrap">
-                <div class="mc-progress-bar">
-                  <div class="mc-progress-fill"
-                    [style.width.%]="Math.min(100, (a.breakEvenUnits / item.batchSize) * 100)">
-                  </div>
-                </div>
-                <span class="mc-progress-label">
-                  {{ Math.min(100, Math.round((a.breakEvenUnits / item.batchSize) * 100)) }}% de la tirada hasta BE
-                </span>
-              </div>
-            }
 
             <p class="mc-hint">Toca para ver análisis completo</p>
           </div>

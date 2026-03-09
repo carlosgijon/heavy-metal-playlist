@@ -195,27 +195,105 @@
 .mc-be-ok  { color: oklch(var(--su)); }
 .mc-be-warn { color: oklch(var(--wa)); }
 
-// ── Progress bar ────────────────────────────────────────────────────
+// ── Sales status ─────────────────────────────────────────────────────
 
-.mc-progress-wrap {
+.mc-sales {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
+  padding: 0.55rem 0.7rem 0.5rem;
+  background: oklch(var(--b1));
+  border-radius: 0.5rem;
+  border: 1px solid oklch(var(--b3));
 }
 
-.mc-progress-bar {
-  height: 5px;
+.mc-sales-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mc-sales-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.65;
+}
+
+.mc-sales-sold {
+  font-size: 0.9rem;
+  font-weight: 800;
+  opacity: 1;
+  color: oklch(var(--bc));
+}
+
+.mc-sales-pnl {
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.mc-sales-none {
+  font-size: 0.72rem;
+  opacity: 0.4;
+  font-style: italic;
+}
+
+.mc-pnl-loss   { color: oklch(var(--er)); }
+.mc-pnl-even   { color: oklch(var(--wa)); }
+.mc-pnl-profit { color: oklch(var(--su)); }
+
+.mc-sales-bar {
+  position: relative;
+  height: 7px;
   background: oklch(var(--b3));
   border-radius: 999px;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.mc-progress-fill {
+.mc-sales-fill {
   height: 100%;
-  background: oklch(var(--wa));
   border-radius: 999px;
-  transition: width 0.3s ease;
+  transition: width 0.4s ease;
+  min-width: 0;
 }
+
+.mc-fill-loss   { background: oklch(var(--er) / 0.6); }
+.mc-fill-profit { background: oklch(var(--su) / 0.8); }
+
+.mc-sales-be-marker {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: oklch(var(--bc) / 0.5);
+  border-radius: 1px;
+  transform: translateX(-50%);
+
+  &::before {
+    content: 'BE';
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.48rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: oklch(var(--bc) / 0.45);
+    white-space: nowrap;
+  }
+}
+
+.mc-sales-msg {
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.mc-msg-loss   { color: oklch(var(--er) / 0.9); }
+.mc-msg-even   { color: oklch(var(--wa)); }
+.mc-msg-profit { color: oklch(var(--su)); }
 
 .mc-progress-label {
   font-size: 0.65rem;

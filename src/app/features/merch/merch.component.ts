@@ -121,6 +121,42 @@ export class MerchComponent implements OnInit {
     return SIZED_MERCH_TYPES.includes(item.type);
   }
 
+  // ── Sales tracking ───────────────────────────────────────────────────────
+
+  soldUnits(item: MerchItem): number {
+    return Math.max(0, item.batchSize - item.stock);
+  }
+
+  currentPnL(item: MerchItem): number {
+    const investment = item.batchSize * item.productionCost + item.fixedCosts;
+    return this.soldUnits(item) * item.sellingPrice - investment;
+  }
+
+  soldPct(item: MerchItem): number {
+    if (item.batchSize === 0) return 0;
+    return Math.min(100, (this.soldUnits(item) / item.batchSize) * 100);
+  }
+
+  bePct(item: MerchItem): number {
+    const a = calcMerchAnalysis(item);
+    if (a.breakEvenUnits === Infinity || item.batchSize === 0) return 100;
+    return Math.min(100, (a.breakEvenUnits / item.batchSize) * 100);
+  }
+
+  pnlStatus(item: MerchItem): 'none' | 'loss' | 'even' | 'profit' {
+    if (this.soldUnits(item) === 0) return 'none';
+    const pnl = this.currentPnL(item);
+    if (pnl > 0.01) return 'profit';
+    if (pnl >= -0.01) return 'even';
+    return 'loss';
+  }
+
+  unitsToBreakEven(item: MerchItem): number {
+    const a = calcMerchAnalysis(item);
+    if (a.breakEvenUnits === Infinity) return Infinity;
+    return Math.max(0, a.breakEvenUnits - this.soldUnits(item));
+  }
+
   // ── Catálogo dialogs ─────────────────────────────────────────────────────
 
   openDetail(item: MerchItem): void {
