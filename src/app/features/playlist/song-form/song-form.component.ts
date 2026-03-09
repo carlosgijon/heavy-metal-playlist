@@ -23,7 +23,7 @@ import { DatabaseService } from '../../../core/services/database.service';
   styleUrls: ['./song-form.component.scss'],
 })
 export class SongFormComponent implements OnInit, OnDestroy {
-  private readonly dialogRef = inject(DialogRef<Partial<Song>>);
+  private readonly dialogRef = inject(DialogRef<Partial<Song> | LibrarySong[]>);
   readonly data = inject<{ song: Partial<Song> | null }>(DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly musicApi = inject(MusicApiService);
@@ -43,6 +43,7 @@ export class SongFormComponent implements OnInit, OnDestroy {
   librarySongs: LibrarySong[] = [];
   filteredLibrarySongs: LibrarySong[] = [];
   selectedLibrarySong: LibrarySong | null = null;
+  selectedLibrarySongs: LibrarySong[] = [];
 
   formMode: 'library' | 'search' | 'manual' = 'library';
 
@@ -140,6 +141,24 @@ export class SongFormComponent implements OnInit, OnDestroy {
         s.title.toLowerCase().includes(lower) ||
         s.artist.toLowerCase().includes(lower),
     );
+  }
+
+  isLibrarySelected(s: LibrarySong): boolean {
+    return this.selectedLibrarySongs.some(x => x.id === s.id);
+  }
+
+  toggleLibrarySong(s: LibrarySong): void {
+    const idx = this.selectedLibrarySongs.findIndex(x => x.id === s.id);
+    if (idx >= 0) {
+      this.selectedLibrarySongs = this.selectedLibrarySongs.filter(x => x.id !== s.id);
+    } else {
+      this.selectedLibrarySongs = [...this.selectedLibrarySongs, s];
+    }
+  }
+
+  submitLibrarySelection(): void {
+    if (this.selectedLibrarySongs.length === 0) return;
+    this.dialogRef.close(this.selectedLibrarySongs);
   }
 
   selectFromLibrary(libSong: LibrarySong): void {

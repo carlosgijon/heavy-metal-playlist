@@ -24,7 +24,7 @@
 
     <!-- PASO 1: LIBRERÍA -->
     <div class="library-section" *ngIf="formMode === 'library'">
-      <p class="section-hint">Busca en tu librería o crea una canción nueva</p>
+      <p class="section-hint">Selecciona una o varias canciones de la librería</p>
 
       <div class="field-group">
         <div class="relative">
@@ -42,8 +42,15 @@
       <div class="library-list" *ngIf="filteredLibrarySongs.length > 0">
         <div
           class="library-item"
+          [class.lib-selected]="isLibrarySelected(s)"
           *ngFor="let s of filteredLibrarySongs"
-          (click)="selectFromLibrary(s)">
+          (click)="toggleLibrarySong(s)">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-sm checkbox-primary flex-shrink-0"
+            [checked]="isLibrarySelected(s)"
+            (click)="$event.stopPropagation()"
+            (change)="toggleLibrarySong(s)" />
           <div class="lib-main">
             <span class="lib-title">{{ s.title }}</span>
             <span class="lib-artist">{{ s.artist }}</span>
@@ -52,6 +59,13 @@
             <span *ngIf="s.tempo" class="lib-bpm">{{ s.tempo }} BPM</span>
             <span *ngIf="s.duration">{{ formatDuration(s.duration) }}</span>
           </span>
+          <button
+            class="btn btn-ghost btn-xs lib-config-btn"
+            type="button"
+            title="Configurar nombre en setlist"
+            (click)="$event.stopPropagation(); selectFromLibrary(s)">
+            <ng-icon name="heroPencil" class="w-3 h-3"></ng-icon>
+          </button>
         </div>
       </div>
 
@@ -59,6 +73,16 @@
       <p class="library-empty" *ngIf="librarySongs.length > 0 && filteredLibrarySongs.length === 0">
         No se encontraron resultados.
       </p>
+
+      <div class="library-add-bar" *ngIf="selectedLibrarySongs.length > 0">
+        <button class="btn btn-primary btn-sm flex-1" type="button" (click)="submitLibrarySelection()">
+          <ng-icon name="heroPlus" class="w-4 h-4"></ng-icon>
+          Añadir {{ selectedLibrarySongs.length }} {{ selectedLibrarySongs.length === 1 ? 'canción' : 'canciones' }}
+        </button>
+        <button class="btn btn-ghost btn-sm" type="button" (click)="selectedLibrarySongs = []">
+          Limpiar
+        </button>
+      </div>
 
       <div class="library-actions">
         <button class="btn btn-ghost btn-sm text-warning" type="button" (click)="switchToSearch()">

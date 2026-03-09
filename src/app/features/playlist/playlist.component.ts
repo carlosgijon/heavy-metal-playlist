@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Dialog } from '@angular/cdk/dialog';
 import { NgIconComponent } from '@ng-icons/core';
-import { Song, PlaylistWithStats } from '../../core/models/song.model';
+import { Song, PlaylistWithStats, LibrarySong } from '../../core/models/song.model';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SongFormComponent } from './song-form/song-form.component';
@@ -62,15 +62,37 @@ export class PlaylistComponent implements OnInit {
       data: { song: null },
     });
     ref.closed.subscribe(async (r) => {
-      const result = r as Partial<Song> | undefined;
+      const result = r as Partial<Song> | LibrarySong[] | undefined;
       if (!result) return;
       try {
-        const created = await this.db.create({
-          ...(result as Omit<Song, 'id' | 'position'>),
-          playlistId: this.playlist.id,
-        });
-        this.songs = [...this.songs, created];
-        this.toast.success(`"${created.title}" añadida`, 'Canción añadida');
+        if (Array.isArray(result)) {
+          const created = await Promise.all(
+            result.map(libSong => this.db.create({
+              title: libSong.title,
+              artist: libSong.artist,
+              album: libSong.album,
+              duration: libSong.duration,
+              tempo: libSong.tempo,
+              style: libSong.style,
+              notes: libSong.notes,
+              type: 'song',
+              songId: libSong.id,
+              playlistId: this.playlist.id,
+            } as Omit<Song, 'id' | 'position'>))
+          );
+          this.songs = [...this.songs, ...created];
+          this.toast.success(
+            `${created.length} ${created.length === 1 ? 'canción añadida' : 'canciones añadidas'}`,
+            'Añadido'
+          );
+        } else {
+          const created = await this.db.create({
+            ...(result as Omit<Song, 'id' | 'position'>),
+            playlistId: this.playlist.id,
+          });
+          this.songs = [...this.songs, created];
+          this.toast.success(`"${created.title}" añadida`, 'Canción añadida');
+        }
       } catch {
         this.toast.danger('No se pudo añadir la canción', 'Error');
       }
