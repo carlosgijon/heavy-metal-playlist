@@ -24,7 +24,7 @@ import { DatabaseService } from '../../../core/services/database.service';
 })
 export class SongFormComponent implements OnInit, OnDestroy {
   private readonly dialogRef = inject(DialogRef<Partial<Song> | LibrarySong[]>);
-  readonly data = inject<{ song: Partial<Song> | null }>(DIALOG_DATA);
+  readonly data = inject<{ song: Partial<Song> | null; existingSongIds?: string[] }>(DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
   private readonly musicApi = inject(MusicApiService);
   private readonly bpmService = inject(BpmService);
@@ -143,11 +143,16 @@ export class SongFormComponent implements OnInit, OnDestroy {
     );
   }
 
+  isAlreadyInSetlist(s: LibrarySong): boolean {
+    return !!this.data.existingSongIds?.includes(s.id);
+  }
+
   isLibrarySelected(s: LibrarySong): boolean {
     return this.selectedLibrarySongs.some(x => x.id === s.id);
   }
 
   toggleLibrarySong(s: LibrarySong): void {
+    if (this.isAlreadyInSetlist(s)) return;
     const idx = this.selectedLibrarySongs.findIndex(x => x.id === s.id);
     if (idx >= 0) {
       this.selectedLibrarySongs = this.selectedLibrarySongs.filter(x => x.id !== s.id);

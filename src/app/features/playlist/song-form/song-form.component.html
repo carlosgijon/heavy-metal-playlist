@@ -43,12 +43,14 @@
         <div
           class="library-item"
           [class.lib-selected]="isLibrarySelected(s)"
+          [class.lib-already]="isAlreadyInSetlist(s)"
           *ngFor="let s of filteredLibrarySongs"
           (click)="toggleLibrarySong(s)">
           <input
             type="checkbox"
             class="checkbox checkbox-sm checkbox-primary flex-shrink-0"
             [checked]="isLibrarySelected(s)"
+            [disabled]="isAlreadyInSetlist(s)"
             (click)="$event.stopPropagation()"
             (change)="toggleLibrarySong(s)" />
           <div class="lib-main">
@@ -56,10 +58,12 @@
             <span class="lib-artist">{{ s.artist }}</span>
           </div>
           <span class="lib-meta">
-            <span *ngIf="s.tempo" class="lib-bpm">{{ s.tempo }} BPM</span>
-            <span *ngIf="s.duration">{{ formatDuration(s.duration) }}</span>
+            <span *ngIf="isAlreadyInSetlist(s)" class="lib-in-setlist">Ya añadida</span>
+            <span *ngIf="!isAlreadyInSetlist(s) && s.tempo" class="lib-bpm">{{ s.tempo }} BPM</span>
+            <span *ngIf="!isAlreadyInSetlist(s) && s.duration">{{ formatDuration(s.duration) }}</span>
           </span>
           <button
+            *ngIf="!isAlreadyInSetlist(s)"
             class="btn btn-ghost btn-xs lib-config-btn"
             type="button"
             title="Configurar nombre en setlist"

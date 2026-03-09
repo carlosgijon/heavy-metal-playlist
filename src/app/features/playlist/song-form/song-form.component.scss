@@ -149,6 +149,12 @@
     background: oklch(var(--p) / 0.1);
   }
 
+  &.lib-already {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+  }
+
   .lib-config-btn {
     opacity: 0;
     transition: opacity 0.1s;
@@ -199,6 +205,13 @@
     color: oklch(var(--su));
     font-weight: 600;
     opacity: 1;
+  }
+
+  .lib-in-setlist {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: oklch(var(--su));
+    white-space: nowrap;
   }
 }
 

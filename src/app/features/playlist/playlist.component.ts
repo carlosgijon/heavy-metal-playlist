@@ -55,19 +55,25 @@ export class PlaylistComponent implements OnInit {
   }
 
   openAddForm(): void {
+    const existingSongIds = this.songs
+      .filter(s => s.songId)
+      .map(s => s.songId as string);
     const ref = this.dialog.open(SongFormComponent, {
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-dark-backdrop',
       disableClose: true,
-      data: { song: null },
+      data: { song: null, existingSongIds },
     });
     ref.closed.subscribe(async (r) => {
       const result = r as Partial<Song> | LibrarySong[] | undefined;
       if (!result) return;
       try {
         if (Array.isArray(result)) {
+          const existingSet = new Set(existingSongIds);
+          const toAdd = result.filter(s => !existingSet.has(s.id));
+          if (toAdd.length === 0) return;
           const created = await Promise.all(
-            result.map(libSong => this.db.create({
+            toAdd.map(libSong => this.db.create({
               title: libSong.title,
               artist: libSong.artist,
               album: libSong.album,
