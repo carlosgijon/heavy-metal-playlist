@@ -209,17 +209,17 @@ export class PlaylistComponent implements OnInit {
         songItems.map(s => ({ id: s.id, title: s.title, artist: s.artist, tempo: s.tempo, style: s.style, notes: s.notes, startNote: (s as any).startNote, endNote: (s as any).endNote, duration: s.duration })),
         this.aiPreferences,
       );
+      // Deduplicate and map IDs to songs; append any the AI missed at the end
+      const seen = new Set<string>();
       const orderedSongs = result.orderedIds
         .map(id => songItems.find(s => s.id === id))
-        .filter((s): s is Song => !!s);
-      if (orderedSongs.length !== songItems.length) {
-        this.toast.warning('La IA no devolvió un orden completo');
-        return;
-      }
+        .filter((s): s is Song => !!s && !seen.has(s.id) && (seen.add(s.id), true));
+      const missedSongs = songItems.filter(s => !seen.has(s.id));
+      const allOrderedSongs = [...orderedSongs, ...missedSongs];
 
       // 1. Apply joinWithNext to each song based on AI suggestion
       const joinSet = new Set(result.joinAfter ?? []);
-      const joinUpdates = orderedSongs
+      const joinUpdates = allOrderedSongs
         .filter(s => s.joinWithNext !== joinSet.has(s.id))
         .map(s => this.db.update({ ...s, joinWithNext: joinSet.has(s.id) }));
       if (joinUpdates.length) await Promise.all(joinUpdates);
@@ -229,7 +229,7 @@ export class PlaylistComponent implements OnInit {
       const otherEvents = this.songs.filter(s => s.type === 'event' && s.title?.toUpperCase() !== 'BIS');
 
       // 3. Build the new order starting with non-BIS events then songs
-      const newOrder: Song[] = [...otherEvents, ...orderedSongs];
+      const newOrder: Song[] = [...otherEvents, ...allOrderedSongs];
 
       // 4. Insert or reuse BIS event at the position suggested by AI
       if (result.bisAfterSongId) {
