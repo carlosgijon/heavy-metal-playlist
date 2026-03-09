@@ -184,7 +184,7 @@ export class PlaylistComponent implements OnInit {
     this.isGenerating = true;
     try {
       const result = await this.db.generateSetlist(
-        songItems.map(s => ({ id: s.id, title: s.title, artist: s.artist, tempo: s.tempo, style: s.style, notes: s.notes })),
+        songItems.map(s => ({ id: s.id, title: s.title, artist: s.artist, tempo: s.tempo, style: s.style, notes: s.notes, startNote: (s as any).startNote, endNote: (s as any).endNote, duration: s.duration })),
         this.aiPreferences,
       );
       const orderedSongs = result.orderedIds
