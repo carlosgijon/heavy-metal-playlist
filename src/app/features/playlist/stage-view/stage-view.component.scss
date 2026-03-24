@@ -1,0 +1,228 @@
+.stage-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.stage-box {
+  width: 100%;
+  max-width: 900px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  color: #fff;
+  user-select: none;
+}
+
+// ── Top bar ───────────────────────────────────────────────────────────
+.stage-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.stage-playlist-name {
+  font-size: 0.85rem;
+  opacity: 0.5;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.stage-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stage-counter {
+  font-size: 0.9rem;
+  opacity: 0.5;
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Main content ──────────────────────────────────────────────────────
+.stage-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 2.5rem;
+  gap: 2rem;
+}
+
+.stage-current {
+  text-align: center;
+}
+
+.stage-song-number {
+  font-size: 1rem;
+  opacity: 0.35;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.1em;
+}
+
+.stage-song-title {
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.stage-song-artist {
+  font-size: clamp(1rem, 2.5vw, 1.6rem);
+  opacity: 0.6;
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+.stage-song-meta {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.95rem;
+  opacity: 0.5;
+}
+
+.stage-bpm {
+  font-variant-numeric: tabular-nums;
+}
+
+.stage-notes {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.5;
+  font-style: italic;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stage-join-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  opacity: 0.5;
+  color: oklch(var(--wa, 80% 0.18 85));
+}
+
+// ── Next song preview ─────────────────────────────────────────────────
+.stage-next-wrapper {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 1.25rem;
+  text-align: center;
+}
+
+.stage-next-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  opacity: 0.35;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.4rem;
+}
+
+.stage-next-title {
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  font-weight: 600;
+  opacity: 0.45;
+}
+
+.stage-next-meta {
+  font-size: 0.8rem;
+  opacity: 0.3;
+  margin-top: 0.2rem;
+}
+
+.stage-end .stage-next-label {
+  font-size: 0.8rem;
+  opacity: 0.25;
+}
+
+// ── Progress bar ──────────────────────────────────────────────────────
+.stage-progress {
+  height: 2px;
+  background: rgba(255,255,255,0.1);
+}
+
+.stage-progress-fill {
+  height: 100%;
+  background: oklch(var(--p, 65% 0.2 280));
+  transition: width 0.3s ease;
+}
+
+// ── Controls ──────────────────────────────────────────────────────────
+.stage-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+}
+
+.stage-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  width: 4rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: rgba(255,255,255,0.15);
+  }
+
+  &:disabled {
+    opacity: 0.2;
+    cursor: default;
+  }
+}
+
+.stage-time-remaining {
+  text-align: center;
+}
+
+.stage-time-label {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.35;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+}
+
+.stage-time-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+// ── Keyboard hint ─────────────────────────────────────────────────────
+.stage-hint {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 0.75rem;
+  font-size: 0.7rem;
+  opacity: 0.2;
+  letter-spacing: 0.05em;
+}

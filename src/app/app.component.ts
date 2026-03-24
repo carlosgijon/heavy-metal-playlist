@@ -15,11 +15,12 @@ import { BandSettingsComponent } from './features/band-settings/band-settings.co
 import { SettingsDialogComponent } from './shared/settings-dialog/settings-dialog.component';
 import { FinanzasComponent } from './features/finanzas/finanzas.component';
 import { MerchComponent } from './features/merch/merch.component';
+import { EnsayosComponent } from './features/ensayos/ensayos.component';
 import { AuthService } from './core/services/auth.service';
 import { DatabaseService } from './core/services/database.service';
 import { PlaylistWithStats } from './core/models/song.model';
 
-type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario' | 'admin' | 'band-settings' | 'finanzas' | 'merch';
+type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario' | 'admin' | 'band-settings' | 'finanzas' | 'merch' | 'ensayos';
 
 @Component({
   selector: 'app-root',
@@ -39,6 +40,7 @@ type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'cal
     BandSettingsComponent,
     FinanzasComponent,
     MerchComponent,
+    EnsayosComponent,
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

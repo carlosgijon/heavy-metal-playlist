@@ -10,6 +10,8 @@ import { ToastService } from '../../core/services/toast.service';
 import { SongFormComponent } from './song-form/song-form.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { MetronomeDialogComponent } from '../../shared/metronome-dialog/metronome-dialog.component';
+import { StageViewComponent, StageViewData } from './stage-view/stage-view.component';
+import { VoteDialogComponent, VoteDialogData } from './vote-dialog/vote-dialog.component';
 
 @Component({
   selector: 'app-playlist',
@@ -38,6 +40,10 @@ export class PlaylistComponent implements OnInit {
   aiPreferences = '';
   isGenerating = false;
   aiExplanation = '';
+
+  linkedGigs: Array<{ id: string; title: string; date?: string; status: string; venueName?: string }> = [];
+  showLinkedGigs = false;
+  linkedGigsLoaded = false;
 
   async ngOnInit(): Promise<void> {
     await this.loadSongs();
@@ -200,6 +206,41 @@ export class PlaylistComponent implements OnInit {
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-dark-backdrop',
       data: { bpm: song.tempo, title: song.title },
+    });
+  }
+
+  async toggleLinkedGigs(): Promise<void> {
+    this.showLinkedGigs = !this.showLinkedGigs;
+    if (this.showLinkedGigs && !this.linkedGigsLoaded) {
+      try {
+        this.linkedGigs = await this.db.getPlaylistGigs(this.playlist.id);
+        this.linkedGigsLoaded = true;
+      } catch {
+        this.toast.danger('No se pudo cargar el historial de conciertos');
+        this.showLinkedGigs = false;
+      }
+    }
+  }
+
+  formatGigDate(d: string): string {
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y}`;
+  }
+
+  openStageView(): void {
+    this.dialog.open<void>(StageViewComponent, {
+      hasBackdrop: false,
+      panelClass: 'stage-view-panel',
+      data: { songs: this.songs, playlistName: this.playlist.name } satisfies StageViewData,
+    });
+  }
+
+  openVoteDialog(): void {
+    this.dialog.open<void>(VoteDialogComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: false,
+      data: { playlistId: this.playlist.id, playlistName: this.playlist.name, songs: this.songs } satisfies VoteDialogData,
     });
   }
 

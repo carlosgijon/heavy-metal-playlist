@@ -1,0 +1,156 @@
+<div class="page-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Ensayos</h1>
+      <p class="page-subtitle">{{ rehearsals.length }} ensayo{{ rehearsals.length !== 1 ? 's' : '' }} registrados</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-primary gap-2" (click)="showNewForm = !showNewForm" [class.btn-active]="showNewForm">
+        <ng-icon name="heroPlus" size="18"></ng-icon>
+        Nuevo ensayo
+      </button>
+    </div>
+  </div>
+
+  <!-- New rehearsal form -->
+  <div class="new-form" *ngIf="showNewForm">
+    <div class="form-row">
+      <div class="field-group">
+        <label class="field-label">Fecha *</label>
+        <input class="input input-bordered input-sm" type="date" [(ngModel)]="newDate" />
+      </div>
+      <div class="field-group flex-1">
+        <label class="field-label">Notas</label>
+        <input class="input input-bordered input-sm w-full" [(ngModel)]="newNotes" placeholder="Sala, objetivos..." />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" (click)="showNewForm = false">Cancelar</button>
+      <button class="btn btn-primary btn-sm" (click)="createRehearsal()" [disabled]="creating || !newDate">
+        <span *ngIf="creating" class="loading loading-spinner loading-xs"></span>
+        Crear ensayo
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="loading">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && rehearsals.length === 0" class="empty-state">
+    <ng-icon name="heroMusicalNote" class="w-8 h-8"></ng-icon>
+    <div>
+      <p>Sin ensayos registrados.</p>
+      <p>Crea el primero para hacer seguimiento de tu práctica.</p>
+    </div>
+  </div>
+
+  <!-- Rehearsal list -->
+  <div class="rehearsal-list" *ngIf="!loading && rehearsals.length > 0">
+    <div class="rehearsal-card" *ngFor="let r of rehearsals">
+
+      <!-- Card header -->
+      <div class="rc-header" (click)="toggleExpand(r.id)">
+        <div class="rc-header-left">
+          <ng-icon name="heroChevronRight" class="w-4 h-4 rc-chevron" [class.rc-chevron--open]="expandedId === r.id"></ng-icon>
+          <div>
+            <span class="rc-date">{{ formatDate(r.date) }}</span>
+            <span class="rc-song-count">{{ r.songs.length }} canción{{ r.songs.length !== 1 ? 'es' : '' }}</span>
+            <span class="rc-notes" *ngIf="r.notes">· {{ r.notes }}</span>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-xs text-error" (click)="$event.stopPropagation(); deleteRehearsal(r)">
+          <ng-icon name="heroTrash" class="w-4 h-4"></ng-icon>
+        </button>
+      </div>
+
+      <!-- Expanded body -->
+      <div class="rc-body" *ngIf="expandedId === r.id">
+
+        <!-- Song list -->
+        <div class="rc-songs" *ngIf="r.songs.length > 0">
+          <div class="rc-song-row" *ngFor="let s of r.songs">
+
+            <!-- View mode -->
+            <ng-container *ngIf="editingSongEntryId !== s.id">
+              <div class="rc-song-info">
+                <span class="rc-song-title">{{ s.title }}</span>
+                <span class="rc-song-artist">{{ s.artist }}</span>
+                <span class="rc-song-bpm" *ngIf="s.tempo">{{ s.tempo }} BPM</span>
+              </div>
+              <div class="rc-song-right">
+                <span class="rc-song-rating" *ngIf="s.rating" title="Valoración">{{ ratingStars(s.rating) }}</span>
+                <span class="rc-song-notes" *ngIf="s.notes">{{ s.notes }}</span>
+                <button class="btn btn-ghost btn-xs" (click)="startEditSong(s)">
+                  <ng-icon name="heroPencil" class="w-3 h-3"></ng-icon>
+                </button>
+                <button class="btn btn-ghost btn-xs text-error" (click)="removeSong(r.id, s)">
+                  <ng-icon name="heroXMark" class="w-3 h-3"></ng-icon>
+                </button>
+              </div>
+            </ng-container>
+
+            <!-- Edit mode -->
+            <ng-container *ngIf="editingSongEntryId === s.id">
+              <div class="rc-song-edit">
+                <span class="rc-song-title">{{ s.title }}</span>
+                <input class="input input-bordered input-xs flex-1" [(ngModel)]="editSongNotes" placeholder="Notas..." />
+                <select class="select select-bordered select-xs w-28" [(ngModel)]="editSongRating">
+                  <option [ngValue]="null">Sin valoración</option>
+                  <option [value]="1">★☆☆☆☆</option>
+                  <option [value]="2">★★☆☆☆</option>
+                  <option [value]="3">★★★☆☆</option>
+                  <option [value]="4">★★★★☆</option>
+                  <option [value]="5">★★★★★</option>
+                </select>
+                <button class="btn btn-primary btn-xs" (click)="saveEditSong(r.id, s)">✓</button>
+                <button class="btn btn-ghost btn-xs" (click)="editingSongEntryId = null">✗</button>
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+
+        <p class="rc-empty-songs" *ngIf="r.songs.length === 0 && pendingRehearsalId !== r.id">
+          Sin canciones. Añade las que practicaste.
+        </p>
+
+        <!-- Add song form -->
+        <div class="rc-add-song" *ngIf="pendingRehearsalId === r.id">
+          <select class="select select-bordered select-sm flex-1" [(ngModel)]="selectedSongId">
+            <option *ngFor="let ls of availableSongs(r)" [value]="ls.id">{{ ls.title }} — {{ ls.artist }}</option>
+          </select>
+          <select class="select select-bordered select-sm w-32" [(ngModel)]="songRating">
+            <option [ngValue]="null">Sin nota</option>
+            <option [value]="1">★☆☆☆☆</option>
+            <option [value]="2">★★☆☆☆</option>
+            <option [value]="3">★★★☆☆</option>
+            <option [value]="4">★★★★☆</option>
+            <option [value]="5">★★★★★</option>
+          </select>
+          <input class="input input-bordered input-sm w-40" [(ngModel)]="songNotes" placeholder="Notas..." />
+          <button class="btn btn-primary btn-sm" (click)="confirmAddSong()" [disabled]="addingSong || !selectedSongId">
+            <span *ngIf="addingSong" class="loading loading-spinner loading-xs"></span>
+            Añadir
+          </button>
+          <button class="btn btn-ghost btn-sm" (click)="pendingRehearsalId = null">Cancelar</button>
+        </div>
+
+        <!-- Add song button -->
+        <button
+          class="btn btn-ghost btn-sm mt-2"
+          *ngIf="pendingRehearsalId !== r.id && availableSongs(r).length > 0"
+          (click)="openAddSong(r.id)">
+          <ng-icon name="heroPlus" class="w-4 h-4"></ng-icon>
+          Añadir canción practicada
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+</div>

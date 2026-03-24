@@ -1,0 +1,212 @@
+.new-form {
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.5rem;
+  background: oklch(var(--b2));
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.field-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem;
+  text-align: center;
+  border-radius: 0.75rem;
+  border: 1px dashed oklch(var(--b3));
+  background: oklch(var(--b2));
+  color: oklch(var(--bc) / 0.6);
+}
+
+// ── Rehearsal cards ───────────────────────────────────────────────
+
+.rehearsal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rehearsal-card {
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.5rem;
+  background: oklch(var(--b1));
+  overflow: hidden;
+}
+
+.rc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  user-select: none;
+  gap: 0.5rem;
+
+  &:hover { background: oklch(var(--b2)); }
+}
+
+.rc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.rc-chevron {
+  transition: transform 0.2s ease;
+  opacity: 0.5;
+  flex-shrink: 0;
+
+  &--open { transform: rotate(90deg); }
+}
+
+.rc-date {
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.rc-song-count {
+  font-size: 0.78rem;
+  opacity: 0.55;
+  margin-left: 0.5rem;
+}
+
+.rc-notes {
+  font-size: 0.78rem;
+  opacity: 0.55;
+  font-style: italic;
+}
+
+.rc-body {
+  border-top: 1px solid oklch(var(--b3));
+  padding: 0.75rem 1rem 1rem;
+}
+
+.rc-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.rc-song-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  background: oklch(var(--b2));
+  font-size: 0.85rem;
+}
+
+.rc-song-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.rc-song-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.rc-song-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.rc-song-artist {
+  opacity: 0.5;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.rc-song-bpm {
+  font-size: 0.72rem;
+  opacity: 0.45;
+  white-space: nowrap;
+}
+
+.rc-song-rating {
+  font-size: 0.78rem;
+  color: oklch(var(--wa));
+  letter-spacing: -2px;
+}
+
+.rc-song-notes {
+  font-size: 0.72rem;
+  opacity: 0.5;
+  font-style: italic;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rc-song-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.rc-empty-songs {
+  font-size: 0.82rem;
+  opacity: 0.4;
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.rc-add-song {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: oklch(var(--b2));
+  margin-bottom: 0.5rem;
+}

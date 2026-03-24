@@ -3,11 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, MeResponse, SelectBandResponse, User, UserPayload, UserUpdate } from '../models/auth.model';
-import { Song, Playlist, PlaylistWithStats, LibrarySong, PlaylistSongView } from '../models/song.model';
+import { Song, Playlist, PlaylistWithStats, LibrarySong, PlaylistSongView, LibraryStats, VoteSession, VoteEntry, VoteResult } from '../models/song.model';
 import { BandMember, Microphone, Instrument, Amplifier, PaEquipment, ChannelEntry } from '../models/equipment.model';
 import { Venue, Gig, GigStatus, GigSummary, CalendarEvent, GigChecklist, ChecklistItem, GigContact } from '../models/gig.model';
 import { Transaction, WishListItem } from '../models/finance.model';
 import { MerchItem, MerchSaleDto, MerchRestockDto } from '../models/merch.model';
+import { Rehearsal, RehearsalSongEntry } from '../models/rehearsal.model';
 
 @Injectable({ providedIn: 'root' })
 export class DatabaseService {
@@ -166,6 +167,44 @@ export class DatabaseService {
 
   getLibrarySongUsage(id: string): Promise<string[]> {
     return this.get(`/library/${id}/usage`);
+  }
+
+  getLibraryStats(): Promise<LibraryStats> {
+    return this.get('/library/stats');
+  }
+
+  getPlaylistGigs(playlistId: string): Promise<Array<{ id: string; title: string; date?: string; status: string; venueName?: string }>> {
+    return this.get(`/playlists/${playlistId}/gigs`);
+  }
+
+  // -- Setlist voting --------------------------------------------------------
+
+  getVoteSession(playlistId: string): Promise<VoteSession | null> {
+    return this.get(`/vote-sessions?playlistId=${playlistId}`);
+  }
+
+  createVoteSession(playlistId: string, title: string): Promise<VoteSession> {
+    return this.post('/vote-sessions', { playlistId, title });
+  }
+
+  closeVoteSession(sessionId: string): Promise<VoteSession> {
+    return this.put(`/vote-sessions/${sessionId}/close`, {});
+  }
+
+  reopenVoteSession(sessionId: string): Promise<VoteSession> {
+    return this.put(`/vote-sessions/${sessionId}/reopen`, {});
+  }
+
+  deleteVoteSession(sessionId: string): Promise<void> {
+    return this.del(`/vote-sessions/${sessionId}`);
+  }
+
+  castVote(sessionId: string, voterName: string, orderedIds: string[]): Promise<VoteEntry> {
+    return this.post(`/vote-sessions/${sessionId}/votes`, { voterName, orderedIds });
+  }
+
+  getVoteResults(sessionId: string): Promise<VoteResult[]> {
+    return this.get(`/vote-sessions/${sessionId}/results`);
   }
 
   addSongToPlaylist(
@@ -513,5 +552,35 @@ export class DatabaseService {
 
   generateSetlist(songs: any[], preferences: string): Promise<{ orderedIds: string[]; joinAfter: string[]; bisAfterSongId: string | null; explanation: string }> {
     return this.post('/ai/setlist', { songs, preferences });
+  }
+
+  // -- Rehearsals --------------------------------------------------------------
+
+  getRehearsals(): Promise<Rehearsal[]> {
+    return this.get('/rehearsals');
+  }
+
+  createRehearsal(dto: { date: string; notes?: string }): Promise<Rehearsal> {
+    return this.post('/rehearsals', dto);
+  }
+
+  updateRehearsal(dto: Pick<Rehearsal, 'id'> & { date?: string; notes?: string }): Promise<Rehearsal> {
+    return this.put(`/rehearsals/${dto.id}`, dto);
+  }
+
+  deleteRehearsal(id: string): Promise<void> {
+    return this.del(`/rehearsals/${id}`);
+  }
+
+  addRehearsalSong(rehearsalId: string, dto: { songId: string; notes?: string; rating?: number }): Promise<RehearsalSongEntry> {
+    return this.post(`/rehearsals/${rehearsalId}/songs`, dto);
+  }
+
+  updateRehearsalSong(rehearsalId: string, entryId: string, dto: { notes?: string; rating?: number }): Promise<RehearsalSongEntry> {
+    return this.put(`/rehearsals/${rehearsalId}/songs/${entryId}`, dto);
+  }
+
+  deleteRehearsalSong(rehearsalId: string, entryId: string): Promise<void> {
+    return this.del(`/rehearsals/${rehearsalId}/songs/${entryId}`);
   }
 }

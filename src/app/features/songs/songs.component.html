@@ -12,11 +12,86 @@
         type="text"
         [(ngModel)]="searchQuery"
         placeholder="Buscar por título, artista o género..." />
+      <button class="btn btn-ghost gap-2" (click)="toggleStats()" [class.btn-active]="showStats">
+        <ng-icon name="heroChartBar" size="18"></ng-icon>
+        Estadísticas
+      </button>
       <button class="btn btn-primary gap-2" (click)="openCreateForm()">
         <ng-icon name="heroPlus" size="18"></ng-icon>
         Nueva canción
       </button>
     </div>
+  </div>
+
+  <!-- Stats panel -->
+  <div class="stats-panel" *ngIf="showStats">
+    <div *ngIf="statsLoading" class="stats-loading">
+      <span class="loading loading-spinner loading-md text-primary"></span>
+    </div>
+    <ng-container *ngIf="!statsLoading && stats">
+      <!-- KPIs -->
+      <div class="stats-kpis">
+        <div class="stats-kpi">
+          <span class="stats-kpi-value">{{ stats.totalSongs }}</span>
+          <span class="stats-kpi-label">Canciones</span>
+        </div>
+        <div class="stats-kpi">
+          <span class="stats-kpi-value">{{ stats.totalWithTempo }}</span>
+          <span class="stats-kpi-label">Con BPM</span>
+        </div>
+        <div class="stats-kpi">
+          <span class="stats-kpi-value">{{ stats.totalWithDuration }}</span>
+          <span class="stats-kpi-label">Con duración</span>
+        </div>
+        <div class="stats-kpi stats-kpi--warning">
+          <span class="stats-kpi-value">{{ stats.neverUsed.length }}</span>
+          <span class="stats-kpi-label">Sin usar</span>
+        </div>
+      </div>
+
+      <!-- Most used + Never used + Genre -->
+      <div class="stats-cols">
+        <!-- Most used -->
+        <div class="stats-section" *ngIf="stats.mostUsed.length > 0">
+          <div class="stats-section-title">
+            <ng-icon name="heroFire" class="w-4 h-4 text-warning"></ng-icon>
+            Más usadas en setlists
+          </div>
+          <div class="stats-song-row" *ngFor="let s of stats.mostUsed">
+            <span class="stats-song-title">{{ s.title }}</span>
+            <span class="stats-song-artist">{{ s.artist }}</span>
+            <span class="stats-song-count">{{ s.usageCount }}×</span>
+          </div>
+        </div>
+
+        <!-- Never used -->
+        <div class="stats-section" *ngIf="stats.neverUsed.length > 0">
+          <div class="stats-section-title">
+            <ng-icon name="heroArchiveBox" class="w-4 h-4 text-error"></ng-icon>
+            Sin añadir a ningún setlist
+          </div>
+          <div class="stats-song-row" *ngFor="let s of stats.neverUsed">
+            <span class="stats-song-title">{{ s.title }}</span>
+            <span class="stats-song-artist">{{ s.artist }}</span>
+          </div>
+        </div>
+
+        <!-- Genre distribution -->
+        <div class="stats-section" *ngIf="genreEntries().length > 0">
+          <div class="stats-section-title">
+            <ng-icon name="heroTag" class="w-4 h-4 text-primary"></ng-icon>
+            Por género
+          </div>
+          <div class="stats-genre-row" *ngFor="let g of genreEntries()">
+            <span class="stats-genre-name">{{ g.genre }}</span>
+            <div class="stats-genre-bar-wrap">
+              <div class="stats-genre-bar" [style.width.%]="(g.count / stats!.totalSongs) * 100"></div>
+            </div>
+            <span class="stats-genre-count">{{ g.count }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
   </div>
 
   <!-- Loading -->

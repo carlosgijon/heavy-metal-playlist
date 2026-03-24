@@ -57,6 +57,42 @@ export interface PlaylistSongView {
 // Backwards-compatible alias — all existing components use Song
 export type Song = PlaylistSongView;
 
+export interface LibrarySongWithCount extends LibrarySong {
+  usageCount: number;
+}
+
+export interface LibraryStats {
+  totalSongs: number;
+  totalWithTempo: number;
+  totalWithDuration: number;
+  byGenre: Record<string, number>;
+  mostUsed: LibrarySongWithCount[];
+  neverUsed: LibrarySongWithCount[];
+}
+
+export interface VoteEntry {
+  id: string;
+  sessionId: string;
+  voterName: string;
+  orderedIds: string[];
+  createdAt: string;
+}
+
+export interface VoteResult {
+  songId: string;
+  avgRank: number;
+  voteCount: number;
+}
+
+export interface VoteSession {
+  id: string;
+  playlistId: string;
+  title: string;
+  status: 'open' | 'closed';
+  createdAt: string;
+  votes: VoteEntry[];
+}
+
 export interface ItunesTrack {
   trackId: number;
   trackName: string;

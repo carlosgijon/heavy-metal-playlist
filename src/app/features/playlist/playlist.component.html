@@ -22,6 +22,29 @@
     <div class="header-actions">
       <button
         class="btn btn-ghost btn-sm tooltip"
+        data-tip="Ver conciertos que usaron este setlist"
+        (click)="toggleLinkedGigs()"
+        [class.btn-active]="showLinkedGigs">
+        <ng-icon name="heroCalendar" class="w-4 h-4"></ng-icon>
+        Historial
+      </button>
+      <button
+        class="btn btn-ghost btn-sm tooltip"
+        data-tip="Votación de setlist"
+        (click)="openVoteDialog()">
+        <ng-icon name="heroHandThumbUp" class="w-4 h-4"></ng-icon>
+        Votación
+      </button>
+      <button
+        class="btn btn-ghost btn-sm tooltip"
+        data-tip="Modo escenario (pantalla completa)"
+        *ngIf="songs.length > 0"
+        (click)="openStageView()">
+        <ng-icon name="heroComputerDesktop" class="w-4 h-4"></ng-icon>
+        Escenario
+      </button>
+      <button
+        class="btn btn-ghost btn-sm tooltip"
         data-tip="Exportar a PDF para imprimir"
         *ngIf="songs.length > 0"
         (click)="exportToPdf()">
@@ -85,6 +108,25 @@
     <button class="btn btn-ghost btn-xs ml-auto" (click)="aiExplanation = ''">
       <ng-icon name="heroXMark" class="w-3 h-3"></ng-icon>
     </button>
+  </div>
+
+  <!-- Linked gigs panel -->
+  <div class="linked-gigs-panel" *ngIf="showLinkedGigs">
+    <div class="lgp-header">
+      <ng-icon name="heroCalendar" class="w-4 h-4 text-primary"></ng-icon>
+      <span>Conciertos que usaron este setlist</span>
+    </div>
+    <div *ngIf="linkedGigs.length === 0" class="lgp-empty">
+      Ningún concierto tiene este setlist vinculado aún.
+    </div>
+    <div class="lgp-list" *ngIf="linkedGigs.length > 0">
+      <div class="lgp-item" *ngFor="let g of linkedGigs">
+        <span class="lgp-title">{{ g.title }}</span>
+        <span class="lgp-venue" *ngIf="g.venueName">{{ g.venueName }}</span>
+        <span class="lgp-date" *ngIf="g.date">{{ formatGigDate(g.date) }}</span>
+        <span class="badge badge-sm lgp-status">{{ g.status }}</span>
+      </div>
+    </div>
   </div>
 
   <!-- Loading -->

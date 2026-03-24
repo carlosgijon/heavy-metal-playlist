@@ -112,6 +112,14 @@
         </svg>
         <span class="nav-label">Merch</span>
       </button>
+      <button
+        class="nav-item"
+        [class.active]="view() === 'ensayos'"
+        (click)="setView('ensayos')"
+        title="Ensayos">
+        <ng-icon name="heroBeaker" class="nav-icon"></ng-icon>
+        <span class="nav-label">Ensayos</span>
+      </button>
       @if (isAdmin()) {
         <button
           class="nav-item"
@@ -168,6 +176,8 @@
         <app-finanzas />
       } @else if (view() === 'merch') {
         <app-merch />
+      } @else if (view() === 'ensayos') {
+        <app-ensayos />
       } @else if (view() === 'admin') {
         <app-users />
       } @else if (view() === 'band-settings') {
@@ -236,6 +246,13 @@
         <path d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z"/>
       </svg>
       <span>Merch</span>
+    </button>
+    <button class="bottom-nav-item" [class.active]="view() === 'ensayos'" (click)="setView('ensayos')">
+      <!-- heroBeaker -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15M14.25 3.104c.251.023.501.05.75.082M19.8 15a2.25 2.25 0 0 1 .45 1.338V19.5a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25v-3.162c0-.495.18-.972.504-1.338L19.8 15Z"/>
+      </svg>
+      <span>Ensayos</span>
     </button>
   </nav>
 </div>

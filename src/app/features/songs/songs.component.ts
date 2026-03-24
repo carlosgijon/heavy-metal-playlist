@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Dialog } from '@angular/cdk/dialog';
 import { NgIconComponent } from '@ng-icons/core';
-import { LibrarySong, PlaylistWithStats } from '../../core/models/song.model';
+import { LibrarySong, LibraryStats, PlaylistWithStats } from '../../core/models/song.model';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { SongLibraryFormComponent } from './song-library-form/song-library-form.component';
@@ -30,6 +30,11 @@ export class SongsComponent implements OnInit {
   playlists: PlaylistWithStats[] = [];
   loading = true;
   searchQuery = '';
+
+  // Stats panel
+  showStats = false;
+  stats: LibraryStats | null = null;
+  statsLoading = false;
 
   // Add-to-playlist modal state
   addingToPlaylist: LibrarySong | null = null;
@@ -173,6 +178,28 @@ export class SongsComponent implements OnInit {
     } finally {
       this.addingInProgress = false;
     }
+  }
+
+  async toggleStats(): Promise<void> {
+    this.showStats = !this.showStats;
+    if (this.showStats && !this.stats) {
+      this.statsLoading = true;
+      try {
+        this.stats = await this.db.getLibraryStats();
+      } catch {
+        this.toast.danger('No se pudieron cargar las estadísticas');
+        this.showStats = false;
+      } finally {
+        this.statsLoading = false;
+      }
+    }
+  }
+
+  genreEntries(): { genre: string; count: number }[] {
+    if (!this.stats) return [];
+    return Object.entries(this.stats.byGenre)
+      .map(([genre, count]) => ({ genre, count }))
+      .sort((a, b) => b.count - a.count);
   }
 
   openMetronome(song: LibrarySong): void {
