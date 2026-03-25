@@ -74,11 +74,11 @@ export interface StageViewData {
               <ng-icon name="heroArrowRight" class="w-4 h-4"></ng-icon>
               Siguiente
             </div>
-            <div class="stage-next-title">{{ nextSong?.setlistName || nextSong?.title }}</div>
-            <div class="stage-next-artist">{{ nextSong?.artist }}</div>
-            <div class="stage-next-meta" *ngIf="nextSong?.tempo || nextSong?.duration">
-              <span *ngIf="nextSong?.tempo">{{ nextSong?.tempo }} BPM</span>
-              <span *ngIf="nextSong?.duration"> · {{ formatDuration(nextSong?.duration) }}</span>
+            <div class="stage-next-title">{{ nextSong.setlistName || nextSong.title }}</div>
+            <div class="stage-next-artist">{{ nextSong.artist }}</div>
+            <div class="stage-next-meta" *ngIf="nextSong.tempo || nextSong.duration">
+              <span *ngIf="nextSong.tempo">{{ nextSong.tempo }} BPM</span>
+              <span *ngIf="nextSong.duration"> · {{ formatDuration(nextSong.duration) }}</span>
             </div>
           </div>
           <div class="stage-next-wrapper stage-end" *ngIf="!nextSong">
