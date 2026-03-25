@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Dialog } from '@angular/cdk/dialog';
 import {
-  MerchItem, MerchSaleDto, MERCH_TYPES, MERCH_SIZES, SIZED_MERCH_TYPES,
+  MerchItem, MerchSaleDto, MerchWaitingEntry, MERCH_TYPES, MERCH_SIZES, SIZED_MERCH_TYPES,
   calcMerchAnalysis,
 } from '../../core/models/merch.model';
 import { Gig } from '../../core/models/gig.model';
@@ -14,6 +14,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-
 import { MerchItemFormComponent, MerchItemFormData } from './merch-item-form/merch-item-form.component';
 import { MerchDetailDialogComponent } from './merch-detail-dialog/merch-detail-dialog.component';
 import { MerchSaleDialogComponent } from './merch-sale-dialog/merch-sale-dialog.component';
+import { WaitingListFormComponent, WaitingListFormData, WaitingListFormResult } from './waiting-list-form/waiting-list-form.component';
 
 export interface CartItem {
   item: MerchItem;
@@ -21,7 +22,7 @@ export interface CartItem {
   quantity: number;
 }
 
-type MerchTab = 'catalogo' | 'stock' | 'tpv';
+type MerchTab = 'catalogo' | 'stock' | 'tpv' | 'espera';
 
 @Component({
   selector: 'app-merch',
@@ -38,8 +39,12 @@ export class MerchComponent implements OnInit {
 
   items: MerchItem[] = [];
   gigs: Gig[] = [];
+  waitingList: MerchWaitingEntry[] = [];
   loading = true;
   tab: MerchTab = 'catalogo';
+
+  // --- Waiting list state ---
+  waitingFilter: 'all' | 'waiting' | 'notified' | 'delivered' = 'waiting';
 
   // TPV gig picker state
   tpvShowGigPicker = false;
@@ -69,9 +74,10 @@ export class MerchComponent implements OnInit {
 
   private async load(): Promise<void> {
     try {
-      [this.items, this.gigs] = await Promise.all([
+      [this.items, this.gigs, this.waitingList] = await Promise.all([
         this.db.getMerchItems(),
         this.db.getGigs(),
+        this.db.getMerchWaitingList(),
       ]);
     } catch (e) {
       this.toast.danger('Error cargando productos de merch');
@@ -409,5 +415,82 @@ export class MerchComponent implements OnInit {
 
   tpvSizeStock(item: MerchItem, size: string): number {
     return item.stockSizes?.[size] ?? 0;
+  }
+
+  // ── Waiting list ──────────────────────────────────────────────────
+
+  get filteredWaiting(): MerchWaitingEntry[] {
+    if (this.waitingFilter === 'all') return this.waitingList;
+    return this.waitingList.filter(e => e.status === this.waitingFilter);
+  }
+
+  get waitingPendingCount(): number {
+    return this.waitingList.filter(e => e.status === 'waiting').length;
+  }
+
+  /** Entries grouped by itemId for template rendering */
+  get waitingByItem(): { itemId: string; itemName: string; entries: MerchWaitingEntry[] }[] {
+    const map = new Map<string, { itemId: string; itemName: string; entries: MerchWaitingEntry[] }>();
+    for (const e of this.filteredWaiting) {
+      if (!map.has(e.itemId)) map.set(e.itemId, { itemId: e.itemId, itemName: e.itemName, entries: [] });
+      map.get(e.itemId)!.entries.push(e);
+    }
+    return Array.from(map.values());
+  }
+
+  openAddWaiting(item: MerchItem, size?: string): void {
+    const ref = this.dialog.open<WaitingListFormResult>(WaitingListFormComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { item, size } satisfies WaitingListFormData,
+    });
+    ref.closed.subscribe(async result => {
+      if (!result) return;
+      try {
+        const entry = await this.db.addMerchWaiting(item.id, result);
+        this.waitingList = [...this.waitingList, entry];
+        this.toast.success(`${result.name} añadido a la lista de espera`);
+      } catch {
+        this.toast.danger('No se pudo añadir a la lista de espera');
+      }
+    });
+  }
+
+  async markWaiting(entry: MerchWaitingEntry, status: 'notified' | 'delivered'): Promise<void> {
+    try {
+      const updated = await this.db.updateMerchWaiting(entry.id, { status });
+      this.waitingList = this.waitingList.map(e => e.id === updated.id ? updated : e);
+      this.toast.success(status === 'notified' ? `${entry.name} marcado como avisado` : `${entry.name} marcado como entregado`);
+    } catch {
+      this.toast.danger('No se pudo actualizar');
+    }
+  }
+
+  deleteWaiting(entry: MerchWaitingEntry): void {
+    const ref = this.dialog.open<boolean>(ConfirmDialogComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { title: 'Eliminar de la lista', message: `¿Eliminar a ${entry.name} de la lista de espera?`, confirmLabel: 'Eliminar' } satisfies ConfirmDialogData,
+    });
+    ref.closed.subscribe(async confirmed => {
+      if (!confirmed) return;
+      try {
+        await this.db.deleteMerchWaiting(entry.id);
+        this.waitingList = this.waitingList.filter(e => e.id !== entry.id);
+        this.toast.warning('Entrada eliminada');
+      } catch {
+        this.toast.danger('No se pudo eliminar');
+      }
+    });
+  }
+
+  statusLabel(s: string): string {
+    return ({ waiting: 'Esperando', notified: 'Avisado', delivered: 'Entregado' } as Record<string,string>)[s] ?? s;
+  }
+
+  statusBadge(s: string): string {
+    return ({ waiting: 'badge-warning', notified: 'badge-info', delivered: 'badge-success' } as Record<string,string>)[s] ?? 'badge-ghost';
   }
 }

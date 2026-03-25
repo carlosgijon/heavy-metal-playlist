@@ -45,6 +45,19 @@ export const MERCH_TYPES = [
   { value: 'other', label: 'Otro' },
 ];
 
+export interface MerchWaitingEntry {
+  id: string;
+  itemId: string;
+  itemName: string;
+  itemType: string;
+  name: string;
+  size?: string;
+  contact?: string;
+  notes?: string;
+  status: 'waiting' | 'notified' | 'delivered';
+  createdAt: string;
+}
+
 export interface MerchAnalysis {
   totalCost: number;         // productionCost * batchSize + fixedCosts
   breakEvenUnits: number;    // ceil(totalCost / (sellingPrice - productionCost))

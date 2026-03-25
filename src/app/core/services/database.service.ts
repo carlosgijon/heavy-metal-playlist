@@ -7,7 +7,7 @@ import { Song, Playlist, PlaylistWithStats, LibrarySong, PlaylistSongView, Libra
 import { BandMember, Microphone, Instrument, Amplifier, PaEquipment, ChannelEntry } from '../models/equipment.model';
 import { Venue, Gig, GigStatus, GigSummary, CalendarEvent, GigChecklist, ChecklistItem, GigContact } from '../models/gig.model';
 import { Transaction, WishListItem } from '../models/finance.model';
-import { MerchItem, MerchSaleDto, MerchRestockDto } from '../models/merch.model';
+import { MerchItem, MerchSaleDto, MerchRestockDto, MerchWaitingEntry } from '../models/merch.model';
 import { Rehearsal, RehearsalSongEntry } from '../models/rehearsal.model';
 
 @Injectable({ providedIn: 'root' })
@@ -531,6 +531,22 @@ export class DatabaseService {
 
   restockMerchItem(id: string, dto: MerchRestockDto): Promise<MerchItem> {
     return this.put(`/merch/${id}/stock`, dto);
+  }
+
+  getMerchWaitingList(): Promise<MerchWaitingEntry[]> {
+    return this.get('/merch/waiting');
+  }
+
+  addMerchWaiting(itemId: string, dto: { name: string; size?: string; contact?: string; notes?: string }): Promise<MerchWaitingEntry> {
+    return this.post(`/merch/${itemId}/waiting`, dto);
+  }
+
+  updateMerchWaiting(entryId: string, dto: { status?: string; contact?: string; notes?: string }): Promise<MerchWaitingEntry> {
+    return this.put(`/merch/waiting/${entryId}`, dto);
+  }
+
+  deleteMerchWaiting(entryId: string): Promise<void> {
+    return this.del(`/merch/waiting/${entryId}`);
   }
 
   // Aliases used by GigDetailComponent
