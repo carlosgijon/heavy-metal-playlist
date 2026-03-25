@@ -154,10 +154,7 @@ export class StageViewComponent implements OnInit, OnDestroy {
   get currentSong(): Song | undefined { return this.songList[this.currentIndex]; }
 
   get nextSong(): Song | undefined {
-    for (let i = this.currentIndex + 1; i < this.songList.length; i++) {
-      if (this.songList[i].type !== 'event') return this.songList[i];
-    }
-    return undefined;
+    return this.songList[this.currentIndex + 1];
   }
 
   get currentSongNumber(): string {
