@@ -15,6 +15,7 @@ export interface StageViewData {
   imports: [CommonModule, NgIconComponent],
   template: `
     <div class="stage-overlay" (click)="onOverlayClick($event)">
+      <div class="stage-beat-flash" [class.stage-beat-flash--active]="beatPulse"></div>
       <div class="stage-box" (click)="$event.stopPropagation()">
 
         <!-- Top bar -->
@@ -39,7 +40,7 @@ export interface StageViewData {
 
             <!-- BPM + Metronome -->
             <div class="stage-bpm-row" *ngIf="currentSong?.tempo">
-              <div class="stage-bpm-display" [class.beat-flash]="beatPulse">
+              <div class="stage-bpm-display">
                 <span class="stage-bpm-number">{{ currentSong?.tempo }}</span>
                 <span class="stage-bpm-unit">BPM</span>
               </div>
