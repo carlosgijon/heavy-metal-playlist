@@ -47,8 +47,35 @@
   <!-- ── TAB: RESUMEN ── -->
   <div *ngIf="!loading && tab === 'resumen'">
 
+    <!-- Saldo actual — destacado -->
+    <div class="kpi-card kpi-current-balance" [class.kpi-positive]="currentBalance >= 0" [class.kpi-negative]="currentBalance < 0">
+      <div class="kpi-label">Saldo total de caja</div>
+      <div class="kpi-value kpi-value-lg">{{ currentBalance >= 0 ? '+' : '' }}{{ formatAmount(currentBalance) }} €</div>
+    </div>
+
     <!-- KPI cards -->
     <div class="kpi-grid">
+      <div class="kpi-card kpi-initial">
+        <div class="kpi-label-row">
+          <span class="kpi-label">Saldo inicial</span>
+          @if (!editingBalance) {
+            <button class="btn btn-ghost btn-xs" (click)="startEditBalance()" title="Editar saldo inicial">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
+            </button>
+          }
+        </div>
+        @if (editingBalance) {
+          <div class="balance-edit-row">
+            <input type="number" class="input input-bordered input-sm w-28" [(ngModel)]="balanceDraft" step="0.01" />
+            <button class="btn btn-success btn-xs" [disabled]="savingBalance" (click)="saveInitialBalance()">
+              @if (savingBalance) { <span class="loading loading-spinner loading-xs"></span> } @else { ✓ }
+            </button>
+            <button class="btn btn-ghost btn-xs" (click)="cancelEditBalance()">✕</button>
+          </div>
+        } @else {
+          <div class="kpi-value">{{ formatAmount(initialBalance) }} €</div>
+        }
+      </div>
       <div class="kpi-card kpi-income">
         <div class="kpi-label">Total ingresos</div>
         <div class="kpi-value">{{ formatAmount(totalIncome) }} €</div>
@@ -58,7 +85,7 @@
         <div class="kpi-value">{{ formatAmount(totalExpenses) }} €</div>
       </div>
       <div class="kpi-card" [class.kpi-positive]="balance >= 0" [class.kpi-negative]="balance < 0">
-        <div class="kpi-label">Balance</div>
+        <div class="kpi-label">Balance actividad</div>
         <div class="kpi-value">{{ balance >= 0 ? '+' : '' }}{{ formatAmount(balance) }} €</div>
       </div>
     </div>

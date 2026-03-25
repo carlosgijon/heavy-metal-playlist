@@ -51,6 +51,11 @@ export class FinanzasComponent implements OnInit, AfterViewInit, OnDestroy {
   wishList: WishListItem[] = [];
   gigs: Gig[] = [];
 
+  initialBalance = 0;
+  editingBalance = false;
+  balanceDraft = 0;
+  savingBalance = false;
+
   // Filters for transactions tab
   filterType = 'all';
   filterYear = new Date().getFullYear();
@@ -84,11 +89,16 @@ export class FinanzasComponent implements OnInit, AfterViewInit, OnDestroy {
   async load(): Promise<void> {
     try {
       this.loading = true;
-      [this.transactions, this.wishList, this.gigs] = await Promise.all([
+      const [transactions, wishList, gigs, balanceRes] = await Promise.all([
         this.db.getTransactions(),
         this.db.getWishList(),
         this.db.getGigs(),
+        this.db.getInitialBalance(),
       ]);
+      this.transactions = transactions;
+      this.wishList = wishList;
+      this.gigs = gigs;
+      this.initialBalance = balanceRes.initialBalance;
     } catch {
       this.toast.danger('Error al cargar los datos financieros', 'Error');
     } finally {
@@ -120,6 +130,33 @@ export class FinanzasComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get balance(): number {
     return this.totalIncome - this.totalExpenses;
+  }
+
+  get currentBalance(): number {
+    return this.initialBalance + this.totalIncome - this.totalExpenses;
+  }
+
+  startEditBalance(): void {
+    this.balanceDraft = this.initialBalance;
+    this.editingBalance = true;
+  }
+
+  cancelEditBalance(): void {
+    this.editingBalance = false;
+  }
+
+  async saveInitialBalance(): Promise<void> {
+    this.savingBalance = true;
+    try {
+      const res = await this.db.setInitialBalance(this.balanceDraft);
+      this.initialBalance = res.initialBalance;
+      this.editingBalance = false;
+      this.toast.success('Saldo inicial guardado');
+    } catch {
+      this.toast.danger('No se pudo guardar el saldo inicial', 'Error');
+    } finally {
+      this.savingBalance = false;
+    }
   }
 
   // ── Filtered transactions ─────────────────────────────────────────

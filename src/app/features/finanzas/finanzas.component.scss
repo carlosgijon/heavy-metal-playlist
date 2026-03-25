@@ -1,3 +1,25 @@
+// ── Saldo total de caja ────────────────────────────────────────────
+
+.kpi-current-balance {
+  background: oklch(var(--b2));
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.75rem;
+  border-left: 6px solid oklch(var(--p));
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.kpi-value-lg {
+  font-size: 2.4rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 // ── KPI Cards ─────────────────────────────────────────────────────
 
 .kpi-grid {
@@ -17,8 +39,25 @@
 
 .kpi-income { border-left-color: #22c55e; }
 .kpi-expense { border-left-color: #ef4444; }
+.kpi-initial { border-left-color: oklch(var(--p)); }
 .kpi-positive { border-left-color: #22c55e; }
 .kpi-negative { border-left-color: #ef4444; }
+
+.kpi-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+
+  .kpi-label { margin-bottom: 0; }
+}
+
+.balance-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
 
 .kpi-label {
   font-size: 0.75rem;

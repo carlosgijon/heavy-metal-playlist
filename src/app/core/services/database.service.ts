@@ -499,6 +499,14 @@ export class DatabaseService {
     return this.del(`/finance/wish-list/${id}`);
   }
 
+  getInitialBalance(): Promise<{ initialBalance: number }> {
+    return this.get('/finance/balance');
+  }
+
+  setInitialBalance(amount: number): Promise<{ initialBalance: number }> {
+    return this.put('/finance/balance', { initialBalance: amount });
+  }
+
   // -- Merch ------------------------------------------------------------------
 
   getMerchItems(): Promise<MerchItem[]> {
