@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { NgIconComponent } from '@ng-icons/core';
@@ -31,32 +31,50 @@ export interface StageViewData {
         <!-- Main content -->
         <div class="stage-main">
 
-          <!-- Current song -->
+          <!-- ── CURRENT SONG ── -->
           <div class="stage-current">
             <div class="stage-song-number">{{ currentSongNumber }}</div>
             <div class="stage-song-title">{{ currentSong?.setlistName || currentSong?.title }}</div>
             <div class="stage-song-artist">{{ currentSong?.artist }}</div>
+
+            <!-- BPM + Metronome -->
+            <div class="stage-bpm-row" *ngIf="currentSong?.tempo">
+              <div class="stage-bpm-display" [class.beat-flash]="beatPulse">
+                <span class="stage-bpm-number">{{ currentSong?.tempo }}</span>
+                <span class="stage-bpm-unit">BPM</span>
+              </div>
+              <button
+                class="stage-metro-btn"
+                [class.stage-metro-btn--active]="metronomeActive"
+                (click)="toggleMetronome()"
+                [title]="metronomeActive ? 'Detener metrónomo (M)' : 'Activar metrónomo (M)'"
+              >
+                <span class="stage-metro-dot" [class.stage-metro-dot--pulse]="beatPulse"></span>
+                {{ metronomeActive ? 'Parar' : 'Metro' }}
+              </button>
+            </div>
+
             <div class="stage-song-meta">
-              <span *ngIf="currentSong?.tempo" class="stage-bpm">{{ currentSong?.tempo }} BPM</span>
               <span *ngIf="currentSong?.duration" class="stage-duration">{{ formatDuration(currentSong?.duration) }}</span>
               <span *ngIf="currentSong?.style" class="stage-style">{{ currentSong?.style }}</span>
             </div>
             <div *ngIf="currentSong?.notes" class="stage-notes">{{ currentSong?.notes }}</div>
+
+            <!-- Join indicator -->
+            <div *ngIf="currentSong?.joinWithNext" class="stage-join-indicator">
+              <ng-icon name="heroArrowTurnDownRight" class="w-5 h-5"></ng-icon>
+              Encadenado con la siguiente
+            </div>
           </div>
 
-          <!-- Join indicator -->
-          <div *ngIf="currentSong?.joinWithNext" class="stage-join-indicator">
-            <ng-icon name="heroArrowTurnDownRight" class="w-5 h-5"></ng-icon>
-            Encadenado con la siguiente
-          </div>
-
-          <!-- Next song preview -->
+          <!-- ── NEXT SONG ── -->
           <div class="stage-next-wrapper" *ngIf="nextSong">
             <div class="stage-next-label">
               <ng-icon name="heroArrowRight" class="w-4 h-4"></ng-icon>
               Siguiente
             </div>
             <div class="stage-next-title">{{ nextSong?.setlistName || nextSong?.title }}</div>
+            <div class="stage-next-artist">{{ nextSong?.artist }}</div>
             <div class="stage-next-meta" *ngIf="nextSong?.tempo || nextSong?.duration">
               <span *ngIf="nextSong?.tempo">{{ nextSong?.tempo }} BPM</span>
               <span *ngIf="nextSong?.duration"> · {{ formatDuration(nextSong?.duration) }}</span>
@@ -93,6 +111,7 @@ export interface StageViewData {
         <!-- Keyboard hint -->
         <div class="stage-hint">
           <span>← → Navegar</span>
+          <span>M Metrónomo</span>
           <span>Esc Salir</span>
         </div>
 
@@ -103,25 +122,31 @@ export interface StageViewData {
 })
 export class StageViewComponent implements OnInit, OnDestroy {
   private readonly dialogRef = inject(DialogRef<void>);
+  private readonly zone = inject(NgZone);
   readonly data = inject<StageViewData>(DIALOG_DATA);
 
-  /** Only song/event rows that matter for stage navigation */
   songList: Song[] = [];
   currentIndex = 0;
 
+  // Metronome
+  metronomeActive = false;
+  beatPulse = false;
+  private audioCtx: AudioContext | null = null;
+  private metronomeTimer: ReturnType<typeof setInterval> | null = null;
+
   ngOnInit(): void {
-    // Filter out pure events (BIS markers) but keep "song" type entries
-    this.songList = this.data.songs.filter(s => s.type !== 'event' || s.title?.toUpperCase() === 'BIS');
-    // Actually keep all — events (BIS, Intro...) show as markers
     this.songList = this.data.songs;
   }
 
-  ngOnDestroy(): void {}
+  ngOnDestroy(): void {
+    this.stopMetronome();
+  }
 
   @HostListener('document:keydown', ['$event'])
   onKey(e: KeyboardEvent): void {
     if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); this.next(); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); this.prev(); }
+    if (e.key === 'm' || e.key === 'M') { e.preventDefault(); this.toggleMetronome(); }
     if (e.key === 'Escape') this.close();
   }
 
@@ -158,11 +183,17 @@ export class StageViewComponent implements OnInit, OnDestroy {
   }
 
   next(): void {
-    if (this.currentIndex < this.songList.length - 1) this.currentIndex++;
+    if (this.currentIndex < this.songList.length - 1) {
+      this.currentIndex++;
+      if (this.metronomeActive) this.restartMetronome();
+    }
   }
 
   prev(): void {
-    if (this.currentIndex > 0) this.currentIndex--;
+    if (this.currentIndex > 0) {
+      this.currentIndex--;
+      if (this.metronomeActive) this.restartMetronome();
+    }
   }
 
   close(): void { this.dialogRef.close(); }
@@ -174,5 +205,62 @@ export class StageViewComponent implements OnInit, OnDestroy {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  // ── Metronome ────────────────────────────────────────────────────────
+
+  toggleMetronome(): void {
+    if (this.metronomeActive) {
+      this.stopMetronome();
+    } else {
+      this.startMetronome();
+    }
+  }
+
+  private startMetronome(): void {
+    const bpm = this.currentSong?.tempo;
+    if (!bpm) return;
+    this.audioCtx = new AudioContext();
+    this.metronomeActive = true;
+    const intervalMs = Math.round(60000 / bpm);
+    this.doTick();
+    this.metronomeTimer = setInterval(() => {
+      this.zone.run(() => this.doTick());
+    }, intervalMs);
+  }
+
+  private stopMetronome(): void {
+    if (this.metronomeTimer !== null) {
+      clearInterval(this.metronomeTimer);
+      this.metronomeTimer = null;
+    }
+    this.audioCtx?.close();
+    this.audioCtx = null;
+    this.metronomeActive = false;
+    this.beatPulse = false;
+  }
+
+  private restartMetronome(): void {
+    this.stopMetronome();
+    setTimeout(() => this.startMetronome(), 0);
+  }
+
+  private doTick(): void {
+    this.playClick();
+    this.beatPulse = true;
+    setTimeout(() => { this.beatPulse = false; }, 120);
+  }
+
+  private playClick(): void {
+    if (!this.audioCtx) return;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    osc.frequency.value = 1200;
+    gain.gain.setValueAtTime(0.5, this.audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.04);
+    osc.start(this.audioCtx.currentTime);
+    osc.stop(this.audioCtx.currentTime + 0.04);
   }
 }

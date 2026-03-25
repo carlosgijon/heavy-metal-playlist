@@ -10,11 +10,10 @@
 
 .stage-box {
   width: 100%;
-  max-width: 900px;
+  max-width: 960px;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 0;
   color: #fff;
   user-select: none;
 }
@@ -24,13 +23,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
 }
 
 .stage-playlist-name {
-  font-size: 0.85rem;
-  opacity: 0.5;
+  font-size: 0.8rem;
+  opacity: 0.4;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -43,8 +43,8 @@
 }
 
 .stage-counter {
-  font-size: 0.9rem;
-  opacity: 0.5;
+  font-size: 0.85rem;
+  opacity: 0.45;
   font-variant-numeric: tabular-nums;
 }
 
@@ -53,58 +53,146 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 2rem 2.5rem;
-  gap: 2rem;
+  overflow: hidden;
 }
 
+// ── Current song ──────────────────────────────────────────────────────
 .stage-current {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  padding: 1.5rem 2.5rem 1rem;
+  gap: 0.25rem;
 }
 
 .stage-song-number {
-  font-size: 1rem;
-  opacity: 0.35;
+  font-size: 0.85rem;
+  opacity: 0.3;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 0.5rem;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.25rem;
 }
 
 .stage-song-title {
   font-size: clamp(2rem, 6vw, 4.5rem);
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1.05;
   letter-spacing: -0.02em;
-  margin-bottom: 0.5rem;
+  color: #ffffff;
 }
 
 .stage-song-artist {
-  font-size: clamp(1rem, 2.5vw, 1.6rem);
-  opacity: 0.6;
+  font-size: clamp(0.95rem, 2.2vw, 1.5rem);
+  opacity: 0.55;
   font-weight: 400;
-  margin-bottom: 1rem;
+  margin-top: 0.2rem;
+}
+
+// ── BPM + Metronome ───────────────────────────────────────────────────
+.stage-bpm-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.stage-bpm-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  transition: color 0.05s;
+}
+
+.stage-bpm-number {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: color 0.05s;
+}
+
+.stage-bpm-unit {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  opacity: 0.45;
+}
+
+@keyframes beat-flash {
+  0%   { color: #fff; }
+  20%  { color: #f59e0b; }
+  100% { color: #fff; }
+}
+
+.stage-bpm-display.beat-flash {
+  animation: beat-flash 0.18s ease-out;
+}
+
+.stage-metro-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.45);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+  }
+
+  &--active {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+  }
+}
+
+.stage-metro-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+@keyframes metro-dot-pulse {
+  0%   { transform: scale(1);   opacity: 1; }
+  40%  { transform: scale(2.2); opacity: 0.8; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.stage-metro-dot--pulse {
+  animation: metro-dot-pulse 0.18s ease-out;
 }
 
 .stage-song-meta {
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  font-size: 0.95rem;
-  opacity: 0.5;
-}
-
-.stage-bpm {
-  font-variant-numeric: tabular-nums;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  opacity: 0.38;
+  margin-top: 0.2rem;
 }
 
 .stage-notes {
-  margin-top: 1rem;
-  font-size: 0.9rem;
-  opacity: 0.5;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  opacity: 0.4;
   font-style: italic;
   max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .stage-join-indicator {
@@ -112,16 +200,23 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  font-size: 0.82rem;
-  opacity: 0.5;
-  color: oklch(var(--wa, 80% 0.18 85));
+  font-size: 0.78rem;
+  opacity: 0.45;
+  color: #fbbf24;
+  margin-top: 0.5rem;
 }
 
-// ── Next song preview ─────────────────────────────────────────────────
+// ── Next song ─────────────────────────────────────────────────────────
 .stage-next-wrapper {
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding-top: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  padding: 1rem 2.5rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  gap: 0.2rem;
 }
 
 .stage-next-label {
@@ -129,39 +224,53 @@
   align-items: center;
   justify-content: center;
   gap: 0.3rem;
-  font-size: 0.72rem;
-  opacity: 0.35;
+  font-size: 0.68rem;
+  color: #f59e0b;
+  opacity: 0.55;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.4rem;
+  letter-spacing: 0.14em;
+  margin-bottom: 0.3rem;
 }
 
 .stage-next-title {
-  font-size: clamp(1rem, 2.5vw, 1.5rem);
-  font-weight: 600;
-  opacity: 0.45;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: #f59e0b;
+}
+
+.stage-next-artist {
+  font-size: clamp(0.95rem, 2.2vw, 1.5rem);
+  color: #f59e0b;
+  opacity: 0.55;
+  font-weight: 400;
+  margin-top: 0.15rem;
 }
 
 .stage-next-meta {
-  font-size: 0.8rem;
-  opacity: 0.3;
-  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: #f59e0b;
+  opacity: 0.38;
+  margin-top: 0.15rem;
 }
 
 .stage-end .stage-next-label {
-  font-size: 0.8rem;
-  opacity: 0.25;
+  font-size: 0.75rem;
+  opacity: 0.2;
+  color: #fff;
 }
 
 // ── Progress bar ──────────────────────────────────────────────────────
 .stage-progress {
   height: 2px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.08);
+  flex-shrink: 0;
 }
 
 .stage-progress-fill {
   height: 100%;
-  background: oklch(var(--p, 65% 0.2 280));
+  background: #f59e0b;
   transition: width 0.3s ease;
 }
 
@@ -170,15 +279,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 2rem;
+  padding: 1.25rem 2rem;
+  flex-shrink: 0;
 }
 
 .stage-btn {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 50%;
-  width: 4rem;
-  height: 4rem;
+  width: 3.75rem;
+  height: 3.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,11 +297,11 @@
   color: #fff;
 
   &:hover:not(:disabled) {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.14);
   }
 
   &:disabled {
-    opacity: 0.2;
+    opacity: 0.18;
     cursor: default;
   }
 }
@@ -202,18 +312,18 @@
 
 .stage-time-label {
   display: block;
-  font-size: 0.7rem;
-  opacity: 0.35;
+  font-size: 0.65rem;
+  opacity: 0.3;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.15rem;
 }
 
 .stage-time-value {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 // ── Keyboard hint ─────────────────────────────────────────────────────
@@ -221,8 +331,9 @@
   display: flex;
   justify-content: center;
   gap: 2rem;
-  padding: 0.75rem;
-  font-size: 0.7rem;
-  opacity: 0.2;
+  padding: 0.6rem;
+  font-size: 0.65rem;
+  opacity: 0.18;
   letter-spacing: 0.05em;
+  flex-shrink: 0;
 }
