@@ -51,6 +51,7 @@ export interface MerchWaitingEntry {
   itemName: string;
   itemType: string;
   name: string;
+  quantity: number;
   size?: string;
   contact?: string;
   notes?: string;

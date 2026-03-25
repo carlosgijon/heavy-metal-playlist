@@ -6,12 +6,12 @@ import { MerchItem, MERCH_SIZES } from '../../../core/models/merch.model';
 
 export interface WaitingListFormData {
   item: MerchItem;
-  /** Pre-selected size (from stock tab button click) */
   size?: string;
 }
 
 export interface WaitingListFormResult {
   name: string;
+  quantity: number;
   size?: string;
   contact?: string;
   notes?: string;
@@ -54,6 +54,17 @@ export interface WaitingListFormResult {
           </div>
         }
 
+        <!-- Quantity -->
+        <div class="form-control mb-3">
+          <label class="label py-1"><span class="label-text">Unidades</span></label>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-square btn-sm btn-ghost" [disabled]="quantity <= 1" (click)="quantity = quantity - 1">−</button>
+            <input type="number" class="input input-bordered input-sm w-20 text-center font-bold"
+              min="1" [(ngModel)]="quantity" />
+            <button class="btn btn-square btn-sm btn-ghost" (click)="quantity = quantity + 1">+</button>
+          </div>
+        </div>
+
         <!-- Contact -->
         <div class="form-control mb-3">
           <label class="label py-1"><span class="label-text">Contacto <span class="opacity-50">(opcional)</span></span></label>
@@ -94,7 +105,6 @@ export interface WaitingListFormResult {
     }
     .wlf-title { font-size: 1rem; font-weight: 700; }
     .wlf-sub { font-size: 0.8rem; opacity: 0.55; margin-top: 2px; }
-    .wlf-body {}
   `],
 })
 export class WaitingListFormComponent {
@@ -104,6 +114,7 @@ export class WaitingListFormComponent {
   readonly sizes = MERCH_SIZES;
 
   name = '';
+  quantity = 1;
   size: string | undefined = this.data.size;
   contact = '';
   notes = '';
@@ -112,6 +123,7 @@ export class WaitingListFormComponent {
     if (!this.name.trim()) return;
     this.dialogRef.close({
       name: this.name.trim(),
+      quantity: this.quantity,
       size: this.size,
       contact: this.contact.trim() || undefined,
       notes: this.notes.trim() || undefined,

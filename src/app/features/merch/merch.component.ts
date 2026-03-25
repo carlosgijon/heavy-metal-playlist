@@ -438,6 +438,11 @@ export class MerchComponent implements OnInit {
     return Array.from(map.values());
   }
 
+  getZeroSizes(item: MerchItem): string[] {
+    if (!item.stockSizes) return [];
+    return ['XS', 'S', 'M', 'L', 'XL', 'XXL'].filter(s => (item.stockSizes![s] ?? 0) === 0);
+  }
+
   openAddWaiting(item: MerchItem, size?: string): void {
     const ref = this.dialog.open<WaitingListFormResult>(WaitingListFormComponent, {
       hasBackdrop: true,
@@ -458,10 +463,46 @@ export class MerchComponent implements OnInit {
   }
 
   async markWaiting(entry: MerchWaitingEntry, status: 'notified' | 'delivered'): Promise<void> {
+    if (status === 'delivered') {
+      const item = this.items.find(i => i.id === entry.itemId);
+      if (!item) return;
+
+      // Check stock
+      const available = item.hasSizes && entry.size
+        ? (item.stockSizes?.[entry.size] ?? 0)
+        : item.stock;
+
+      if (available < entry.quantity) {
+        this.toast.danger(
+          `Stock insuficiente${entry.size ? ` (talla ${entry.size})` : ''}: ${available} ud${available !== 1 ? 's' : ''} disponible${available !== 1 ? 's' : ''}, se necesitan ${entry.quantity}`
+        );
+        return;
+      }
+
+      // Sell → reduce stock + create income transaction
+      try {
+        const { item: updated } = await this.db.sellMerchItem(item.id, {
+          quantity: entry.quantity,
+          unitPrice: item.sellingPrice,
+          date: new Date().toISOString().slice(0, 10),
+          size: entry.size,
+          notes: `Lista de espera: ${entry.name}`,
+        });
+        this.items = this.items.map(i => i.id === updated.id ? updated : i);
+      } catch {
+        this.toast.danger('No se pudo registrar la venta');
+        return;
+      }
+    }
+
     try {
       const updated = await this.db.updateMerchWaiting(entry.id, { status });
       this.waitingList = this.waitingList.map(e => e.id === updated.id ? updated : e);
-      this.toast.success(status === 'notified' ? `${entry.name} marcado como avisado` : `${entry.name} marcado como entregado`);
+      this.toast.success(
+        status === 'notified'
+          ? `${entry.name} marcado como avisado`
+          : `${entry.name} entregado — stock y finanzas actualizados`
+      );
     } catch {
       this.toast.danger('No se pudo actualizar');
     }

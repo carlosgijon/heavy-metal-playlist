@@ -249,13 +249,21 @@
                   <div class="size-cell" [class.size-cell-empty]="qty === 0" [class.size-cell-low]="qty > 0 && qty <= 3">
                     <span class="size-label">{{ size }}</span>
                     <span class="size-qty">{{ qty }}</span>
-                    @if (qty === 0) {
-                      <button class="btn btn-xs btn-ghost text-warning mt-1 px-1" title="Añadir a lista de espera"
-                        (click)="openAddWaiting(item, size)">espera</button>
-                    }
                   </div>
                 }
               </div>
+              <!-- Botones de espera por talla fuera de las celdas -->
+              @let zeroSizes = getZeroSizes(item);
+              @if (zeroSizes.length > 0) {
+                <div class="waiting-size-btns">
+                  <span class="text-xs opacity-50">Sin stock:</span>
+                  @for (size of zeroSizes; track size) {
+                    <button class="btn btn-xs btn-outline btn-warning" (click)="openAddWaiting(item, size)">
+                      + Espera {{ size }}
+                    </button>
+                  }
+                </div>
+              }
             }
 
             <!-- Sin stock sin tallas: botón lista de espera -->

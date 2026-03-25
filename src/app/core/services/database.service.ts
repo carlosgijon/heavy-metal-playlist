@@ -537,7 +537,7 @@ export class DatabaseService {
     return this.get('/merch/waiting');
   }
 
-  addMerchWaiting(itemId: string, dto: { name: string; size?: string; contact?: string; notes?: string }): Promise<MerchWaitingEntry> {
+  addMerchWaiting(itemId: string, dto: { name: string; quantity: number; size?: string; contact?: string; notes?: string }): Promise<MerchWaitingEntry> {
     return this.post(`/merch/${itemId}/waiting`, dto);
   }
 
