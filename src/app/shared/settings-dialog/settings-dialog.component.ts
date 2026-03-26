@@ -12,11 +12,57 @@ export const FONT_SIZE_MAP: Record<string, string> = {
 };
 
 export const FONT_FAMILY_MAP: Record<string, string> = {
-  system: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-  inter: "'Inter', sans-serif",
-  nunito: "'Nunito', sans-serif",
-  jetbrains: "'JetBrains Mono', monospace",
+  system:      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  inter:       "'Inter', sans-serif",
+  roboto:      "'Roboto', sans-serif",
+  opensans:    "'Open Sans', sans-serif",
+  lato:        "'Lato', sans-serif",
+  nunito:      "'Nunito', sans-serif",
+  poppins:     "'Poppins', sans-serif",
+  montserrat:  "'Montserrat', sans-serif",
+  dmsans:      "'DM Sans', sans-serif",
+  plusjakarta: "'Plus Jakarta Sans', sans-serif",
+  outfit:      "'Outfit', sans-serif",
+  playfair:    "'Playfair Display', serif",
+  merriweather:"'Merriweather', serif",
+  lora:        "'Lora', serif",
+  oswald:      "'Oswald', sans-serif",
+  rajdhani:    "'Rajdhani', sans-serif",
+  barlow:      "'Barlow Condensed', sans-serif",
+  bebas:       "'Bebas Neue', sans-serif",
+  jetbrains:   "'JetBrains Mono', monospace",
+  sourcecodepro:"'Source Code Pro', monospace",
+  firacode:    "'Fira Code', monospace",
 };
+
+const FONT_FAMILY_OPTIONS: { key: string; label: string; stack: string; category: string }[] = [
+  // Sistema
+  { key: 'system',       label: 'Sistema',           stack: FONT_FAMILY_MAP['system'],       category: 'sistema' },
+  // Sans-serif
+  { key: 'inter',        label: 'Inter',              stack: FONT_FAMILY_MAP['inter'],        category: 'sans-serif' },
+  { key: 'roboto',       label: 'Roboto',             stack: FONT_FAMILY_MAP['roboto'],       category: 'sans-serif' },
+  { key: 'opensans',     label: 'Open Sans',          stack: FONT_FAMILY_MAP['opensans'],     category: 'sans-serif' },
+  { key: 'lato',         label: 'Lato',               stack: FONT_FAMILY_MAP['lato'],         category: 'sans-serif' },
+  { key: 'nunito',       label: 'Nunito',             stack: FONT_FAMILY_MAP['nunito'],       category: 'sans-serif' },
+  { key: 'poppins',      label: 'Poppins',            stack: FONT_FAMILY_MAP['poppins'],      category: 'sans-serif' },
+  { key: 'montserrat',   label: 'Montserrat',         stack: FONT_FAMILY_MAP['montserrat'],   category: 'sans-serif' },
+  { key: 'dmsans',       label: 'DM Sans',            stack: FONT_FAMILY_MAP['dmsans'],       category: 'sans-serif' },
+  { key: 'plusjakarta',  label: 'Plus Jakarta Sans',  stack: FONT_FAMILY_MAP['plusjakarta'],  category: 'sans-serif' },
+  { key: 'outfit',       label: 'Outfit',             stack: FONT_FAMILY_MAP['outfit'],       category: 'sans-serif' },
+  // Serif
+  { key: 'playfair',     label: 'Playfair Display',   stack: FONT_FAMILY_MAP['playfair'],     category: 'serif' },
+  { key: 'merriweather', label: 'Merriweather',       stack: FONT_FAMILY_MAP['merriweather'], category: 'serif' },
+  { key: 'lora',         label: 'Lora',               stack: FONT_FAMILY_MAP['lora'],         category: 'serif' },
+  // Display
+  { key: 'oswald',       label: 'Oswald',             stack: FONT_FAMILY_MAP['oswald'],       category: 'display' },
+  { key: 'rajdhani',     label: 'Rajdhani',           stack: FONT_FAMILY_MAP['rajdhani'],     category: 'display' },
+  { key: 'barlow',       label: 'Barlow Condensed',   stack: FONT_FAMILY_MAP['barlow'],       category: 'display' },
+  { key: 'bebas',        label: 'Bebas Neue',         stack: FONT_FAMILY_MAP['bebas'],        category: 'display' },
+  // Monospace
+  { key: 'jetbrains',    label: 'JetBrains Mono',     stack: FONT_FAMILY_MAP['jetbrains'],    category: 'monospace' },
+  { key: 'sourcecodepro',label: 'Source Code Pro',    stack: FONT_FAMILY_MAP['sourcecodepro'],category: 'monospace' },
+  { key: 'firacode',     label: 'Fira Code',          stack: FONT_FAMILY_MAP['firacode'],     category: 'monospace' },
+];
 
 const FONT_SIZE_OPTIONS = [
   { key: 'xs', label: 'XS', px: 13 },
@@ -26,19 +72,12 @@ const FONT_SIZE_OPTIONS = [
   { key: 'xl', label: 'XL', px: 18 },
 ];
 
-const FONT_FAMILY_OPTIONS = [
-  { key: 'system',    label: 'Sistema',         stack: FONT_FAMILY_MAP['system'] },
-  { key: 'inter',     label: 'Inter',            stack: FONT_FAMILY_MAP['inter'] },
-  { key: 'nunito',    label: 'Nunito',           stack: FONT_FAMILY_MAP['nunito'] },
-  { key: 'jetbrains', label: 'JetBrains Mono',  stack: FONT_FAMILY_MAP['jetbrains'] },
-];
-
 @Component({
   selector: 'app-settings-dialog',
   standalone: true,
   imports: [FormsModule],
   template: `
-    <div class="modal-box w-96 max-w-[95vw]">
+    <div class="modal-box settings-box">
       <h3 class="font-bold text-lg mb-5">Configuración</h3>
 
       <!-- ── Tema ─────────────────────────────────────── -->
@@ -128,49 +167,68 @@ const FONT_FAMILY_OPTIONS = [
 
       <!-- ── Tipografía ───────────────────────────────── -->
       <p class="section-label">Tipografía</p>
-      <div class="font-family-grid mb-5">
-        @for (opt of fontFamilyOptions; track opt.key) {
+      <input
+        class="input input-sm input-bordered w-full mb-2"
+        type="text"
+        placeholder="Buscar fuente..."
+        [(ngModel)]="fontSearch" />
+
+      <div class="font-list">
+        @for (opt of filteredFonts; track opt.key) {
           <button
-            class="font-family-btn"
-            [class.font-family-btn-active]="currentFontFamily === opt.key"
-            [style.font-family]="opt.stack"
+            class="font-card"
+            [class.font-card-active]="currentFontFamily === opt.key"
             (click)="changeFontFamily(opt.key)">
-            {{ opt.label }}
+            <div class="font-card-main">
+              <span class="font-card-name" [style.font-family]="opt.stack">{{ opt.label }}</span>
+              <span class="font-card-tag">{{ opt.category }}</span>
+            </div>
+            <span class="font-card-preview" [style.font-family]="opt.stack">
+              Heavy Metal · Rock &amp; Roll
+            </span>
           </button>
+        }
+        @if (filteredFonts.length === 0) {
+          <p class="font-list-empty">Sin resultados para "{{ fontSearch }}"</p>
         }
       </div>
 
-      <div class="modal-action mt-2">
+      <div class="modal-action mt-4">
         <button class="btn btn-sm" type="button" (click)="close()">Cerrar</button>
       </div>
     </div>
   `,
   styles: [`
+    .settings-box {
+      width: 420px;
+      max-width: 95vw;
+    }
+
     .section-label {
+      display: block;
       font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       opacity: 0.6;
       margin: 0 0 0.5rem;
-      display: block;
     }
 
-    /* Font size */
+    /* ── Font size buttons ── */
     .font-size-row {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.4rem;
       align-items: flex-end;
     }
 
     .font-size-btn {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
       gap: 0.2rem;
-      flex: 1;
-      padding: 0.4rem 0.25rem 0.35rem;
+      padding: 0.35rem 0.2rem 0.3rem;
       border-radius: 0.5rem;
       border: 2px solid oklch(var(--b3));
       background: oklch(var(--b2));
@@ -179,10 +237,9 @@ const FONT_FAMILY_OPTIONS = [
       line-height: 1;
       color: oklch(var(--bc));
       transition: border-color 0.15s, background 0.15s;
-      min-height: 2.75rem;
+      min-height: 2.6rem;
 
       &:hover { border-color: oklch(var(--p) / 0.5); }
-
       &.font-size-btn-active {
         border-color: oklch(var(--p));
         background: oklch(var(--p) / 0.1);
@@ -191,42 +248,89 @@ const FONT_FAMILY_OPTIONS = [
     }
 
     .font-size-label {
-      font-size: 0.55rem !important;
+      font-size: 0.52rem !important;
       font-weight: 800;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      opacity: 0.6;
+      opacity: 0.55;
     }
 
-    /* Font family */
-    .font-family-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    /* ── Font picker ── */
+    .font-list {
+      max-height: 280px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border: 1px solid oklch(var(--b3));
+      border-radius: 0.6rem;
+      padding: 0.25rem;
+      background: oklch(var(--b1));
+
+      &::-webkit-scrollbar { width: 5px; }
+      &::-webkit-scrollbar-track { background: transparent; }
+      &::-webkit-scrollbar-thumb {
+        background: oklch(var(--b3));
+        border-radius: 99px;
+      }
+    }
+
+    .font-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      width: 100%;
+      padding: 0.5rem 0.7rem;
+      border-radius: 0.4rem;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.1s;
+
+      &:hover { background: oklch(var(--b2)); }
+
+      &.font-card-active {
+        background: oklch(var(--p) / 0.1);
+
+        .font-card-name { color: oklch(var(--p)); }
+        .font-card-tag  { color: oklch(var(--p) / 0.7); }
+      }
+    }
+
+    .font-card-main {
+      display: flex;
+      align-items: baseline;
       gap: 0.5rem;
     }
 
-    .font-family-btn {
-      padding: 0.55rem 0.75rem;
-      border-radius: 0.5rem;
-      border: 2px solid oklch(var(--b3));
-      background: oklch(var(--b2));
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-weight: 600;
-      text-align: left;
+    .font-card-name {
+      font-size: 1rem;
+      font-weight: 700;
       color: oklch(var(--bc));
-      transition: border-color 0.15s, background 0.15s;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
 
-      &:hover { border-color: oklch(var(--p) / 0.5); }
+    .font-card-tag {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.45;
+    }
 
-      &.font-family-btn-active {
-        border-color: oklch(var(--p));
-        background: oklch(var(--p) / 0.1);
-        color: oklch(var(--p));
-      }
+    .font-card-preview {
+      font-size: 0.8rem;
+      opacity: 0.5;
+      line-height: 1.3;
+    }
+
+    .font-list-empty {
+      padding: 1.5rem;
+      text-align: center;
+      opacity: 0.45;
+      font-size: 0.8rem;
+      font-style: italic;
     }
   `],
 })
@@ -237,9 +341,18 @@ export class SettingsDialogComponent implements OnInit {
   currentTheme = 'dark';
   currentFontSize = 'md';
   currentFontFamily = 'system';
+  fontSearch = '';
 
   readonly fontSizeOptions = FONT_SIZE_OPTIONS;
   readonly fontFamilyOptions = FONT_FAMILY_OPTIONS;
+
+  get filteredFonts() {
+    const q = this.fontSearch.trim().toLowerCase();
+    if (!q) return FONT_FAMILY_OPTIONS;
+    return FONT_FAMILY_OPTIONS.filter(f =>
+      f.label.toLowerCase().includes(q) || f.category.includes(q)
+    );
+  }
 
   async ngOnInit(): Promise<void> {
     try {
