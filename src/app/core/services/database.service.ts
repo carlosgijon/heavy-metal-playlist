@@ -121,11 +121,11 @@ export class DatabaseService {
 
   // -- Settings --------------------------------------------------------------
 
-  getSettings(): Promise<{ theme: string }> {
+  getSettings(): Promise<{ theme: string; fontSize?: string; fontFamily?: string }> {
     return this.get('/settings');
   }
 
-  setSettings(partial: { theme?: string }): Promise<void> {
+  setSettings(partial: { theme?: string; fontSize?: string; fontFamily?: string }): Promise<void> {
     return this.post('/settings', partial);
   }
 

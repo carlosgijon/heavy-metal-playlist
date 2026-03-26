@@ -60,18 +60,29 @@ export class AppComponent implements OnInit {
   selectedPlaylist = signal<PlaylistWithStats | null>(null);
 
   async ngOnInit(): Promise<void> {
-    // Apply cached theme immediately to avoid flash of default theme
+    // Apply cached appearance immediately to avoid flash
     const cachedTheme = localStorage.getItem('theme');
-    if (cachedTheme) {
-      document.documentElement.setAttribute('data-theme', cachedTheme);
-    }
+    if (cachedTheme) document.documentElement.setAttribute('data-theme', cachedTheme);
+    const cachedFontSize = localStorage.getItem('fontSize');
+    if (cachedFontSize) document.documentElement.style.fontSize = cachedFontSize;
+    const cachedFontFamily = localStorage.getItem('fontFamily');
+    if (cachedFontFamily) document.documentElement.style.fontFamily = cachedFontFamily;
+
     await this.auth.init();
-    // Confirm theme from server (keeps localStorage cache in sync)
+    // Confirm settings from server
     try {
       const settings = await this.db.getSettings();
       if (settings.theme) {
         document.documentElement.setAttribute('data-theme', settings.theme);
         localStorage.setItem('theme', settings.theme);
+      }
+      if (settings.fontSize) {
+        document.documentElement.style.fontSize = settings.fontSize;
+        localStorage.setItem('fontSize', settings.fontSize);
+      }
+      if (settings.fontFamily) {
+        document.documentElement.style.fontFamily = settings.fontFamily;
+        localStorage.setItem('fontFamily', settings.fontFamily);
       }
     } catch { /* non-critical */ }
   }
