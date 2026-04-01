@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, AfterViewInit, ViewChild, HostListener } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, ViewChild, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -36,8 +36,8 @@ interface Popover {
   imports: [CommonModule, FullCalendarModule, NgIconComponent],
   providers: [provideIcons({ heroTrash, heroXMark, heroMapPin, heroClock, heroBanknotes, heroUserCircle, heroCalendarDays })],
   template: `
-    <div class="fc-host-wrapper" (click)="closePopover()">
-      <full-calendar #fullcal class="fc-fill" [options]="calendarOptions"></full-calendar>
+    <div #wrapper class="fc-host-wrapper" (click)="closePopover()">
+      <full-calendar #fullcal [options]="calendarOptions"></full-calendar>
 
       <!-- ── Legend ─────────────────────────────────────────────────────── -->
       <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 px-1 pb-2 text-xs opacity-60">
@@ -151,27 +151,20 @@ interface Popover {
   `,
   styles: [`
     :host {
-      display: flex;
-      flex-direction: column;
+      display: block;
       height: 100%;
     }
 
     .fc-host-wrapper {
-      flex: 1;
-      min-height: 0;
+      height: 100%;
       display: flex;
       flex-direction: column;
-    }
-
-    .fc-fill {
-      display: block;
-      flex: 1;
-      min-height: 0;
     }
   `],
 })
 export class CalendarComponent implements OnInit, AfterViewInit {
-  @ViewChild('fullcal') private fullcal!: FullCalendarComponent;
+  @ViewChild('fullcal')  private fullcal!: FullCalendarComponent;
+  @ViewChild('wrapper')  private wrapperRef!: ElementRef<HTMLDivElement>;
 
   private dialog = inject(Dialog);
   private db     = inject(DatabaseService);
@@ -205,8 +198,8 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     },
     multiMonthMaxColumns: 3,
     dayMaxEvents: 3,
-    height: '100%',
-    expandRows: true,
+    height: 'auto',
+    expandRows: false,
     events: [],
     eventClick:   (arg) => this.onEventClick(arg),
     dateClick:    (arg) => this.onDateClick(arg),
@@ -219,15 +212,22 @@ export class CalendarComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // FullCalendar reads container height synchronously at render time,
-    // before the browser finishes the flex layout pass. A 0-delay timeout
-    // lets the browser complete layout first, then we force a recalculation.
-    setTimeout(() => this.fullcal?.getApi().updateSize(), 0);
+    setTimeout(() => this.applyHeight(), 0);
   }
 
   @HostListener('window:resize')
   onResize(): void {
-    this.fullcal?.getApi().updateSize();
+    this.applyHeight();
+  }
+
+  private applyHeight(): void {
+    const wrapper = this.wrapperRef?.nativeElement;
+    if (!wrapper) return;
+    // 40px = legend row height
+    const h = wrapper.clientHeight - 40;
+    if (h > 200) {
+      this.calendarOptions = { ...this.calendarOptions, height: h, expandRows: true };
+    }
   }
 
   private async load(): Promise<void> {
