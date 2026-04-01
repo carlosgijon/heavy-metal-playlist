@@ -2,218 +2,199 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { heroChevronLeft, heroChevronRight, heroPlus, heroTrash } from '@ng-icons/heroicons/outline';
+import { heroTrash, heroXMark, heroMapPin, heroClock, heroBanknotes, heroUserCircle, heroCalendarDays } from '@ng-icons/heroicons/outline';
+import { FullCalendarModule } from '@fullcalendar/angular';
+import { CalendarOptions, EventClickArg, EventInput } from '@fullcalendar/core';
+import { DateClickArg } from '@fullcalendar/interaction';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import listPlugin from '@fullcalendar/list';
+import interactionPlugin from '@fullcalendar/interaction';
+import esLocale from '@fullcalendar/core/locales/es';
 import { DatabaseService } from '../../../core/services/database.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import {
-  CalendarEvent, Gig, GIG_STATUS_BADGE, GIG_STATUS_LABELS, EVENT_TYPE_LABELS, EVENT_TYPE_DOT,
+  CalendarEvent, Gig, GIG_STATUS_BADGE, GIG_STATUS_LABELS, EVENT_TYPE_LABELS,
 } from '../../../core/models/gig.model';
 import { BandMember } from '../../../core/models/equipment.model';
 import {
   CalendarEventFormComponent, CalendarEventFormData, CalendarEventFormResult,
 } from './calendar-event-form/calendar-event-form.component';
 
-interface CalCell {
-  date: Date;
-  iso: string;        // YYYY-MM-DD
-  inMonth: boolean;
-  events: CalendarEvent[];
-  gigs: Gig[];
-  followUps: Gig[];   // gigs whose follow_up_date falls on this day
+interface Popover {
+  x: number;
+  y: number;
+  kind: 'gig' | 'calEvent' | 'followup';
+  gig?: Gig;
+  calEvent?: CalendarEvent;
 }
 
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, NgIconComponent],
-  providers: [provideIcons({ heroChevronLeft, heroChevronRight, heroPlus, heroTrash })],
+  imports: [CommonModule, FullCalendarModule, NgIconComponent],
+  providers: [provideIcons({ heroTrash, heroXMark, heroMapPin, heroClock, heroBanknotes, heroUserCircle, heroCalendarDays })],
   template: `
-    <div class="flex flex-col h-full">
+    <div class="h-full flex flex-col" (click)="closePopover()">
+      <full-calendar [options]="calendarOptions" class="flex-1 min-h-0"></full-calendar>
 
-    <!-- Header: month nav -->
-    <div class="flex items-center justify-between mb-2" style="position:relative">
-      <button class="btn btn-sm btn-ghost" (click)="prevMonth()">
-        <ng-icon name="heroChevronLeft" size="16" />
-      </button>
-
-      <!-- Clickable month label -->
-      <button class="btn btn-sm btn-ghost font-semibold capitalize gap-1" (click)="toggleMonthPicker()">
-        {{ monthLabel }}
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-
-      <button class="btn btn-sm btn-ghost" (click)="nextMonth()">
-        <ng-icon name="heroChevronRight" size="16" />
-      </button>
-
-      <!-- Month/year picker dropdown -->
-      @if (showMonthPicker) {
-        <!-- Backdrop -->
-        <div style="position:fixed;inset:0;z-index:40" (click)="closeMonthPicker()"></div>
-        <!-- Picker panel -->
-        <div style="position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);z-index:50;min-width:220px"
-             class="bg-base-200 border border-base-300 rounded-xl shadow-xl p-3">
-          <!-- Year nav -->
-          <div class="flex items-center justify-between mb-2">
-            <button class="btn btn-xs btn-ghost" (click)="pickerPrevYear(); $event.stopPropagation()">
-              <ng-icon name="heroChevronLeft" size="12" />
-            </button>
-            <span class="font-bold text-sm">{{ pickerYear }}</span>
-            <button class="btn btn-xs btn-ghost" (click)="pickerNextYear(); $event.stopPropagation()">
-              <ng-icon name="heroChevronRight" size="12" />
-            </button>
-          </div>
-          <!-- Month grid 4×3 -->
-          <div class="grid grid-cols-4 gap-1">
-            @for (m of pickerMonths; track $index) {
-              <button class="btn btn-xs"
-                [class.btn-primary]="pickerYear === viewYear && $index === viewMonth"
-                [class.btn-ghost]="!(pickerYear === viewYear && $index === viewMonth)"
-                (click)="selectPickerMonth($index); $event.stopPropagation()">
-                {{ m }}
-              </button>
-            }
-          </div>
-        </div>
-      }
+      <!-- ── Legend ─────────────────────────────────────────────────────── -->
+      <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 px-1 text-xs opacity-60">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style="background:#22c55e"></span>Confirmado
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style="background:#f59e0b"></span>En gestión
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style="background:#3b82f6"></span>Ensayo
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style="background:#ef4444"></span>No disponible
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style="background:#a855f7"></span>Seguimiento
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style="background:#eab308"></span>Otro
+        </span>
+      </div>
     </div>
 
-    <!-- Legend -->
-    <div class="flex flex-wrap gap-2 mb-2 text-xs opacity-70">
-      <span class="flex items-center gap-1"><span class="px-1 py-px rounded bg-base-100 border border-success leading-tight text-[10px]">Txt</span> Concierto confirmado</span>
-      <span class="flex items-center gap-1"><span class="px-1 py-px rounded bg-base-100 border border-warning leading-tight text-[10px]">Txt</span> En gestión</span>
-      <span class="flex items-center gap-1"><span class="px-1 py-px rounded bg-base-100 border border-info leading-tight text-[10px]">Txt</span> Ensayo</span>
-      <span class="flex items-center gap-1"><span class="px-1 py-px rounded bg-base-100 border border-error leading-tight text-[10px]">Txt</span> No disponible</span>
-      <span class="flex items-center gap-1"><span class="px-1 py-px rounded bg-base-100 border border-secondary leading-tight text-[10px]">Txt</span> Seguimiento</span>
-    </div>
+    <!-- ── Event detail popover ───────────────────────────────────────────── -->
+    @if (popover) {
+      <div class="card bg-base-200 border border-base-300 shadow-2xl"
+           style="position:fixed; z-index:9999; min-width:220px; max-width:290px;"
+           [style.left.px]="popover.x"
+           [style.top.px]="popover.y"
+           (click)="$event.stopPropagation()">
+        <div class="card-body p-3 gap-1.5">
 
-    <!-- Day headers -->
-    <div class="grid grid-cols-7 text-center text-xs font-semibold opacity-60 mb-1">
-      @for (d of dayNames; track d) { <div>{{ d }}</div> }
-    </div>
+          <!-- Close button -->
+          <button class="btn btn-xs btn-ghost btn-circle absolute top-1.5 right-1.5"
+                  (click)="closePopover()">
+            <ng-icon name="heroXMark" size="13" />
+          </button>
 
-    <!-- Calendar grid: flex-1 fills remaining height; grid-auto-rows divides rows equally -->
-    <div class="grid grid-cols-7 gap-px bg-base-300 rounded-lg overflow-hidden border border-base-300 flex-1 min-h-0"
-         style="grid-auto-rows: 1fr">
-      @for (cell of cells; track cell.iso) {
-        <div class="bg-base-100 p-1 flex flex-col cursor-pointer hover:bg-base-200 transition-colors overflow-hidden min-h-0"
-             [class.opacity-30]="!cell.inMonth"
-             (click)="openDayPanel(cell)">
-          <!-- Day number -->
-          <span class="text-xs font-medium mb-0.5 leading-none flex-shrink-0"
-                [class.text-primary]="cell.iso === todayIso">
-            {{ cell.date.getDate() }}
-          </span>
-          <!-- Event chips -->
-          <div class="flex flex-col gap-px overflow-hidden flex-1 min-h-0">
-            @for (g of cell.gigs; track g.id) {
-              <span class="text-[10px] leading-tight truncate px-1 rounded bg-base-100 border flex-shrink-0"
-                    [class.border-success]="g.status === 'confirmed' || g.status === 'played'"
-                    [class.border-warning]="g.status !== 'confirmed' && g.status !== 'played' && g.status !== 'cancelled'"
-                    [class.border-base-300]="g.status === 'cancelled'"
-                    [title]="g.title">{{ g.title }}</span>
-            }
-            @for (e of cell.events; track e.id) {
-              <span class="text-[10px] leading-tight truncate px-1 rounded bg-base-100 border flex-shrink-0"
-                    [ngClass]="chipBorder(e)"
-                    [title]="e.title">{{ e.title }}</span>
-            }
-            @for (g of cell.followUps; track g.id) {
-              <span class="text-[10px] leading-tight truncate px-1 rounded bg-base-100 border border-secondary flex-shrink-0"
-                    [title]="'Seguimiento: ' + g.title">{{ g.title }}</span>
-            }
-          </div>
-        </div>
-      }
-    </div>
-
-    <!-- Day detail panel -->
-    @if (selectedCell) {
-      <div class="mt-4 card card-bordered bg-base-200">
-        <div class="card-body p-3">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="font-semibold text-sm">{{ formatSelectedDate() }}</h3>
-            <button class="btn btn-xs btn-primary gap-1" (click)="addEvent()">
-              <ng-icon name="heroPlus" size="12" /> Añadir evento
-            </button>
-          </div>
-
-          @if (selectedCell.gigs.length === 0 && selectedCell.events.length === 0 && selectedCell.followUps.length === 0) {
-            <p class="text-xs opacity-50">Sin eventos este día.</p>
-          }
-
-          @for (g of selectedCell.gigs; track g.id) {
-            <div class="flex items-center gap-2 py-1 border-b border-base-300">
-              <span class="badge badge-xs" [ngClass]="gigBadge[g.status]">{{ gigStatusLabels[g.status] }}</span>
-              <span class="text-sm flex-1">{{ g.title }}</span>
-              @if (g.time) { <span class="text-xs opacity-60">{{ g.time }}</span> }
-            </div>
-          }
-
-          @for (e of selectedCell.events; track e.id) {
-            <div class="flex items-center gap-2 py-1 border-b border-base-300">
-              <span class="w-2 h-2 rounded-full flex-shrink-0" [ngClass]="dotClass(e)"></span>
-              <span class="text-sm flex-1">
-                {{ e.title }}
-                @if (e.memberName) { <span class="opacity-60"> · {{ e.memberName }}</span> }
+          <!-- GIG -->
+          @if (popover.kind === 'gig' && popover.gig; as gig) {
+            <div class="flex items-center gap-2 pr-6 flex-wrap">
+              <span class="badge badge-sm" [ngClass]="gigBadge[gig.status]">
+                {{ gigStatusLabels[gig.status] }}
               </span>
-              @if (e.endDate && e.endDate !== e.date) {
-                <span class="text-xs opacity-60">hasta {{ formatIso(e.endDate) }}</span>
-              }
-              <button class="btn btn-ghost btn-xs text-error" (click)="deleteEvent(e)">
-                <ng-icon name="heroTrash" size="12" />
+              <span class="font-semibold text-sm leading-tight">{{ gig.title }}</span>
+            </div>
+            @if (gig.time) {
+              <p class="flex items-center gap-1.5 text-xs opacity-60">
+                <ng-icon name="heroClock" size="12" />{{ gig.time }}
+              </p>
+            }
+            @if (gig.venueName) {
+              <p class="flex items-center gap-1.5 text-xs opacity-60">
+                <ng-icon name="heroMapPin" size="12" />{{ gig.venueName }}
+              </p>
+            }
+            @if (gig.pay) {
+              <p class="flex items-center gap-1.5 text-xs opacity-60">
+                <ng-icon name="heroBanknotes" size="12" />{{ gig.pay }}
+              </p>
+            }
+            @if (gig.notes) {
+              <p class="text-xs opacity-50 line-clamp-2 mt-0.5">{{ gig.notes }}</p>
+            }
+          }
+
+          <!-- CALENDAR EVENT -->
+          @if (popover.kind === 'calEvent' && popover.calEvent; as ev) {
+            <div class="flex items-center gap-2 pr-6">
+              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    [style.background]="evtDotColor(ev)"></span>
+              <span class="font-semibold text-sm leading-tight">{{ ev.title }}</span>
+            </div>
+            <p class="text-xs opacity-55">{{ typeLabels[ev.type] }}</p>
+            @if (ev.memberName) {
+              <p class="flex items-center gap-1.5 text-xs opacity-60">
+                <ng-icon name="heroUserCircle" size="12" />{{ ev.memberName }}
+              </p>
+            }
+            @if (ev.endDate && ev.endDate !== ev.date) {
+              <p class="flex items-center gap-1.5 text-xs opacity-55">
+                <ng-icon name="heroCalendarDays" size="12" />hasta {{ formatIso(ev.endDate) }}
+              </p>
+            }
+            @if (ev.notes) {
+              <p class="text-xs opacity-50 line-clamp-2 mt-0.5">{{ ev.notes }}</p>
+            }
+            <div class="card-actions justify-end mt-1">
+              <button class="btn btn-xs btn-error btn-outline gap-1" (click)="deleteEvent(ev)">
+                <ng-icon name="heroTrash" size="11" />Eliminar
               </button>
             </div>
           }
-          @for (g of selectedCell.followUps; track g.id) {
-            <div class="flex items-center gap-2 py-1 border-b border-base-300">
-              <span class="w-2 h-2 rounded-full flex-shrink-0 bg-secondary"></span>
-              <span class="badge badge-xs badge-secondary">Seguimiento</span>
-              <span class="text-sm flex-1">{{ g.title }}</span>
-              @if (g.followUpNote) {
-                <span class="text-xs opacity-60 truncate max-w-32">{{ g.followUpNote }}</span>
-              }
+
+          <!-- FOLLOW-UP -->
+          @if (popover.kind === 'followup' && popover.gig; as gig) {
+            <div class="flex items-center gap-2 pr-6">
+              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-secondary"></span>
+              <span class="font-semibold text-sm leading-tight">{{ gig.title }}</span>
             </div>
+            <p class="text-xs opacity-55">Seguimiento pendiente</p>
+            @if (gig.followUpNote) {
+              <p class="text-xs opacity-50 line-clamp-2 mt-0.5">{{ gig.followUpNote }}</p>
+            }
           }
+
         </div>
       </div>
     }
-
-    </div> <!-- end flex col wrapper -->
   `,
+  styles: [`
+    :host { display: block; height: 100%; }
+
+    full-calendar {
+      display: block;
+      height: 100%;
+    }
+  `],
 })
 export class CalendarComponent implements OnInit {
   private dialog = inject(Dialog);
-  private db = inject(DatabaseService);
-  private toast = inject(ToastService);
+  private db     = inject(DatabaseService);
+  private toast  = inject(ToastService);
 
-  readonly dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-  readonly gigBadge = GIG_STATUS_BADGE;
+  readonly gigBadge        = GIG_STATUS_BADGE;
   readonly gigStatusLabels = GIG_STATUS_LABELS;
-  readonly pickerMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  readonly typeLabels      = EVENT_TYPE_LABELS;
 
-  today = new Date();
-  todayIso = this.isoDate(this.today);
-  viewYear = this.today.getFullYear();
-  viewMonth = this.today.getMonth(); // 0-based
-  cells: CalCell[] = [];
-  selectedCell: CalCell | null = null;
-
-  showMonthPicker = false;
-  pickerYear = this.today.getFullYear();
+  popover: Popover | null = null;
 
   private events: CalendarEvent[] = [];
-  private gigs: Gig[] = [];
-  members: BandMember[] = [];
+  private gigs:   Gig[]           = [];
+  members:        BandMember[]    = [];
 
-  get monthLabel(): string {
-    return new Date(this.viewYear, this.viewMonth, 1)
-      .toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-  }
+  calendarOptions: CalendarOptions = {
+    plugins: [dayGridPlugin, listPlugin, interactionPlugin],
+    initialView: 'dayGridMonth',
+    locale: esLocale,
+    firstDay: 1,
+    headerToolbar: {
+      left:   'prev,next today',
+      center: 'title',
+      right:  'dayGridMonth,listMonth',
+    },
+    buttonText: {
+      today: 'Hoy',
+      month: 'Mes',
+      list:  'Lista',
+    },
+    dayMaxEvents: 3,
+    height: '100%',
+    events: [],
+    eventClick:   (arg) => this.onEventClick(arg),
+    dateClick:    (arg) => this.onDateClick(arg),
+    moreLinkText: (n)   => `+${n} más`,
+    eventDisplay: 'block',
+  };
 
   async ngOnInit(): Promise<void> {
     await this.load();
@@ -226,80 +207,101 @@ export class CalendarComponent implements OnInit {
         this.db.getGigs(),
         this.db.getMembers(),
       ]);
-      this.buildCells();
-    } catch { this.toast.danger('Error al cargar el calendario'); }
-  }
-
-  toggleMonthPicker(): void {
-    this.pickerYear = this.viewYear;
-    this.showMonthPicker = !this.showMonthPicker;
-  }
-
-  closeMonthPicker(): void {
-    this.showMonthPicker = false;
-  }
-
-  pickerPrevYear(): void { this.pickerYear--; }
-  pickerNextYear(): void { this.pickerYear++; }
-
-  selectPickerMonth(monthIndex: number): void {
-    this.viewYear = this.pickerYear;
-    this.viewMonth = monthIndex;
-    this.showMonthPicker = false;
-    this.selectedCell = null;
-    this.buildCells();
-  }
-
-  prevMonth(): void {
-    if (this.viewMonth === 0) { this.viewMonth = 11; this.viewYear--; }
-    else this.viewMonth--;
-    this.selectedCell = null;
-    this.buildCells();
-  }
-
-  nextMonth(): void {
-    if (this.viewMonth === 11) { this.viewMonth = 0; this.viewYear++; }
-    else this.viewMonth++;
-    this.selectedCell = null;
-    this.buildCells();
-  }
-
-  buildCells(): void {
-    const firstOfMonth = new Date(this.viewYear, this.viewMonth, 1);
-    const startDow = (firstOfMonth.getDay() + 6) % 7;
-    const daysInMonth = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
-    const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
-
-    this.cells = Array.from({ length: totalCells }, (_, i) => {
-      const date = new Date(this.viewYear, this.viewMonth, 1 - startDow + i);
-      const iso = this.isoDate(date);
-      const inMonth = date.getMonth() === this.viewMonth;
-
-      const dayEvents = this.events.filter(e => {
-        if (e.date === iso) return true;
-        if (e.endDate && e.endDate > e.date) return iso >= e.date && iso <= e.endDate;
-        return false;
-      });
-      const dayGigs = this.gigs.filter(g => g.date === iso);
-      const followUps = this.gigs.filter(g => g.followUpDate === iso);
-
-      return { date, iso, inMonth, events: dayEvents, gigs: dayGigs, followUps };
-    });
-
-    if (this.selectedCell) {
-      this.selectedCell = this.cells.find(c => c.iso === this.selectedCell!.iso) ?? null;
+      this.calendarOptions = { ...this.calendarOptions, events: this.buildEvents() };
+    } catch {
+      this.toast.danger('Error al cargar el calendario');
     }
   }
 
-  openDayPanel(cell: CalCell): void {
-    this.selectedCell = this.selectedCell?.iso === cell.iso ? null : cell;
+  private buildEvents(): EventInput[] {
+    const result: EventInput[] = [];
+
+    for (const gig of this.gigs) {
+      if (!gig.date) continue;
+      const c = this.gigColors(gig);
+      result.push({
+        id: `gig-${gig.id}`,
+        title: gig.title,
+        start: gig.date,
+        allDay: true,
+        backgroundColor: c.bg,
+        borderColor: c.border,
+        textColor: '#fff',
+        extendedProps: { kind: 'gig', data: gig },
+      });
+    }
+
+    for (const ev of this.events) {
+      const c   = this.evtColors(ev);
+      const end = ev.endDate && ev.endDate !== ev.date ? this.addOneDay(ev.endDate) : undefined;
+      result.push({
+        id: `evt-${ev.id}`,
+        title: ev.title,
+        start: ev.date,
+        end,
+        allDay: true,
+        backgroundColor: c.bg,
+        borderColor: c.border,
+        textColor: '#fff',
+        extendedProps: { kind: 'calEvent', data: ev },
+      });
+    }
+
+    for (const gig of this.gigs) {
+      if (!gig.followUpDate) continue;
+      result.push({
+        id: `fu-${gig.id}`,
+        title: gig.title,
+        start: gig.followUpDate,
+        allDay: true,
+        backgroundColor: '#a855f7',
+        borderColor: '#9333ea',
+        textColor: '#fff',
+        extendedProps: { kind: 'followup', data: gig },
+      });
+    }
+
+    return result;
   }
 
-  addEvent(): void {
-    if (!this.selectedCell) return;
+  private gigColors(gig: Gig): { bg: string; border: string } {
+    const map: Partial<Record<string, { bg: string; border: string }>> = {
+      confirmed:   { bg: '#22c55e', border: '#16a34a' },
+      played:      { bg: '#6b7280', border: '#4b5563' },
+      cobrado:     { bg: '#10b981', border: '#059669' },
+      cancelled:   { bg: '#9ca3af', border: '#6b7280' },
+      lead:        { bg: '#8b5cf6', border: '#7c3aed' },
+      contacted:   { bg: '#f59e0b', border: '#d97706' },
+      negotiating: { bg: '#f59e0b', border: '#d97706' },
+      hold:        { bg: '#fb923c', border: '#ea580c' },
+    };
+    return map[gig.status] ?? { bg: '#f59e0b', border: '#d97706' };
+  }
+
+  private evtColors(ev: CalendarEvent): { bg: string; border: string } {
+    const map: Record<string, { bg: string; border: string }> = {
+      rehearsal:   { bg: '#3b82f6', border: '#2563eb' },
+      unavailable: { bg: '#ef4444', border: '#dc2626' },
+      other:       { bg: '#eab308', border: '#ca8a04' },
+    };
+    return map[ev.type] ?? { bg: '#6b7280', border: '#4b5563' };
+  }
+
+  evtDotColor(ev: CalendarEvent): string {
+    return this.evtColors(ev).bg;
+  }
+
+  private addOneDay(iso: string): string {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  onDateClick(arg: DateClickArg): void {
+    this.closePopover();
     const ref = this.dialog.open<CalendarEventFormResult>(CalendarEventFormComponent, {
       hasBackdrop: true, backdropClass: 'cdk-overlay-dark-backdrop', disableClose: true,
-      data: { event: null, members: this.members, defaultDate: this.selectedCell.iso } satisfies CalendarEventFormData,
+      data: { event: null, members: this.members, defaultDate: arg.dateStr } satisfies CalendarEventFormData,
     });
     ref.closed.subscribe(async r => {
       const result = r as CalendarEventFormResult | undefined;
@@ -312,7 +314,25 @@ export class CalendarComponent implements OnInit {
     });
   }
 
+  onEventClick(arg: EventClickArg): void {
+    arg.jsEvent.stopPropagation();
+    const props = arg.event.extendedProps;
+    const x = Math.min(arg.jsEvent.clientX + 10, window.innerWidth  - 310);
+    const y = Math.min(arg.jsEvent.clientY + 10, window.innerHeight - 230);
+    this.popover = {
+      x, y,
+      kind:     props['kind'],
+      gig:      (props['kind'] === 'gig' || props['kind'] === 'followup') ? props['data'] as Gig : undefined,
+      calEvent: props['kind'] === 'calEvent' ? props['data'] as CalendarEvent : undefined,
+    };
+  }
+
+  closePopover(): void {
+    this.popover = null;
+  }
+
   deleteEvent(event: CalendarEvent): void {
+    this.closePopover();
     const ref = this.dialog.open<boolean>(ConfirmDialogComponent, {
       hasBackdrop: true, backdropClass: 'cdk-overlay-dark-backdrop', disableClose: true,
       data: { title: 'Eliminar evento', message: `¿Eliminar "${event.title}"?`, confirmLabel: 'Eliminar' } satisfies ConfirmDialogData,
@@ -327,30 +347,8 @@ export class CalendarComponent implements OnInit {
     });
   }
 
-  dotClass(e: CalendarEvent): string {
-    return EVENT_TYPE_DOT[e.type] ?? 'bg-base-content';
-  }
-
-  chipBorder(e: CalendarEvent): string {
-    const map: Record<string, string> = {
-      rehearsal: 'border-info',
-      unavailable: 'border-error',
-      other: 'border-warning',
-    };
-    return map[e.type] ?? 'border-base-content';
-  }
-
-  formatSelectedDate(): string {
-    if (!this.selectedCell) return '';
-    return this.selectedCell.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-  }
-
   formatIso(iso: string): string {
     const [y, m, d] = iso.split('-');
     return `${d}/${m}/${y}`;
-  }
-
-  private isoDate(d: Date): string {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 }

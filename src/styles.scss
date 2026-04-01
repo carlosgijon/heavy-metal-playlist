@@ -76,6 +76,198 @@ html, body {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
+// ── FullCalendar DaisyUI theme ────────────────────────────────────────────────
+
+.fc {
+  // Core variables
+  --fc-border-color:                oklch(var(--b3));
+  --fc-button-bg-color:             oklch(var(--b2));
+  --fc-button-border-color:         oklch(var(--b3));
+  --fc-button-text-color:           oklch(var(--bc));
+  --fc-button-hover-bg-color:       oklch(var(--b3));
+  --fc-button-hover-border-color:   oklch(var(--b3));
+  --fc-button-active-bg-color:      oklch(var(--p));
+  --fc-button-active-border-color:  oklch(var(--p));
+  --fc-button-active-text-color:    oklch(var(--pc));
+  --fc-today-bg-color:              color-mix(in oklch, oklch(var(--p)) 12%, transparent);
+  --fc-page-bg-color:               oklch(var(--b1));
+  --fc-neutral-bg-color:            oklch(var(--b2));
+  --fc-list-event-hover-bg-color:   oklch(var(--b2));
+  --fc-highlight-color:             color-mix(in oklch, oklch(var(--p)) 15%, transparent);
+  --fc-small-font-size:             0.78em;
+
+  font-family: inherit;
+
+  // ── Toolbar ──────────────────────────────────────────────────────────────
+  .fc-toolbar.fc-header-toolbar { margin-bottom: 0.85rem !important; }
+
+  .fc-toolbar-title {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    color: oklch(var(--bc)) !important;
+    text-transform: capitalize;
+  }
+
+  // ── Buttons ───────────────────────────────────────────────────────────────
+  .fc-button-primary {
+    border-radius: 0.5rem !important;
+    font-size: 0.78rem !important;
+    font-weight: 500 !important;
+    padding: 0.3rem 0.7rem !important;
+    text-transform: capitalize !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+    outline: none !important;
+
+    &:focus { box-shadow: none !important; }
+    &:disabled { opacity: 0.4 !important; }
+  }
+
+  .fc-button-group {
+    .fc-button-primary {
+      border-radius: 0 !important;
+      &:first-child { border-radius: 0.5rem 0 0 0.5rem !important; }
+      &:last-child  { border-radius: 0 0.5rem 0.5rem 0 !important; }
+    }
+  }
+
+  // ── Scrollgrid ────────────────────────────────────────────────────────────
+  .fc-scrollgrid {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border-color: oklch(var(--b3)) !important;
+
+    td, th { border-color: oklch(var(--b3)) !important; }
+  }
+
+  // ── Day column headers ─────────────────────────────────────────────────────
+  .fc-col-header-cell {
+    background: oklch(var(--b2));
+    padding: 0.4rem 0;
+
+    .fc-col-header-cell-cushion {
+      color: oklch(var(--bc));
+      opacity: 0.65;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-decoration: none !important;
+    }
+  }
+
+  // ── Day cells ─────────────────────────────────────────────────────────────
+  .fc-daygrid-day-number {
+    color: oklch(var(--bc));
+    font-size: 0.78rem;
+    text-decoration: none !important;
+    padding: 4px 6px !important;
+  }
+
+  .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    background: oklch(var(--p));
+    color: oklch(var(--pc));
+    border-radius: 50%;
+    width: 1.55rem;
+    height: 1.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+    margin: 3px;
+  }
+
+  .fc-day-other .fc-daygrid-day-number { opacity: 0.25; }
+
+  // Weekend columns subtle tint
+  .fc-day-sat .fc-daygrid-day-number,
+  .fc-day-sun .fc-daygrid-day-number {
+    color: color-mix(in oklch, oklch(var(--er)) 70%, oklch(var(--bc)));
+  }
+
+  // ── Events ────────────────────────────────────────────────────────────────
+  .fc-event {
+    border-radius: 4px !important;
+    font-size: 0.71rem !important;
+    font-weight: 500 !important;
+    padding: 1px 5px !important;
+    cursor: pointer;
+    transition: filter 0.1s;
+
+    &:hover { filter: brightness(1.15); }
+  }
+
+  // ── +N más link ───────────────────────────────────────────────────────────
+  .fc-daygrid-more-link {
+    color: oklch(var(--p)) !important;
+    font-size: 0.71rem !important;
+    font-weight: 600 !important;
+    padding: 0 3px !important;
+
+    &:hover {
+      background: color-mix(in oklch, oklch(var(--p)) 12%, transparent) !important;
+      border-radius: 3px;
+    }
+  }
+
+  // ── More-events popover ───────────────────────────────────────────────────
+  .fc-more-popover {
+    background: oklch(var(--b2)) !important;
+    border: 1px solid oklch(var(--b3)) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35) !important;
+
+    .fc-popover-header {
+      background: oklch(var(--b3)) !important;
+      color: oklch(var(--bc)) !important;
+      border-radius: 0.75rem 0.75rem 0 0 !important;
+      padding: 0.45rem 0.75rem !important;
+      font-size: 0.78rem !important;
+      font-weight: 600 !important;
+    }
+
+    .fc-popover-close { color: oklch(var(--bc)) !important; opacity: 0.6; }
+    .fc-popover-body  { padding: 0.4rem !important; }
+  }
+
+  // ── List view ─────────────────────────────────────────────────────────────
+  .fc-list {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border-color: oklch(var(--b3)) !important;
+  }
+
+  .fc-list-table td { border-color: oklch(var(--b3)) !important; }
+
+  .fc-list-day-cushion {
+    background: oklch(var(--b2)) !important;
+
+    .fc-list-day-text,
+    .fc-list-day-side-text {
+      color: oklch(var(--bc)) !important;
+      text-decoration: none !important;
+      font-weight: 600 !important;
+      font-size: 0.8rem !important;
+    }
+  }
+
+  .fc-list-event-title a {
+    color: oklch(var(--bc)) !important;
+    text-decoration: none !important;
+    font-size: 0.83rem !important;
+  }
+
+  .fc-list-empty {
+    background: oklch(var(--b1)) !important;
+
+    .fc-list-empty-cushion {
+      color: oklch(var(--bc)) !important;
+      opacity: 0.45;
+      font-size: 0.85rem;
+    }
+  }
+}
+
 // ── WinXP theme overrides ─────────────────────────────────────────
 
 [data-theme="winxp"] {
