@@ -1,9 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, ViewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { heroTrash, heroXMark, heroMapPin, heroClock, heroBanknotes, heroUserCircle, heroCalendarDays } from '@ng-icons/heroicons/outline';
-import { FullCalendarModule } from '@fullcalendar/angular';
+import { FullCalendarModule, FullCalendarComponent } from '@fullcalendar/angular';
 import { CalendarOptions, EventClickArg, EventInput } from '@fullcalendar/core';
 import { DateClickArg } from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -37,7 +37,7 @@ interface Popover {
   providers: [provideIcons({ heroTrash, heroXMark, heroMapPin, heroClock, heroBanknotes, heroUserCircle, heroCalendarDays })],
   template: `
     <div class="fc-host-wrapper" (click)="closePopover()">
-      <full-calendar class="fc-fill" [options]="calendarOptions"></full-calendar>
+      <full-calendar #fullcal class="fc-fill" [options]="calendarOptions"></full-calendar>
 
       <!-- ── Legend ─────────────────────────────────────────────────────── -->
       <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 px-1 pb-2 text-xs opacity-60">
@@ -170,7 +170,9 @@ interface Popover {
     }
   `],
 })
-export class CalendarComponent implements OnInit {
+export class CalendarComponent implements OnInit, AfterViewInit {
+  @ViewChild('fullcal') private fullcal!: FullCalendarComponent;
+
   private dialog = inject(Dialog);
   private db     = inject(DatabaseService);
   private toast  = inject(ToastService);
@@ -214,6 +216,18 @@ export class CalendarComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.load();
+  }
+
+  ngAfterViewInit(): void {
+    // FullCalendar reads container height synchronously at render time,
+    // before the browser finishes the flex layout pass. A 0-delay timeout
+    // lets the browser complete layout first, then we force a recalculation.
+    setTimeout(() => this.fullcal?.getApi().updateSize(), 0);
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.fullcal?.getApi().updateSize();
   }
 
   private async load(): Promise<void> {
