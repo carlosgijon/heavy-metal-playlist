@@ -37,7 +37,7 @@ interface Popover {
   providers: [provideIcons({ heroTrash, heroXMark, heroMapPin, heroClock, heroBanknotes, heroUserCircle, heroCalendarDays })],
   template: `
     <div class="fc-host-wrapper" (click)="closePopover()">
-      <full-calendar [options]="calendarOptions"></full-calendar>
+      <full-calendar class="fc-fill" [options]="calendarOptions"></full-calendar>
 
       <!-- ── Legend ─────────────────────────────────────────────────────── -->
       <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 px-1 pb-2 text-xs opacity-60">
@@ -150,15 +150,23 @@ interface Popover {
     }
   `,
   styles: [`
-    :host { display: block; }
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
 
     .fc-host-wrapper {
+      flex: 1;
+      min-height: 0;
       display: flex;
       flex-direction: column;
     }
 
-    full-calendar {
+    .fc-fill {
       display: block;
+      flex: 1;
+      min-height: 0;
     }
   `],
 })
@@ -195,7 +203,8 @@ export class CalendarComponent implements OnInit {
     },
     multiMonthMaxColumns: 3,
     dayMaxEvents: 3,
-    height: 'auto',
+    height: '100%',
+    expandRows: true,
     events: [],
     eventClick:   (arg) => this.onEventClick(arg),
     dateClick:    (arg) => this.onDateClick(arg),
