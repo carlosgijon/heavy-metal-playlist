@@ -230,6 +230,34 @@ html, body {
     .fc-popover-body  { padding: 0.4rem !important; }
   }
 
+  // ── Multi-month / year view ───────────────────────────────────────────────
+  .fc-multimonth {
+    border-color: oklch(var(--b3)) !important;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .fc-multimonth-month {
+    border-color: oklch(var(--b3)) !important;
+    background: oklch(var(--b1));
+  }
+
+  .fc-multimonth-header {
+    background: oklch(var(--b2)) !important;
+
+    .fc-multimonth-title {
+      color: oklch(var(--bc));
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-transform: capitalize;
+      padding: 0.4rem 0;
+    }
+  }
+
+  .fc-multimonth-daygrid {
+    background: oklch(var(--b1));
+  }
+
   // ── List view ─────────────────────────────────────────────────────────────
   .fc-list {
     border-radius: 0.75rem;

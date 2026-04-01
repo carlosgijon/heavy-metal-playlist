@@ -9,6 +9,7 @@ import { DateClickArg } from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
+import multiMonthPlugin from '@fullcalendar/multimonth';
 import esLocale from '@fullcalendar/core/locales/es';
 import { DatabaseService } from '../../../core/services/database.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -173,20 +174,22 @@ export class CalendarComponent implements OnInit {
   members:        BandMember[]    = [];
 
   calendarOptions: CalendarOptions = {
-    plugins: [dayGridPlugin, listPlugin, interactionPlugin],
+    plugins: [dayGridPlugin, listPlugin, interactionPlugin, multiMonthPlugin],
     initialView: 'dayGridMonth',
     locale: esLocale,
     firstDay: 1,
     headerToolbar: {
       left:   'prev,next today',
       center: 'title',
-      right:  'dayGridMonth,listMonth',
+      right:  'dayGridMonth,multiMonthYear,listMonth',
     },
     buttonText: {
       today: 'Hoy',
       month: 'Mes',
       list:  'Lista',
+      year:  'Año',
     },
+    multiMonthMaxColumns: 3,
     dayMaxEvents: 3,
     height: '100%',
     events: [],

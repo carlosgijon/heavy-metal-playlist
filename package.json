@@ -27,6 +27,7 @@
     "@fullcalendar/daygrid": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
     "@fullcalendar/list": "^6.1.20",
+    "@fullcalendar/multimonth": "^6.1.20",
     "@fullcalendar/timegrid": "^6.1.20",
     "@ng-icons/core": "^31.4.0",
     "@ng-icons/heroicons": "^31.4.0",
