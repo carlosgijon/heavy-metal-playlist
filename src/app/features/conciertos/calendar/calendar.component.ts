@@ -36,11 +36,11 @@ interface Popover {
   imports: [CommonModule, FullCalendarModule, NgIconComponent],
   providers: [provideIcons({ heroTrash, heroXMark, heroMapPin, heroClock, heroBanknotes, heroUserCircle, heroCalendarDays })],
   template: `
-    <div class="h-full flex flex-col" (click)="closePopover()">
-      <full-calendar [options]="calendarOptions" class="flex-1 min-h-0"></full-calendar>
+    <div class="fc-host-wrapper" (click)="closePopover()">
+      <full-calendar [options]="calendarOptions"></full-calendar>
 
       <!-- ── Legend ─────────────────────────────────────────────────────── -->
-      <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 px-1 text-xs opacity-60">
+      <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 px-1 pb-2 text-xs opacity-60">
         <span class="flex items-center gap-1.5">
           <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style="background:#22c55e"></span>Confirmado
         </span>
@@ -150,11 +150,15 @@ interface Popover {
     }
   `,
   styles: [`
-    :host { display: block; height: 100%; }
+    :host { display: block; }
+
+    .fc-host-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
 
     full-calendar {
       display: block;
-      height: 100%;
     }
   `],
 })
@@ -191,7 +195,7 @@ export class CalendarComponent implements OnInit {
     },
     multiMonthMaxColumns: 3,
     dayMaxEvents: 3,
-    height: '100%',
+    height: 'auto',
     events: [],
     eventClick:   (arg) => this.onEventClick(arg),
     dateClick:    (arg) => this.onDateClick(arg),
