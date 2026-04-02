@@ -4,7 +4,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { heroTrash, heroXMark, heroMapPin, heroClock, heroBanknotes, heroUserCircle, heroCalendarDays } from '@ng-icons/heroicons/outline';
 import { FullCalendarModule, FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarOptions, EventClickArg, EventInput } from '@fullcalendar/core';
+import { CalendarOptions, EventClickArg, EventInput, DatesSetArg } from '@fullcalendar/core';
 import { DateClickArg } from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
@@ -153,6 +153,7 @@ interface Popover {
     :host {
       display: block;
       height: 100%;
+      overflow-y: auto;
     }
 
     .fc-host-wrapper {
@@ -203,9 +204,12 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     events: [],
     eventClick:   (arg) => this.onEventClick(arg),
     dateClick:    (arg) => this.onDateClick(arg),
+    datesSet:     (arg) => this.onDatesSet(arg),
     moreLinkText: (n)   => `+${n} más`,
     eventDisplay: 'block',
   };
+
+  private currentView = 'dayGridMonth';
 
   async ngOnInit(): Promise<void> {
     await this.load();
@@ -220,13 +224,23 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     this.applyHeight();
   }
 
+  onDatesSet(arg: DatesSetArg): void {
+    this.currentView = arg.view.type;
+    this.applyHeight();
+  }
+
   private applyHeight(): void {
     const wrapper = this.wrapperRef?.nativeElement;
     if (!wrapper) return;
-    // 40px = legend row height
-    const h = wrapper.clientHeight - 40;
-    if (h > 200) {
-      this.calendarOptions = { ...this.calendarOptions, height: h, expandRows: true };
+    const isMonthView = this.currentView === 'dayGridMonth';
+    if (isMonthView) {
+      const h = wrapper.clientHeight - 40; // 40px = legend
+      if (h > 200) {
+        this.calendarOptions = { ...this.calendarOptions, height: h, expandRows: true };
+      }
+    } else {
+      // year & list: let content grow naturally, parent scrolls
+      this.calendarOptions = { ...this.calendarOptions, height: 'auto', expandRows: false };
     }
   }
 
