@@ -1,0 +1,249 @@
+<div class="page-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mesa de Mezclas</h1>
+      @if (scnData(); as data) {
+        <p class="page-subtitle">{{ data.sceneName }} · {{ data.inputChannels.length }} canales</p>
+      }
+    </div>
+    <label class="btn btn-primary btn-sm gap-2 cursor-pointer">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+      </svg>
+      Abrir .scn
+      <input type="file" accept=".scn,.SCN" class="hidden" (change)="onFileInput($event)">
+    </label>
+  </div>
+
+  <!-- Drop zone (no file loaded) -->
+  @if (!scnData()) {
+    <div
+      class="drop-zone"
+      [class.dragging]="isDragging()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-14 h-14 mb-4 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25"/>
+      </svg>
+      <p class="text-base-content/50 text-lg">Arrastra un archivo <strong>.scn</strong> aquí</p>
+      <p class="text-base-content/30 text-sm mt-1">o usa el botón "Abrir .scn"</p>
+    </div>
+  }
+
+  <!-- Content (file loaded) -->
+  @if (scnData(); as data) {
+
+    <!-- Tabs -->
+    <div class="tabs tabs-border mb-6">
+      <button class="tab" [class.tab-active]="activeTab()==='canales'" (click)="setTab('canales')">
+        Canales ({{ data.inputChannels.length }})
+      </button>
+      <button class="tab" [class.tab-active]="activeTab()==='combinado'" (click)="setTab('combinado')">
+        EQ Combinado
+      </button>
+      <button class="tab" [class.tab-active]="activeTab()==='buses'" (click)="setTab('buses')">
+        Buses ({{ data.buses.length }})
+      </button>
+    </div>
+
+    <!-- ── TAB: Canales ─────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'canales') {
+      <div class="channels-grid">
+        @for (item of channelCurves(); track item.ch.key; let i = $index) {
+          <div class="channel-card" [class.muted]="!item.ch.on" (click)="selectChannel(item.ch)">
+            <!-- Header -->
+            <div class="ch-header" [style.border-left-color]="item.color">
+              <span class="ch-num">{{ item.ch.number | number:'2.0-0' }}</span>
+              <span class="ch-name" [title]="item.ch.name">{{ item.ch.name }}</span>
+              <span class="ch-xr-dot" [style.background]="item.xrColor"></span>
+            </div>
+
+            <!-- Mini EQ curve -->
+            <div class="mini-chart-wrap">
+              <canvas #miniCanvas></canvas>
+            </div>
+
+            <!-- Info row -->
+            <div class="ch-info">
+              <!-- Fader bar -->
+              <div class="fader-wrap" title="Fader: {{ item.ch.faderDb | number:'1.1-1' }} dB">
+                <div class="fader-bar">
+                  <div class="fader-fill" [style.width.%]="faderPct(item.ch.faderDb)" [style.background]="item.color"></div>
+                  <div class="fader-unity"></div>
+                </div>
+                <span class="fader-label">
+                  {{ isFinite(item.ch.faderDb) ? (item.ch.faderDb | number:'1.1-1') + ' dB' : '-∞' }}
+                </span>
+              </div>
+
+              <!-- Badges -->
+              <div class="ch-badges">
+                <span class="badge badge-sm" [class.badge-success]="item.ch.gateOn" [class.badge-ghost]="!item.ch.gateOn">G</span>
+                <span class="badge badge-sm" [class.badge-warning]="item.ch.dynOn" [class.badge-ghost]="!item.ch.dynOn">
+                  {{ item.ch.dynType === 'EXP' ? 'EX' : 'C' }}
+                </span>
+                <span class="badge badge-sm badge-ghost" title="Pan">{{ panLabel(item.ch.pan) }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── TAB: EQ Combinado ────────────────────────────────────────────────── -->
+    @if (activeTab() === 'combinado') {
+      <div class="combined-wrap">
+        <div class="combined-header">
+          <h3 class="text-base font-semibold">Respuesta EQ — todos los canales activos</h3>
+          <p class="text-xs text-base-content/50 mt-0.5">Canales silenciados o sin EQ excluidos. Pasa el cursor para ver valores.</p>
+        </div>
+        <div class="combined-chart-wrap">
+          <canvas id="combinedCanvas"></canvas>
+        </div>
+
+        <!-- Frequency occupation hint table -->
+        <div class="freq-table-wrap">
+          <h4 class="text-sm font-semibold mb-2 text-base-content/70">Ocupación de frecuencias por canal</h4>
+          <div class="overflow-x-auto">
+            <table class="table table-xs">
+              <thead>
+                <tr>
+                  <th>Canal</th>
+                  <th>Banda baja (&lt;300Hz)</th>
+                  <th>Medios (300–3kHz)</th>
+                  <th>Agudos (&gt;3kHz)</th>
+                  <th>Pico máx.</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of channelCurves(); track item.ch.key) {
+                  @if (item.ch.on && item.ch.eqEnabled) {
+                    <tr>
+                      <td>
+                        <span class="ch-dot" [style.background]="item.color"></span>
+                        {{ item.ch.name }}
+                      </td>
+                      <td>{{ avgBand(item.curve, 20, 300) | number:'1.1-1' }} dB</td>
+                      <td>{{ avgBand(item.curve, 300, 3000) | number:'1.1-1' }} dB</td>
+                      <td>{{ avgBand(item.curve, 3000, 20000) | number:'1.1-1' }} dB</td>
+                      <td [style.color]="item.color">{{ maxGain(item.curve) | number:'1.1-1' }} dB @ {{ peakFreq(item.curve) }}</td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── TAB: Buses ───────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'buses') {
+      <div class="channels-grid">
+        @for (item of busCurves(); track item.ch.key; let i = $index) {
+          <div class="channel-card" [class.muted]="!item.ch.on" (click)="selectChannel(item.ch)">
+            <div class="ch-header" [style.border-left-color]="item.color">
+              <span class="ch-num">B{{ item.ch.number }}</span>
+              <span class="ch-name" [title]="item.ch.name">{{ item.ch.name }}</span>
+              <span class="ch-xr-dot" [style.background]="item.xrColor"></span>
+            </div>
+            <div class="mini-chart-wrap">
+              <canvas #miniCanvas></canvas>
+            </div>
+            <div class="ch-info">
+              <div class="fader-wrap">
+                <div class="fader-bar">
+                  <div class="fader-fill" [style.width.%]="faderPct(item.ch.faderDb)" [style.background]="item.color"></div>
+                  <div class="fader-unity"></div>
+                </div>
+                <span class="fader-label">
+                  {{ isFinite(item.ch.faderDb) ? (item.ch.faderDb | number:'1.1-1') + ' dB' : '-∞' }}
+                </span>
+              </div>
+              <div class="ch-badges">
+                <span class="badge badge-sm" [class.badge-warning]="item.ch.dynOn" [class.badge-ghost]="!item.ch.dynOn">C</span>
+                <span class="badge badge-sm badge-ghost">{{ item.ch.eqMode }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  } <!-- /if scnData -->
+
+  <!-- ── Channel detail modal ─────────────────────────────────────────────── -->
+  @if (selectedChannel(); as ch) {
+    <div class="modal-backdrop" (click)="closeDetail()">
+      <div class="detail-modal" (click)="$event.stopPropagation()">
+        <div class="detail-header">
+          <div class="detail-title-wrap">
+            <span class="detail-dot" [style.background]="getChannelColor(ch)"></span>
+            <h2 class="text-lg font-bold">
+              {{ ch.type === 'ch' ? 'Ch ' + (ch.number | number:'2.0-0') : 'Bus ' + ch.number }}
+              — {{ ch.name }}
+            </h2>
+          </div>
+          <button class="btn btn-ghost btn-sm btn-circle" (click)="closeDetail()">✕</button>
+        </div>
+
+        <!-- Stats row -->
+        <div class="detail-stats">
+          <div class="stat-chip">
+            <span class="stat-label">Fader</span>
+            <span class="stat-value">{{ isFinite(ch.faderDb) ? (ch.faderDb | number:'1.1-1') + ' dB' : '-∞' }}</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-label">Pan</span>
+            <span class="stat-value">{{ panLabel(ch.pan) }}</span>
+          </div>
+          <div class="stat-chip" [class.active]="ch.gateOn">
+            <span class="stat-label">Gate</span>
+            <span class="stat-value">{{ ch.gateOn ? 'ON' : 'OFF' }}</span>
+          </div>
+          <div class="stat-chip" [class.active]="ch.dynOn">
+            <span class="stat-label">{{ ch.dynType }}</span>
+            <span class="stat-value">{{ ch.dynOn ? 'ON' : 'OFF' }}</span>
+          </div>
+          <div class="stat-chip" [class.active]="ch.eqEnabled">
+            <span class="stat-label">EQ</span>
+            <span class="stat-value">{{ ch.eqEnabled ? ch.eqMode : 'OFF' }}</span>
+          </div>
+        </div>
+
+        <!-- EQ bands table -->
+        @if (ch.eqBands.length > 0) {
+          <div class="eq-bands-table">
+            <table class="table table-xs w-full">
+              <thead>
+                <tr><th>Banda</th><th>Tipo</th><th>Frecuencia</th><th>Ganancia</th><th>Q</th></tr>
+              </thead>
+              <tbody>
+                @for (band of ch.eqBands; track $index; let i = $index) {
+                  <tr>
+                    <td class="font-mono text-xs">{{ i + 1 }}</td>
+                    <td><span class="badge badge-xs badge-outline">{{ band.type }}</span></td>
+                    <td class="font-mono">{{ band.freq >= 1000 ? (band.freq/1000 | number:'1.0-2') + ' kHz' : (band.freq | number:'1.0-1') + ' Hz' }}</td>
+                    <td [class.text-success]="band.gain > 0" [class.text-error]="band.gain < 0" class="font-mono font-semibold">
+                      {{ band.gain > 0 ? '+' : '' }}{{ band.gain | number:'1.2-2' }} dB
+                    </td>
+                    <td class="font-mono">{{ band.q }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <!-- Detail EQ chart -->
+        <div class="detail-chart-wrap">
+          <canvas id="detailCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
