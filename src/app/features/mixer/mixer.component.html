@@ -129,7 +129,7 @@
                       <td>{{ avgBand(item.curve, 20, 300) | number:'1.1-1' }} dB</td>
                       <td>{{ avgBand(item.curve, 300, 3000) | number:'1.1-1' }} dB</td>
                       <td>{{ avgBand(item.curve, 3000, 20000) | number:'1.1-1' }} dB</td>
-                      <td [style.color]="item.color">{{ maxGain(item.curve) | number:'1.1-1' }} dB @ {{ peakFreq(item.curve) }}</td>
+                      <td [style.color]="item.color">{{ maxGain(item.curve) | number:'1.1-1' }} dB &#64; {{ peakFreq(item.curve) }}</td>
                     </tr>
                   }
                 }
