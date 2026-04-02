@@ -16,11 +16,13 @@ import { SettingsDialogComponent } from './shared/settings-dialog/settings-dialo
 import { FinanzasComponent } from './features/finanzas/finanzas.component';
 import { MerchComponent } from './features/merch/merch.component';
 import { EnsayosComponent } from './features/ensayos/ensayos.component';
+import { VotacionesComponent } from './features/votaciones/votaciones.component';
+import { MixerComponent } from './features/mixer/mixer.component';
 import { AuthService } from './core/services/auth.service';
 import { DatabaseService } from './core/services/database.service';
 import { PlaylistWithStats } from './core/models/song.model';
 
-type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario' | 'admin' | 'band-settings' | 'finanzas' | 'merch' | 'ensayos';
+type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario' | 'admin' | 'band-settings' | 'finanzas' | 'merch' | 'ensayos' | 'votaciones' | 'mixer';
 
 @Component({
   selector: 'app-root',
@@ -41,6 +43,8 @@ type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'cal
     FinanzasComponent,
     MerchComponent,
     EnsayosComponent,
+    VotacionesComponent,
+    MixerComponent,
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

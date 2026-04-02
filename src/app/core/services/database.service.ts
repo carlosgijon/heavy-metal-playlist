@@ -9,6 +9,7 @@ import { Venue, Gig, GigStatus, GigSummary, CalendarEvent, GigChecklist, Checkli
 import { Transaction, WishListItem } from '../models/finance.model';
 import { MerchItem, MerchSaleDto, MerchRestockDto, MerchWaitingEntry } from '../models/merch.model';
 import { Rehearsal, RehearsalSongEntry } from '../models/rehearsal.model';
+import { Poll, PollResults, CreatePollDto, PollStatus, PollOption } from '../models/poll.model';
 
 @Injectable({ providedIn: 'root' })
 export class DatabaseService {
@@ -606,5 +607,43 @@ export class DatabaseService {
 
   deleteRehearsalSong(rehearsalId: string, entryId: string): Promise<void> {
     return this.del(`/rehearsals/${rehearsalId}/songs/${entryId}`);
+  }
+
+  // ── Polls ──────────────────────────────────────────────────────────────────
+
+  getPolls(): Promise<Poll[]> {
+    return this.get('/polls');
+  }
+
+  getPoll(id: string): Promise<Poll> {
+    return this.get(`/polls/${id}`);
+  }
+
+  createPoll(dto: CreatePollDto): Promise<Poll> {
+    return this.post('/polls', dto);
+  }
+
+  setPollStatus(id: string, status: PollStatus): Promise<Poll> {
+    return this.patch(`/polls/${id}/status`, { status });
+  }
+
+  deletePoll(id: string): Promise<void> {
+    return this.del(`/polls/${id}`);
+  }
+
+  addPollOption(pollId: string, text: string, proposedBy: string): Promise<PollOption> {
+    return this.post(`/polls/${pollId}/options`, { text, proposedBy });
+  }
+
+  deletePollOption(pollId: string, optionId: string): Promise<void> {
+    return this.del(`/polls/${pollId}/options/${optionId}`);
+  }
+
+  castPollVote(pollId: string, dto: { voterName: string; value?: string; approvedOptionIds?: string[]; comment?: string }): Promise<Poll> {
+    return this.post(`/polls/${pollId}/votes`, dto);
+  }
+
+  getPollResults(pollId: string): Promise<PollResults> {
+    return this.get(`/polls/${pollId}/results`);
   }
 }
