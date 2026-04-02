@@ -329,6 +329,8 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
+  isFinite(n: number): boolean { return Number.isFinite(n); }
+
   faderPct(db: number): number {
     if (!isFinite(db)) return 0;
     return Math.max(0, Math.min(100, (db + 90) / 90 * 100));
