@@ -430,14 +430,14 @@ export class VotacionesComponent implements OnInit {
   private async loadAll(): Promise<void> {
     this.loading.set(true);
     try {
-      const [polls, members, gigs] = await Promise.all([
+      const [polls, members, gigs] = await Promise.allSettled([
         this.db.getPolls(),
         this.db.getMembers(),
         this.db.getGigs(),
       ]);
-      this.polls.set(polls);
-      this.members.set(members);
-      this.gigs.set(gigs.filter((g: Gig) => g.date));
+      if (polls.status    === 'fulfilled') this.polls.set(polls.value);
+      if (members.status  === 'fulfilled') this.members.set(members.value);
+      if (gigs.status     === 'fulfilled') this.gigs.set((gigs.value as Gig[]).filter(g => g.date));
     } catch { this.toast.danger('Error al cargar votaciones'); }
     finally { this.loading.set(false); }
   }

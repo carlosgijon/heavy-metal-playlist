@@ -15,7 +15,11 @@ import { Gig, Venue } from '../../core/models/gig.model';
 Chart.register(...registerables);
 
 const FREQS = logFreqs(200);
-const FREQ_LABELS = FREQS.map(f => (f >= 1000 ? `${+(f / 1000).toPrecision(2)}k` : `${Math.round(f)}`));
+
+/** Convert a curve (dB array) to Chart.js {x,y} points paired with FREQS */
+function toPts(curve: number[]): { x: number; y: number }[] {
+  return FREQS.map((f, i) => ({ x: f, y: curve[i] }));
+}
 
 const CHANNEL_COLORS = [
   '#ef4444','#f97316','#eab308','#22c55e','#06b6d4',
@@ -274,13 +278,12 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
       const chart = new Chart(canvas, {
         type: 'line',
         data: {
-          labels: FREQ_LABELS,
           datasets: [{
-            data: item.curve,
+            data: toPts(item.curve),
             borderColor: item.color,
             borderWidth: 1.5,
             pointRadius: 0,
-            fill: { target: 'origin', above: item.color + '22', below: item.color + '22' },
+            fill: { target: { value: 0 }, above: item.color + '22', below: item.color + '22' },
             tension: 0.3,
           }],
         },
@@ -326,14 +329,13 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
     this.detailChart = new Chart(canvas, {
       type: 'line',
       data: {
-        labels: FREQ_LABELS,
         datasets: [{
           label: ch.name,
-          data: curve,
+          data: toPts(curve),
           borderColor: color,
           borderWidth: 2,
           pointRadius: 0,
-          fill: { target: 'origin', above: color + '33', below: color + '33' },
+          fill: { target: { value: 0 }, above: color + '33', below: color + '33' },
           tension: 0.3,
         }],
       },
@@ -347,8 +349,8 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
             mode: 'index',
             intersect: false,
             callbacks: {
-              title: (items) => `${items[0].label} Hz`,
-              label: (item) => `${(item.raw as number).toFixed(1)} dB`,
+              title: (items) => `${fmtFreq((items[0].raw as any).x)} Hz`,
+              label: (item) => `${((item.raw as any).y as number).toFixed(1)} dB`,
             },
           },
         },
@@ -391,10 +393,9 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
     this.combinedChart = new Chart(canvas, {
       type: 'line',
       data: {
-        labels: FREQ_LABELS,
         datasets: activeChannels.map(item => ({
           label: item.ch.name,
-          data: item.curve,
+          data: toPts(item.curve),
           borderColor: item.color,
           borderWidth: 1.8,
           pointRadius: 0,
@@ -415,8 +416,8 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
           },
           tooltip: {
             callbacks: {
-              title: (items) => `${items[0].label} Hz`,
-              label: (item) => `${item.dataset.label}: ${(item.raw as number).toFixed(1)} dB`,
+              title: (items) => `${fmtFreq((items[0].raw as any).x)} Hz`,
+              label: (item) => `${item.dataset.label}: ${((item.raw as any).y as number).toFixed(1)} dB`,
             },
           },
         },
