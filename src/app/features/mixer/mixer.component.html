@@ -57,7 +57,7 @@
               <div class="library-item-info">
                 <span class="library-item-name">{{ file.name }}</span>
                 <span class="library-item-meta">
-                  @if (file.venue) { {{ file.venue }} · }
+                  @if (file.venueId) { {{ venueName(file.venueId) }} · }
                   @if (file.gigId) { {{ gigName(file.gigId) }} · }
                   {{ file.createdAt | date:'dd/MM/yy' }}
                 </span>
@@ -300,15 +300,22 @@
                    placeholder="Ej: Sala Razzmatazz — Main" />
           </div>
           <div class="form-control">
-            <label class="label"><span class="label-text">Sala / Venue</span></label>
-            <input type="text" class="input input-bordered input-sm"
-                   [ngModel]="saveVenue()" (ngModelChange)="saveVenue.set($event)"
-                   placeholder="Nombre de la sala" />
+            <label class="label">
+              <span class="label-text">Sala</span>
+              @if (saveGigId()) { <span class="label-text-alt text-base-content/40">auto-rellenada por el concierto</span> }
+            </label>
+            <select class="select select-bordered select-sm"
+                    [ngModel]="saveVenueId()" (ngModelChange)="saveVenueId.set($event)">
+              <option value="">Sin sala</option>
+              @for (v of venues(); track v.id) {
+                <option [value]="v.id">{{ v.name }}@if (v.city) { — {{ v.city }} }</option>
+              }
+            </select>
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Concierto asociado</span></label>
             <select class="select select-bordered select-sm"
-                    [ngModel]="saveGigId()" (ngModelChange)="saveGigId.set($event)">
+                    [ngModel]="saveGigId()" (ngModelChange)="onSaveGigChange($event)">
               <option value="">Sin concierto</option>
               @for (gig of gigs(); track gig.id) {
                 <option [value]="gig.id">{{ gig.date | date:'dd/MM/yy' }} — {{ gig.venueName ?? gig.title }}</option>

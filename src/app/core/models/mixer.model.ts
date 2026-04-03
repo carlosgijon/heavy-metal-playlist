@@ -5,7 +5,7 @@ export interface ScnFile {
   content: string;
   notes?: string;
   gigId?: string;
-  venue?: string;
+  venueId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,12 +15,12 @@ export interface SaveScnFileDto {
   content: string;
   notes?: string;
   gigId?: string;
-  venue?: string;
+  venueId?: string;
 }
 
 export interface UpdateScnFileDto {
   name?: string;
   notes?: string;
   gigId?: string | null;
-  venue?: string | null;
+  venueId?: string | null;
 }

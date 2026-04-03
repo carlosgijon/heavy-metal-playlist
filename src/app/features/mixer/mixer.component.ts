@@ -10,7 +10,7 @@ import { computeEqCurve, computeGeqCurve, logFreqs, fmtFreq } from './eq-calcula
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ScnFile } from '../../core/models/mixer.model';
-import { Gig } from '../../core/models/gig.model';
+import { Gig, Venue } from '../../core/models/gig.model';
 
 Chart.register(...registerables);
 
@@ -45,14 +45,15 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
   // Library
   readonly scnFiles      = signal<ScnFile[]>([]);
   readonly gigs          = signal<Gig[]>([]);
+  readonly venues        = signal<Venue[]>([]);
   readonly showLibrary   = signal(false);
   readonly showSaveModal = signal(false);
   readonly saveName      = signal('');
   readonly saveNotes     = signal('');
   readonly saveGigId     = signal('');
-  readonly saveVenue     = signal('');
+  readonly saveVenueId   = signal('');
   readonly saveLoading   = signal(false);
-  readonly loadedFileId  = signal<string | null>(null); // id if loaded from library
+  readonly loadedFileId  = signal<string | null>(null);
 
   private combinedChart: Chart | null = null;
   private detailChart: Chart | null = null;
@@ -96,9 +97,12 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
 
   private async loadLibrary(): Promise<void> {
     try {
-      const [files, gigs] = await Promise.all([this.db.getScnFiles(), this.db.getGigs()]);
+      const [files, gigs, venues] = await Promise.all([
+        this.db.getScnFiles(), this.db.getGigs(), this.db.getVenues(),
+      ]);
       this.scnFiles.set(files);
       this.gigs.set(gigs);
+      this.venues.set(venues);
     } catch {}
   }
 
@@ -121,7 +125,7 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
     if (!data) return;
     this.saveName.set(data.sceneName || '');
     this.saveNotes.set('');
-    this.saveVenue.set('');
+    this.saveVenueId.set('');
     this.saveGigId.set('');
     this.showSaveModal.set(true);
   }
@@ -139,7 +143,7 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
         content,
         notes: this.saveNotes() || undefined,
         gigId: this.saveGigId() || undefined,
-        venue: this.saveVenue() || undefined,
+        venueId: this.saveVenueId() || undefined,
       });
       this.scnFiles.update(list => [file, ...list]);
       this.loadedFileId.set(file.id);
@@ -167,6 +171,18 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
   gigName(gigId: string): string {
     const gig = this.gigs().find(g => g.id === gigId);
     return gig ? (gig.venueName ?? gig.title) : gigId;
+  }
+
+  venueName(venueId: string): string {
+    return this.venues().find(v => v.id === venueId)?.name ?? venueId;
+  }
+
+  onSaveGigChange(gigId: string): void {
+    this.saveGigId.set(gigId);
+    if (gigId) {
+      const gig = this.gigs().find(g => g.id === gigId);
+      if (gig?.venueId) this.saveVenueId.set(gig.venueId);
+    }
   }
 
   // ── File handling ───────────────────────────────────────────────────────────

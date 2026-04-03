@@ -183,7 +183,7 @@ export class CalendarComponent implements OnInit, AfterViewInit {
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, listPlugin, interactionPlugin, multiMonthPlugin],
-    initialView: 'dayGridMonth',
+    initialView: 'multiMonthYear',
     locale: esLocale,
     firstDay: 1,
     headerToolbar: {
