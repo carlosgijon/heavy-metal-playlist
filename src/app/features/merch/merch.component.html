@@ -500,6 +500,66 @@
       </div>
     </div>
   }
+
+  <!-- ═══════════════════════════════ TAB: ESPERA ══════════════════════════════ -->
+  @else if (tab === 'espera') {
+
+    <!-- Filtros -->
+    <div class="filters-bar mb-4">
+      <div class="join">
+        <button class="btn btn-sm join-item" [class.btn-primary]="waitingFilter === 'waiting'" (click)="waitingFilter = 'waiting'">
+          Esperando <span class="badge badge-sm ml-1">{{ waitingPendingCount }}</span>
+        </button>
+        <button class="btn btn-sm join-item" [class.btn-primary]="waitingFilter === 'notified'" (click)="waitingFilter = 'notified'">
+          Avisados
+        </button>
+        <button class="btn btn-sm join-item" [class.btn-primary]="waitingFilter === 'delivered'" (click)="waitingFilter = 'delivered'">
+          Entregados
+        </button>
+        <button class="btn btn-sm join-item" [class.btn-primary]="waitingFilter === 'all'" (click)="waitingFilter = 'all'">
+          Todos
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    @if (filteredWaiting.length === 0) {
+      <div class="merch-empty">
+        <p class="font-semibold opacity-60">No hay entradas</p>
+        <p class="text-sm opacity-40">Cuando se acabe el stock de una talla, puedes añadir clientes aquí desde la pestaña Stock.</p>
+      </div>
+    }
+
+    <!-- Grouped by product -->
+    @for (group of waitingByItem; track group.itemId) {
+      <div class="waiting-group">
+        <div class="waiting-group-header">
+          <span class="font-semibold">{{ group.itemName }}</span>
+          <span class="badge badge-sm badge-outline">{{ group.entries.length }}</span>
+        </div>
+        @for (entry of group.entries; track entry.id) {
+          <div class="waiting-row">
+            <div class="waiting-row-info">
+              <span class="waiting-name">{{ entry.name }}</span>
+              @if (entry.size) { <span class="badge badge-xs badge-outline ml-1">{{ entry.size }}</span> }
+              <span class="badge badge-xs ml-2" [class]="statusBadge(entry.status)">{{ statusLabel(entry.status) }}</span>
+              @if (entry.contact) { <span class="waiting-contact">{{ entry.contact }}</span> }
+              @if (entry.notes) { <span class="waiting-notes">{{ entry.notes }}</span> }
+            </div>
+            <div class="waiting-row-actions">
+              @if (entry.status === 'waiting') {
+                <button class="btn btn-xs btn-info" (click)="markWaiting(entry, 'notified')">Avisar</button>
+              }
+              @if (entry.status !== 'delivered') {
+                <button class="btn btn-xs btn-success" (click)="markWaiting(entry, 'delivered')">Entregar</button>
+              }
+              <button class="btn btn-xs btn-ghost text-error" (click)="deleteWaiting(entry)">✕</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
 </div>
 
 <!-- ── Blocking modal: no gig selected ──────────────────────────────────── -->
@@ -527,62 +587,3 @@
   </div>
 }
 
-<!-- ═══════════════════════════════ TAB: ESPERA ══════════════════════════════ -->
-@else if (tab === 'espera') {
-
-  <!-- Filtros -->
-  <div class="filters-bar mb-4">
-    <div class="join">
-      <button class="btn btn-sm join-item" [class.btn-primary]="waitingFilter === 'waiting'" (click)="waitingFilter = 'waiting'">
-        Esperando <span class="badge badge-sm ml-1">{{ waitingPendingCount }}</span>
-      </button>
-      <button class="btn btn-sm join-item" [class.btn-primary]="waitingFilter === 'notified'" (click)="waitingFilter = 'notified'">
-        Avisados
-      </button>
-      <button class="btn btn-sm join-item" [class.btn-primary]="waitingFilter === 'delivered'" (click)="waitingFilter = 'delivered'">
-        Entregados
-      </button>
-      <button class="btn btn-sm join-item" [class.btn-primary]="waitingFilter === 'all'" (click)="waitingFilter = 'all'">
-        Todos
-      </button>
-    </div>
-  </div>
-
-  <!-- Empty state -->
-  @if (filteredWaiting.length === 0) {
-    <div class="merch-empty">
-      <p class="font-semibold opacity-60">No hay entradas</p>
-      <p class="text-sm opacity-40">Cuando se acabe el stock de una talla, puedes añadir clientes aquí desde la pestaña Stock.</p>
-    </div>
-  }
-
-  <!-- Grouped by product -->
-  @for (group of waitingByItem; track group.itemId) {
-    <div class="waiting-group">
-      <div class="waiting-group-header">
-        <span class="font-semibold">{{ group.itemName }}</span>
-        <span class="badge badge-sm badge-outline">{{ group.entries.length }}</span>
-      </div>
-      @for (entry of group.entries; track entry.id) {
-        <div class="waiting-row">
-          <div class="waiting-row-info">
-            <span class="waiting-name">{{ entry.name }}</span>
-            @if (entry.size) { <span class="badge badge-xs badge-outline ml-1">{{ entry.size }}</span> }
-            <span class="badge badge-xs ml-2" [class]="statusBadge(entry.status)">{{ statusLabel(entry.status) }}</span>
-            @if (entry.contact) { <span class="waiting-contact">{{ entry.contact }}</span> }
-            @if (entry.notes) { <span class="waiting-notes">{{ entry.notes }}</span> }
-          </div>
-          <div class="waiting-row-actions">
-            @if (entry.status === 'waiting') {
-              <button class="btn btn-xs btn-info" (click)="markWaiting(entry, 'notified')">Avisar</button>
-            }
-            @if (entry.status !== 'delivered') {
-              <button class="btn btn-xs btn-success" (click)="markWaiting(entry, 'delivered')">Entregar</button>
-            }
-            <button class="btn btn-xs btn-ghost text-error" (click)="deleteWaiting(entry)">✕</button>
-          </div>
-        </div>
-      }
-    </div>
-  }
-}
