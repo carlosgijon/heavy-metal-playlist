@@ -17,6 +17,7 @@ import { PlaylistWithStats } from '../../../../core/models/song.model';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../../../../core/models/finance.model';
 import { DatabaseService } from '../../../../core/services/database.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ScnFile } from '../../../../core/models/mixer.model';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../../shared/confirm-dialog/confirm-dialog.component';
 import { TransactionFormComponent, TransactionFormData } from '../../../finanzas/transaction-form/transaction-form.component';
 import { GigFormComponent, GigFormData, GigFormResult } from '../gig-form/gig-form.component';
@@ -114,6 +115,34 @@ type DetailTab = 'info' | 'resumen' | 'transacciones' | 'merch' | 'contactos' | 
             }
           </div>
         </div>
+
+        <!-- SCN files -->
+        @if (scnFiles.length > 0) {
+          <div class="card bg-base-200 p-5 mt-5">
+            <h3 class="font-bold text-base opacity-70 mb-3">Archivos de mesa (.scn)</h3>
+            <div class="flex flex-col gap-2">
+              @for (f of scnFiles; track f.id) {
+                <div class="flex items-center justify-between gap-3 bg-base-300 rounded-lg px-4 py-2.5">
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold truncate">{{ f.name }}</p>
+                    <p class="text-xs opacity-50">
+                      @if (f.gigId === gig.id) { Concierto · }
+                      @if (f.venueId && f.gigId !== gig.id) { Sala · }
+                      {{ f.updatedAt | date:'dd/MM/yyyy' }}
+                      @if (f.notes) { · {{ f.notes }} }
+                    </p>
+                  </div>
+                  <button class="btn btn-sm btn-outline gap-1.5 shrink-0" (click)="downloadScn(f)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                    </svg>
+                    Descargar
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
       }
 
       <!-- ── TAB: RESUMEN ───────────────────────────────────── -->
@@ -400,6 +429,7 @@ export class GigDetailComponent implements OnInit, OnChanges, AfterViewInit, OnD
   tab: DetailTab = 'info';
   loading = false;
   summary: GigSummary | null = null;
+  scnFiles: ScnFile[] = [];
 
   // Contacts
   contacts: GigContact[] = [];
@@ -455,14 +485,18 @@ export class GigDetailComponent implements OnInit, OnChanges, AfterViewInit, OnD
   private async loadAll(): Promise<void> {
     this.loading = true;
     try {
-      const [summary, contacts, checklists] = await Promise.all([
+      const [summary, contacts, checklists, allScn] = await Promise.all([
         this.db.getGigSummary(this.gig.id),
         this.db.getGigContacts(this.gig.id),
         this.db.getGigChecklists(this.gig.id),
+        this.db.getScnFiles(),
       ]);
       this.summary = summary;
       this.contacts = contacts;
       this.checklists = checklists;
+      this.scnFiles = allScn.filter(f =>
+        f.gigId === this.gig.id || (this.gig.venueId && f.venueId === this.gig.venueId)
+      );
 
       // Load items for each checklist
       for (const cl of checklists) {
@@ -483,6 +517,16 @@ export class GigDetailComponent implements OnInit, OnChanges, AfterViewInit, OnD
     if (t === 'resumen' && this.summary) {
       setTimeout(() => this.buildCharts(), 0);
     }
+  }
+
+  downloadScn(file: ScnFile): void {
+    const blob = new Blob([file.content], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = file.name.endsWith('.scn') ? file.name : file.name + '.scn';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // ── Computed ─────────────────────────────────────────────────────────
