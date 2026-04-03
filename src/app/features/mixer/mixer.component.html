@@ -5,17 +5,74 @@
     <div>
       <h1 class="page-title">Mesa de Mezclas</h1>
       @if (scnData(); as data) {
-        <p class="page-subtitle">{{ data.sceneName }} · {{ data.inputChannels.length }} canales</p>
+        <p class="page-subtitle">
+          {{ data.sceneName }} · {{ data.inputChannels.length }} canales
+          @if (loadedFileId()) { <span class="badge badge-sm badge-success ml-2">guardado</span> }
+        </p>
       }
     </div>
-    <label class="btn btn-primary btn-sm gap-2 cursor-pointer">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
-      </svg>
-      Abrir .scn
-      <input type="file" accept=".scn,.SCN" class="hidden" (change)="onFileInput($event)">
-    </label>
+    <div class="page-header-actions">
+      <!-- Library toggle -->
+      <button class="btn btn-ghost btn-sm gap-2" (click)="toggleLibrary()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776"/>
+        </svg>
+        Biblioteca
+        @if (scnFiles().length > 0) {
+          <span class="badge badge-sm badge-primary">{{ scnFiles().length }}</span>
+        }
+      </button>
+
+      <!-- Save button (only when file loaded) -->
+      @if (scnData()) {
+        <button class="btn btn-primary btn-sm gap-2" (click)="openSaveModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+          </svg>
+          Guardar
+        </button>
+      }
+
+      <!-- Open file -->
+      <label class="btn btn-ghost btn-sm gap-2 cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+        </svg>
+        Abrir .scn
+        <input type="file" accept=".scn,.SCN" class="hidden" (change)="onFileInput($event)">
+      </label>
+    </div>
   </div>
+
+  <!-- Library panel -->
+  @if (showLibrary()) {
+    <div class="library-panel">
+      <h3 class="text-sm font-semibold mb-3 text-base-content/70">Archivos guardados</h3>
+      @if (scnFiles().length === 0) {
+        <p class="text-sm text-base-content/40 text-center py-4">Sin archivos guardados aún</p>
+      } @else {
+        <div class="library-list">
+          @for (file of scnFiles(); track trackById($index, file)) {
+            <div class="library-item" [class.active]="loadedFileId() === file.id" (click)="loadFromLibrary(file)">
+              <div class="library-item-info">
+                <span class="library-item-name">{{ file.name }}</span>
+                <span class="library-item-meta">
+                  @if (file.venue) { {{ file.venue }} · }
+                  @if (file.gigId) { {{ gigName(file.gigId) }} · }
+                  {{ file.createdAt | date:'dd/MM/yy' }}
+                </span>
+                @if (file.notes) {
+                  <span class="library-item-notes">{{ file.notes }}</span>
+                }
+              </div>
+              <button class="btn btn-ghost btn-xs btn-circle text-error opacity-60 hover:opacity-100"
+                      (click)="deleteFromLibrary(file, $event)" title="Eliminar">✕</button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
 
   <!-- Drop zone (no file loaded) -->
   @if (!scnData()) {
@@ -54,21 +111,15 @@
       <div class="channels-grid">
         @for (item of channelCurves(); track item.ch.key; let i = $index) {
           <div class="channel-card" [class.muted]="!item.ch.on" (click)="selectChannel(item.ch)">
-            <!-- Header -->
             <div class="ch-header" [style.border-left-color]="item.color">
               <span class="ch-num">{{ item.ch.number | number:'2.0-0' }}</span>
               <span class="ch-name" [title]="item.ch.name">{{ item.ch.name }}</span>
               <span class="ch-xr-dot" [style.background]="item.xrColor"></span>
             </div>
-
-            <!-- Mini EQ curve -->
             <div class="mini-chart-wrap">
               <canvas #miniCanvas></canvas>
             </div>
-
-            <!-- Info row -->
             <div class="ch-info">
-              <!-- Fader bar -->
               <div class="fader-wrap" title="Fader: {{ item.ch.faderDb | number:'1.1-1' }} dB">
                 <div class="fader-bar">
                   <div class="fader-fill" [style.width.%]="faderPct(item.ch.faderDb)" [style.background]="item.color"></div>
@@ -78,8 +129,6 @@
                   {{ isFinite(item.ch.faderDb) ? (item.ch.faderDb | number:'1.1-1') + ' dB' : '-∞' }}
                 </span>
               </div>
-
-              <!-- Badges -->
               <div class="ch-badges">
                 <span class="badge badge-sm" [class.badge-success]="item.ch.gateOn" [class.badge-ghost]="!item.ch.gateOn">G</span>
                 <span class="badge badge-sm" [class.badge-warning]="item.ch.dynOn" [class.badge-ghost]="!item.ch.dynOn">
@@ -98,13 +147,11 @@
       <div class="combined-wrap">
         <div class="combined-header">
           <h3 class="text-base font-semibold">Respuesta EQ — todos los canales activos</h3>
-          <p class="text-xs text-base-content/50 mt-0.5">Canales silenciados o sin EQ excluidos. Pasa el cursor para ver valores.</p>
+          <p class="text-xs text-base-content/50 mt-0.5">Canales silenciados o sin EQ excluidos.</p>
         </div>
         <div class="combined-chart-wrap">
           <canvas id="combinedCanvas"></canvas>
         </div>
-
-        <!-- Frequency occupation hint table -->
         <div class="freq-table-wrap">
           <h4 class="text-sm font-semibold mb-2 text-base-content/70">Ocupación de frecuencias por canal</h4>
           <div class="overflow-x-auto">
@@ -112,7 +159,7 @@
               <thead>
                 <tr>
                   <th>Canal</th>
-                  <th>Banda baja (&lt;300Hz)</th>
+                  <th>Baja (&lt;300Hz)</th>
                   <th>Medios (300–3kHz)</th>
                   <th>Agudos (&gt;3kHz)</th>
                   <th>Pico máx.</th>
@@ -122,10 +169,7 @@
                 @for (item of channelCurves(); track item.ch.key) {
                   @if (item.ch.on && item.ch.eqEnabled) {
                     <tr>
-                      <td>
-                        <span class="ch-dot" [style.background]="item.color"></span>
-                        {{ item.ch.name }}
-                      </td>
+                      <td><span class="ch-dot" [style.background]="item.color"></span>{{ item.ch.name }}</td>
                       <td>{{ avgBand(item.curve, 20, 300) | number:'1.1-1' }} dB</td>
                       <td>{{ avgBand(item.curve, 300, 3000) | number:'1.1-1' }} dB</td>
                       <td>{{ avgBand(item.curve, 3000, 20000) | number:'1.1-1' }} dB</td>
@@ -189,8 +233,6 @@
           </div>
           <button class="btn btn-ghost btn-sm btn-circle" (click)="closeDetail()">✕</button>
         </div>
-
-        <!-- Stats row -->
         <div class="detail-stats">
           <div class="stat-chip">
             <span class="stat-label">Fader</span>
@@ -213,8 +255,6 @@
             <span class="stat-value">{{ ch.eqEnabled ? ch.eqMode : 'OFF' }}</span>
           </div>
         </div>
-
-        <!-- EQ bands table -->
         @if (ch.eqBands.length > 0) {
           <div class="eq-bands-table">
             <table class="table table-xs w-full">
@@ -237,10 +277,58 @@
             </table>
           </div>
         }
-
-        <!-- Detail EQ chart -->
         <div class="detail-chart-wrap">
           <canvas id="detailCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Save modal ───────────────────────────────────────────────────────── -->
+  @if (showSaveModal()) {
+    <div class="modal-backdrop" (click)="closeSaveModal()">
+      <div class="detail-modal" style="max-width:460px" (click)="$event.stopPropagation()">
+        <div class="detail-header">
+          <h2 class="text-lg font-bold">Guardar en biblioteca</h2>
+          <button class="btn btn-ghost btn-sm btn-circle" (click)="closeSaveModal()">✕</button>
+        </div>
+        <div class="flex flex-col gap-3">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Nombre *</span></label>
+            <input type="text" class="input input-bordered input-sm"
+                   [ngModel]="saveName()" (ngModelChange)="saveName.set($event)"
+                   placeholder="Ej: Sala Razzmatazz — Main" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Sala / Venue</span></label>
+            <input type="text" class="input input-bordered input-sm"
+                   [ngModel]="saveVenue()" (ngModelChange)="saveVenue.set($event)"
+                   placeholder="Nombre de la sala" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Concierto asociado</span></label>
+            <select class="select select-bordered select-sm"
+                    [ngModel]="saveGigId()" (ngModelChange)="saveGigId.set($event)">
+              <option value="">Sin concierto</option>
+              @for (gig of gigs(); track gig.id) {
+                <option [value]="gig.id">{{ gig.date | date:'dd/MM/yy' }} — {{ gig.venueName ?? gig.title }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Notas</span></label>
+            <textarea class="textarea textarea-bordered textarea-sm" rows="2"
+                      [ngModel]="saveNotes()" (ngModelChange)="saveNotes.set($event)"
+                      placeholder="Observaciones, configuración especial..."></textarea>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-2">
+          <button class="btn btn-ghost btn-sm" (click)="closeSaveModal()">Cancelar</button>
+          <button class="btn btn-primary btn-sm" [disabled]="!saveName().trim() || saveLoading()"
+                  (click)="confirmSave()">
+            @if (saveLoading()) { <span class="loading loading-spinner loading-xs"></span> }
+            Guardar
+          </button>
         </div>
       </div>
     </div>

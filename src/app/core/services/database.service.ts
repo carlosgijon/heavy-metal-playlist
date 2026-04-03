@@ -10,6 +10,7 @@ import { Transaction, WishListItem } from '../models/finance.model';
 import { MerchItem, MerchSaleDto, MerchRestockDto, MerchWaitingEntry } from '../models/merch.model';
 import { Rehearsal, RehearsalSongEntry } from '../models/rehearsal.model';
 import { Poll, PollResults, CreatePollDto, PollStatus, PollOption } from '../models/poll.model';
+import { ScnFile, SaveScnFileDto, UpdateScnFileDto } from '../models/mixer.model';
 
 @Injectable({ providedIn: 'root' })
 export class DatabaseService {
@@ -645,5 +646,23 @@ export class DatabaseService {
 
   getPollResults(pollId: string): Promise<PollResults> {
     return this.get(`/polls/${pollId}/results`);
+  }
+
+  // -- SCN Files (Mixer) ------------------------------------------------------
+
+  getScnFiles(): Promise<ScnFile[]> {
+    return this.get('/mixer/scn-files');
+  }
+
+  saveScnFile(dto: SaveScnFileDto): Promise<ScnFile> {
+    return this.post('/mixer/scn-files', dto);
+  }
+
+  updateScnFile(id: string, dto: UpdateScnFileDto): Promise<ScnFile> {
+    return this.patch(`/mixer/scn-files/${id}`, dto);
+  }
+
+  deleteScnFile(id: string): Promise<void> {
+    return this.del(`/mixer/scn-files/${id}`);
   }
 }

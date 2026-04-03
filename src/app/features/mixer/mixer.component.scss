@@ -1,3 +1,68 @@
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.library-panel {
+  background: oklch(var(--b2));
+  border: 1px solid oklch(var(--bc) / 0.08);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.library-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  border: 1px solid oklch(var(--bc) / 0.06);
+  transition: background 0.15s;
+
+  &:hover { background: oklch(var(--b3)); }
+  &.active { border-color: oklch(var(--p) / 0.4); background: oklch(var(--p) / 0.06); }
+}
+
+.library-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.library-item-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.library-item-meta {
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+.library-item-notes {
+  font-size: 0.7rem;
+  opacity: 0.4;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .drop-zone {
   display: flex;
   flex-direction: column;
