@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
 import { DatabaseService } from '../../core/services/database.service';
+import { NAV_THEMES, applyNavTheme } from '../../core/nav-theme';
 
 export const FONT_SIZE_MAP: Record<string, string> = {
   xs: '13px',
@@ -86,15 +87,6 @@ const FONT_SIZE_OPTIONS = [
         class="select select-bordered select-sm w-full mb-5"
         [(ngModel)]="currentTheme"
         (ngModelChange)="changeTheme($event)">
-        <optgroup label="── Slack ──────────">
-          <option value="slack-aubergine">Slack Aubergine</option>
-          <option value="slack-light">Slack Light</option>
-          <option value="slack-dark">Slack Dark</option>
-          <option value="slack-ocean">Slack Ocean</option>
-          <option value="slack-tomato">Slack Tomato</option>
-          <option value="slack-evergreen">Slack Evergreen</option>
-          <option value="slack-warm">Slack Warm</option>
-        </optgroup>
         <optgroup label="── Apps ────────────">
           <option value="github-dark">GitHub Dark</option>
           <option value="discord">Discord</option>
@@ -149,6 +141,32 @@ const FONT_SIZE_OPTIONS = [
           <option value="silk">Silk</option>
         </optgroup>
       </select>
+
+      <!-- ── Color de navegación ───────────────────────── -->
+      <p class="section-label">Color de navegación</p>
+      <p class="nav-theme-hint">Personaliza el color del menú lateral, cabecera y pie de página de forma independiente al tema principal.</p>
+      <div class="nav-theme-grid mb-5">
+        @for (nt of navThemes; track nt.id) {
+          <button
+            class="nav-theme-card"
+            [class.nav-theme-card-active]="currentNavTheme === nt.id"
+            (click)="changeNavTheme(nt.id)"
+            [title]="nt.name">
+            <div class="nav-theme-swatch">
+              @if (nt.id === 'default') {
+                <div class="nav-swatch-default">
+                  <span>A</span>
+                </div>
+              } @else {
+                <div class="nav-swatch-bg" [style.background]="nt.preview.bg">
+                  <div class="nav-swatch-accent" [style.background]="nt.preview.accent"></div>
+                </div>
+              }
+            </div>
+            <span class="nav-theme-name">{{ nt.name }}</span>
+          </button>
+        }
+      </div>
 
       <!-- ── Tamaño de letra ──────────────────────────── -->
       <p class="section-label">Tamaño de letra</p>
@@ -332,6 +350,84 @@ const FONT_SIZE_OPTIONS = [
       font-size: 0.8rem;
       font-style: italic;
     }
+
+    /* ── Nav theme picker ── */
+    .nav-theme-hint {
+      font-size: 0.72rem;
+      opacity: 0.55;
+      margin: -0.3rem 0 0.6rem;
+      line-height: 1.4;
+    }
+
+    .nav-theme-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.4rem;
+    }
+
+    .nav-theme-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.25rem 0.35rem;
+      border-radius: 0.5rem;
+      border: 2px solid oklch(var(--b3));
+      background: oklch(var(--b2));
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+
+      &:hover { border-color: oklch(var(--p) / 0.5); }
+
+      &.nav-theme-card-active {
+        border-color: oklch(var(--p));
+        background: oklch(var(--p) / 0.08);
+      }
+    }
+
+    .nav-theme-swatch {
+      width: 100%;
+      height: 36px;
+      border-radius: 0.3rem;
+      overflow: hidden;
+    }
+
+    .nav-swatch-default {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, oklch(var(--b2)) 50%, oklch(var(--b3)) 50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      opacity: 0.5;
+    }
+
+    .nav-swatch-bg {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 4px;
+    }
+
+    .nav-swatch-accent {
+      height: 5px;
+      border-radius: 2px;
+      width: 55%;
+    }
+
+    .nav-theme-name {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      opacity: 0.65;
+      text-align: center;
+      line-height: 1;
+    }
   `],
 })
 export class SettingsDialogComponent implements OnInit {
@@ -341,10 +437,12 @@ export class SettingsDialogComponent implements OnInit {
   currentTheme = 'dark';
   currentFontSize = 'md';
   currentFontFamily = 'system';
+  currentNavTheme = 'default';
   fontSearch = '';
 
   readonly fontSizeOptions = FONT_SIZE_OPTIONS;
   readonly fontFamilyOptions = FONT_FAMILY_OPTIONS;
+  readonly navThemes = NAV_THEMES;
 
   get filteredFonts() {
     const q = this.fontSearch.trim().toLowerCase();
@@ -364,6 +462,7 @@ export class SettingsDialogComponent implements OnInit {
       this.currentFontFamily = settings.fontFamily
         ? (Object.entries(FONT_FAMILY_MAP).find(([, v]) => v === settings.fontFamily)?.[0] ?? 'system')
         : 'system';
+      this.currentNavTheme = settings.navTheme ?? 'default';
     } catch { /* non-critical */ }
   }
 
@@ -388,6 +487,13 @@ export class SettingsDialogComponent implements OnInit {
     document.documentElement.style.fontFamily = stack;
     localStorage.setItem('fontFamily', stack);
     await this.db.setSettings({ fontFamily: stack });
+  }
+
+  async changeNavTheme(id: string): Promise<void> {
+    this.currentNavTheme = id;
+    applyNavTheme(id);
+    localStorage.setItem('navTheme', id);
+    await this.db.setSettings({ navTheme: id });
   }
 
   close(): void {

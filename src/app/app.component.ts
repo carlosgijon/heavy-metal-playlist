@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { applyNavTheme } from './core/nav-theme';
 import { CommonModule } from '@angular/common';
 import { Dialog } from '@angular/cdk/dialog';
 import { NgIconComponent } from '@ng-icons/core';
@@ -71,6 +72,8 @@ export class AppComponent implements OnInit {
     if (cachedFontSize) document.documentElement.style.fontSize = cachedFontSize;
     const cachedFontFamily = localStorage.getItem('fontFamily');
     if (cachedFontFamily) document.documentElement.style.fontFamily = cachedFontFamily;
+    const cachedNavTheme = localStorage.getItem('navTheme');
+    if (cachedNavTheme) applyNavTheme(cachedNavTheme);
 
     await this.auth.init();
     // Confirm settings from server
@@ -87,6 +90,10 @@ export class AppComponent implements OnInit {
       if (settings.fontFamily) {
         document.documentElement.style.fontFamily = settings.fontFamily;
         localStorage.setItem('fontFamily', settings.fontFamily);
+      }
+      if (settings.navTheme) {
+        applyNavTheme(settings.navTheme);
+        localStorage.setItem('navTheme', settings.navTheme);
       }
     } catch { /* non-critical */ }
   }

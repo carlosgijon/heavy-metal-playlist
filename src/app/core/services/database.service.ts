@@ -123,11 +123,11 @@ export class DatabaseService {
 
   // -- Settings --------------------------------------------------------------
 
-  getSettings(): Promise<{ theme: string; fontSize?: string; fontFamily?: string }> {
+  getSettings(): Promise<{ theme: string; fontSize?: string; fontFamily?: string; navTheme?: string }> {
     return this.get('/settings');
   }
 
-  setSettings(partial: { theme?: string; fontSize?: string; fontFamily?: string }): Promise<void> {
+  setSettings(partial: { theme?: string; fontSize?: string; fontFamily?: string; navTheme?: string }): Promise<void> {
     return this.post('/settings', partial);
   }
 
