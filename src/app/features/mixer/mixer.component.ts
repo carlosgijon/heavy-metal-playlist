@@ -275,6 +275,15 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
     curves.forEach((item, i) => {
       const canvas = canvases[i]?.nativeElement;
       if (!canvas) return;
+
+      // Adaptive y-axis: at least ±3 dB visible, padded 20%
+      const rawMin = Math.min(...item.curve);
+      const rawMax = Math.max(...item.curve);
+      const span   = Math.max(6, rawMax - rawMin);
+      const pad    = span * 0.20;
+      const yMin   = Math.min(-3, rawMin - pad);
+      const yMax   = Math.max( 3, rawMax + pad);
+
       const chart = new Chart(canvas, {
         type: 'line',
         data: {
@@ -301,7 +310,7 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
               border: { display: false },
             },
             y: {
-              min: -18, max: 18,
+              min: yMin, max: yMax,
               ticks: { display: false },
               grid: { color: gridColor, lineWidth: 0.5 },
               border: { display: false },
