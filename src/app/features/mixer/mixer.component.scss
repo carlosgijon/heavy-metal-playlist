@@ -97,6 +97,7 @@
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
   border: 1px solid oklch(var(--bc) / 0.08);
+  color: oklch(var(--bc));
 
   &:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
   &.muted { opacity: 0.45; }
@@ -109,7 +110,7 @@
   padding: 0.45rem 0.6rem 0.35rem;
   border-left: 3px solid transparent;
   background: oklch(var(--b3));
-  color: oklch(var(--bc));
+  color: inherit;
 }
 
 .ch-num {

@@ -255,8 +255,11 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
 
   // ── Theme-aware chart colors ─────────────────────────────────────────────────
 
-  get cardTextColor(): string {
-    return this.isDarkTheme() ? '#e5e7eb' : '#111827';
+  debugChannels(): string {
+    return this.channelCurves().map(item =>
+      `Ch${item.ch.number} "${item.ch.name}" eqEnabled=${item.ch.eqEnabled} bands=${item.ch.eqBands.length}\n` +
+      item.ch.eqBands.map(b => `  ${b.type} ${b.freq}Hz ${b.gain}dB Q=${b.q}`).join('\n')
+    ).join('\n');
   }
 
   private isDarkTheme(): boolean {
