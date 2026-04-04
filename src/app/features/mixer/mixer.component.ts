@@ -1,31 +1,23 @@
 import {
-  Component, OnDestroy, AfterViewInit, ViewChildren, QueryList,
-  ElementRef, signal, computed, ChangeDetectionStrategy, inject,
+  Component, OnInit, signal, computed, inject, ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Chart, registerables } from 'chart.js';
-import { parseScn, ScnData, ChannelData, XR_COLORS } from './scn-parser';
-import { computeEqCurve, computeGeqCurve, logFreqs, fmtFreq } from './eq-calculator';
+import { Dialog } from '@angular/cdk/dialog';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
-import { ScnFile } from '../../core/models/mixer.model';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { ScnFile, SaveScnFileDto } from '../../core/models/mixer.model';
 import { Gig, Venue } from '../../core/models/gig.model';
+import { parseScn, ChannelData } from './scn-parser';
 
-Chart.register(...registerables);
-
-const FREQS = logFreqs(200);
-
-/** Convert a curve (dB array) to Chart.js {x,y} points paired with FREQS */
-function toPts(curve: number[]): { x: number; y: number }[] {
-  return FREQS.map((f, i) => ({ x: f, y: curve[i] }));
+export interface VenueGroup {
+  venueId: string | null;
+  venueName: string;
+  city?: string;
+  files: ScnFile[];
+  expanded: boolean;
 }
-
-const CHANNEL_COLORS = [
-  '#ef4444','#f97316','#eab308','#22c55e','#06b6d4',
-  '#3b82f6','#8b5cf6','#ec4899','#14b8a6','#84cc16',
-  '#f43f5e','#a78bfa','#34d399','#fbbf24','#60a5fa','#fb7185',
-];
 
 @Component({
   selector: 'app-mixer',
@@ -35,459 +27,267 @@ const CHANNEL_COLORS = [
   templateUrl: './mixer.component.html',
   styleUrls: ['./mixer.component.scss'],
 })
-export class MixerComponent implements AfterViewInit, OnDestroy {
-  @ViewChildren('miniCanvas') miniCanvases!: QueryList<ElementRef<HTMLCanvasElement>>;
+export class MixerComponent implements OnInit {
+  private readonly db     = inject(DatabaseService);
+  private readonly toast  = inject(ToastService);
+  private readonly dialog = inject(Dialog);
 
-  private readonly db = inject(DatabaseService);
-  private readonly toast = inject(ToastService);
+  readonly loading      = signal(true);
+  readonly scnFiles     = signal<ScnFile[]>([]);
+  readonly gigs         = signal<Gig[]>([]);
+  readonly venues       = signal<Venue[]>([]);
 
-  readonly scnData       = signal<ScnData | null>(null);
-  readonly activeTab     = signal<'canales' | 'combinado' | 'buses'>('canales');
-  readonly selectedChannel = signal<ChannelData | null>(null);
-  readonly isDragging    = signal(false);
-  readonly debugRaw      = signal<string[]>([]);
+  // Detail panel
+  readonly selectedFile    = signal<ScnFile | null>(null);
+  readonly selectedChannels = signal<ChannelData[]>([]);
+  readonly channelSearch   = signal('');
 
-  // Library
-  readonly scnFiles      = signal<ScnFile[]>([]);
-  readonly gigs          = signal<Gig[]>([]);
-  readonly venues        = signal<Venue[]>([]);
-  readonly showLibrary   = signal(false);
-  readonly showSaveModal = signal(false);
-  readonly saveName      = signal('');
-  readonly saveNotes     = signal('');
-  readonly saveGigId     = signal('');
-  readonly saveVenueId   = signal('');
-  readonly saveLoading   = signal(false);
-  readonly loadedFileId  = signal<string | null>(null);
+  // Upload modal
+  readonly showUploadModal = signal(false);
+  readonly uploadName      = signal('');
+  readonly uploadNotes     = signal('');
+  readonly uploadGigId     = signal('');
+  readonly uploadVenueId   = signal('');
+  readonly uploadContent   = signal('');
+  readonly uploadFileName  = signal('');
+  readonly uploadSaving    = signal(false);
 
-  private combinedChart: Chart | null = null;
-  private detailChart: Chart | null = null;
-  private miniCharts: Chart[] = [];
+  // Edit modal
+  readonly showEditModal  = signal(false);
+  readonly editFile       = signal<ScnFile | null>(null);
+  readonly editName       = signal('');
+  readonly editNotes      = signal('');
+  readonly editGigId      = signal('');
+  readonly editVenueId    = signal('');
+  readonly editSaving     = signal(false);
 
-  readonly channelCurves = computed(() => {
-    const data = this.scnData();
-    if (!data) return [];
-    return data.inputChannels.map(ch => ({
-      ch,
-      curve: ch.eqMode === 'GEQ'
-        ? computeGeqCurve(ch.geqBands, FREQS)
-        : computeEqCurve(ch.eqBands, FREQS),
-      color: CHANNEL_COLORS[(ch.number - 1) % CHANNEL_COLORS.length],
-      xrColor: XR_COLORS[ch.color] ?? '#6b7280',
-    }));
+  readonly venueGroups = computed<VenueGroup[]>(() => {
+    const files   = this.scnFiles();
+    const venues  = this.venues();
+    const gigs    = this.gigs();
+    const groups  = new Map<string, VenueGroup>();
+
+    for (const file of files) {
+      const key = file.venueId ?? '__none__';
+      if (!groups.has(key)) {
+        const venue = file.venueId ? venues.find(v => v.id === file.venueId) : null;
+        const gigVenue = !file.venueId && file.gigId
+          ? gigs.find(g => g.id === file.gigId)
+          : null;
+        groups.set(key, {
+          venueId:   file.venueId ?? null,
+          venueName: venue?.name ?? gigVenue?.venueName ?? 'Sin sala asignada',
+          city:      venue?.city,
+          files:     [],
+          expanded:  true,
+        });
+      }
+      groups.get(key)!.files.push(file);
+    }
+
+    // Sort: venues with name first, 'Sin sala' last
+    return Array.from(groups.values()).sort((a, b) => {
+      if (!a.venueId && b.venueId) return 1;
+      if (a.venueId && !b.venueId) return -1;
+      return a.venueName.localeCompare(b.venueName);
+    });
   });
 
-  readonly busCurves = computed(() => {
-    const data = this.scnData();
-    if (!data) return [];
-    return data.buses.map(ch => ({
-      ch,
-      curve: ch.eqMode === 'GEQ'
-        ? computeGeqCurve(ch.geqBands, FREQS)
-        : computeEqCurve(ch.eqBands, FREQS),
-      color: CHANNEL_COLORS[(ch.number + 8) % CHANNEL_COLORS.length],
-      xrColor: XR_COLORS[ch.color] ?? '#6b7280',
-    }));
+  readonly filteredChannels = computed(() => {
+    const q = this.channelSearch().toLowerCase().trim();
+    if (!q) return this.selectedChannels();
+    return this.selectedChannels().filter(ch => ch.name.toLowerCase().includes(q));
   });
 
-  ngAfterViewInit() {
-    this.loadLibrary();
-  }
-
-  ngOnDestroy() {
-    this.destroyAllCharts();
-  }
-
-  // ── Library ─────────────────────────────────────────────────────────────────
-
-  private async loadLibrary(): Promise<void> {
+  async ngOnInit(): Promise<void> {
     try {
-      const [files, gigs, venues] = await Promise.all([
+      const [files, gigs, venues] = await Promise.allSettled([
         this.db.getScnFiles(), this.db.getGigs(), this.db.getVenues(),
       ]);
-      this.scnFiles.set(files);
-      this.gigs.set(gigs);
-      this.venues.set(venues);
-    } catch {}
-  }
-
-  toggleLibrary(): void { this.showLibrary.update(v => !v); }
-
-  loadFromLibrary(file: ScnFile): void {
-    this.destroyAllCharts();
-    this.scnData.set(parseScn(file.content, file.name + '.scn'));
-    this.debugRaw.set(file.content.split(/\r?\n/).slice(0, 30));
-    this.loadedFileId.set(file.id);
-    this.selectedChannel.set(null);
-    this.showLibrary.set(false);
-    setTimeout(() => {
-      this.renderMiniCharts();
-      if (this.activeTab() === 'combinado') this.renderCombinedChart();
-    }, 50);
-  }
-
-  openSaveModal(): void {
-    const data = this.scnData();
-    if (!data) return;
-    this.saveName.set(data.sceneName || '');
-    this.saveNotes.set('');
-    this.saveVenueId.set('');
-    this.saveGigId.set('');
-    this.showSaveModal.set(true);
-  }
-
-  closeSaveModal(): void { this.showSaveModal.set(false); }
-
-  async confirmSave(): Promise<void> {
-    const data = this.scnData();
-    if (!data || !this.saveName().trim()) return;
-    this.saveLoading.set(true);
-    try {
-      const content = (data as any)._rawContent ?? '';
-      const file = await this.db.saveScnFile({
-        name: this.saveName().trim(),
-        content,
-        notes: this.saveNotes() || undefined,
-        gigId: this.saveGigId() || undefined,
-        venueId: this.saveVenueId() || undefined,
-      });
-      this.scnFiles.update(list => [file, ...list]);
-      this.loadedFileId.set(file.id);
-      this.showSaveModal.set(false);
-      this.toast.success('Archivo guardado en la biblioteca');
-    } catch (e: any) {
-      this.toast.danger(e?.toString() ?? 'Error al guardar');
+      if (files.status   === 'fulfilled') this.scnFiles.set(files.value);
+      if (gigs.status    === 'fulfilled') this.gigs.set(gigs.value);
+      if (venues.status  === 'fulfilled') this.venues.set(venues.value);
     } finally {
-      this.saveLoading.set(false);
+      this.loading.set(false);
     }
   }
 
-  async deleteFromLibrary(file: ScnFile, event: Event): Promise<void> {
-    event.stopPropagation();
-    try {
-      await this.db.deleteScnFile(file.id);
-      this.scnFiles.update(list => list.filter(f => f.id !== file.id));
-      if (this.loadedFileId() === file.id) this.loadedFileId.set(null);
-      this.toast.success('Archivo eliminado');
-    } catch (e: any) {
-      this.toast.danger(e?.toString() ?? 'Error al eliminar');
-    }
+  toggleGroup(group: VenueGroup): void {
+    group.expanded = !group.expanded;
+    this.scnFiles.update(v => [...v]); // trigger recompute
   }
 
-  gigName(gigId: string): string {
-    const gig = this.gigs().find(g => g.id === gigId);
-    return gig ? (gig.venueName ?? gig.title) : gigId;
+  // ── Detail panel ─────────────────────────────────────────────────────────────
+
+  openFile(file: ScnFile): void {
+    this.selectedFile.set(file);
+    this.channelSearch.set('');
+    const parsed = parseScn(file.content, file.name);
+    this.selectedChannels.set([...parsed.inputChannels, ...parsed.buses]);
   }
 
-  venueName(venueId: string): string {
-    return this.venues().find(v => v.id === venueId)?.name ?? venueId;
+  closeFile(): void {
+    this.selectedFile.set(null);
+    this.selectedChannels.set([]);
   }
 
-  onSaveGigChange(gigId: string): void {
-    this.saveGigId.set(gigId);
-    if (gigId) {
-      const gig = this.gigs().find(g => g.id === gigId);
-      if (gig?.venueId) this.saveVenueId.set(gig.venueId);
-    }
+  downloadFile(file: ScnFile, event?: Event): void {
+    event?.stopPropagation();
+    const blob = new Blob([file.content], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = file.name + '.scn';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
-  // ── File handling ───────────────────────────────────────────────────────────
+  // ── Upload ───────────────────────────────────────────────────────────────────
 
   onFileInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files?.[0]) this.readFile(input.files[0]);
+    const file  = input.files?.[0];
+    if (!file) return;
     input.value = '';
-  }
-
-  onDrop(event: DragEvent): void {
-    event.preventDefault();
-    this.isDragging.set(false);
-    const file = event.dataTransfer?.files[0];
-    if (file && (file.name.endsWith('.scn') || file.name.endsWith('.SCN'))) this.readFile(file);
-  }
-
-  onDragOver(event: DragEvent): void { event.preventDefault(); this.isDragging.set(true); }
-  onDragLeave(): void { this.isDragging.set(false); }
-
-  private readFile(file: File): void {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       const text = e.target?.result as string;
-      this.destroyAllCharts();
-      const parsed = parseScn(text, file.name) as any;
-      parsed._rawContent = text;
-      this.scnData.set(parsed);
-      this.loadedFileId.set(null);
-      this.selectedChannel.set(null);
-      // Capture first 30 lines for debug
-      this.debugRaw.set(text.split(/\r?\n/).slice(0, 30));
-      setTimeout(() => {
-        this.renderMiniCharts();
-        if (this.activeTab() === 'combinado') this.renderCombinedChart();
-      }, 50);
+      this.uploadContent.set(text);
+      this.uploadFileName.set(file.name.replace(/\.scn$/i, ''));
+      this.uploadName.set(file.name.replace(/\.scn$/i, ''));
+      this.uploadNotes.set('');
+      this.uploadGigId.set('');
+      this.uploadVenueId.set('');
+      this.showUploadModal.set(true);
     };
     reader.readAsText(file);
   }
 
-  // ── Tab switching ───────────────────────────────────────────────────────────
-
-  setTab(tab: 'canales' | 'combinado' | 'buses'): void {
-    this.activeTab.set(tab);
-    this.selectedChannel.set(null);
-    setTimeout(() => {
-      if (tab === 'combinado') this.renderCombinedChart();
-      else this.renderMiniCharts();
-    }, 50);
+  onUploadGigChange(gigId: string): void {
+    this.uploadGigId.set(gigId);
+    if (gigId) {
+      const gig = this.gigs().find(g => g.id === gigId);
+      if (gig?.venueId) this.uploadVenueId.set(gig.venueId);
+    }
   }
 
-  // ── Channel detail ──────────────────────────────────────────────────────────
+  closeUploadModal(): void { this.showUploadModal.set(false); }
 
-  selectChannel(ch: ChannelData): void {
-    this.selectedChannel.set(ch);
-    setTimeout(() => this.renderDetailChart(ch), 50);
+  async confirmUpload(): Promise<void> {
+    if (!this.uploadName().trim()) return;
+    this.uploadSaving.set(true);
+    try {
+      const dto: SaveScnFileDto = {
+        name:    this.uploadName().trim(),
+        content: this.uploadContent(),
+        notes:   this.uploadNotes() || undefined,
+        gigId:   this.uploadGigId() || undefined,
+        venueId: this.uploadVenueId() || undefined,
+      };
+      const saved = await this.db.saveScnFile(dto);
+      this.scnFiles.update(list => [saved, ...list]);
+      this.showUploadModal.set(false);
+      this.toast.success('Archivo guardado en la biblioteca');
+    } catch (e: any) {
+      this.toast.danger(e?.toString() ?? 'Error al guardar');
+    } finally {
+      this.uploadSaving.set(false);
+    }
   }
 
-  closeDetail(): void {
-    this.selectedChannel.set(null);
-    this.detailChart?.destroy();
-    this.detailChart = null;
+  // ── Edit ─────────────────────────────────────────────────────────────────────
+
+  openEdit(file: ScnFile, event: Event): void {
+    event.stopPropagation();
+    this.editFile.set(file);
+    this.editName.set(file.name);
+    this.editNotes.set(file.notes ?? '');
+    this.editGigId.set(file.gigId ?? '');
+    this.editVenueId.set(file.venueId ?? '');
+    this.showEditModal.set(true);
   }
 
-  // ── Theme-aware chart colors ─────────────────────────────────────────────────
+  closeEditModal(): void { this.showEditModal.set(false); }
 
-  debugChannels(): string {
-    return this.channelCurves().map(item =>
-      `Ch${item.ch.number} "${item.ch.name}" eqEnabled=${item.ch.eqEnabled} bands=${item.ch.eqBands.length}\n` +
-      item.ch.eqBands.map(b => `  ${b.type} ${b.freq}Hz ${b.gain}dB Q=${b.q}`).join('\n')
-    ).join('\n');
+  onEditGigChange(gigId: string): void {
+    this.editGigId.set(gigId);
+    if (gigId) {
+      const gig = this.gigs().find(g => g.id === gigId);
+      if (gig?.venueId) this.editVenueId.set(gig.venueId);
+    }
   }
 
-  private isDarkTheme(): boolean {
-    const b1 = getComputedStyle(document.documentElement).getPropertyValue('--b1').trim();
-    if (!b1) return true;
-    const L = parseFloat(b1.split(' ')[0]);
-    return isNaN(L) || L < 0.5;
-  }
-
-  private chartTextColor(): string  { return this.isDarkTheme() ? '#9ca3af' : '#374151'; }
-  private chartGridColor(): string  { return this.isDarkTheme() ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'; }
-  private chartLegendColor(): string { return this.isDarkTheme() ? '#d1d5db' : '#1f2937'; }
-
-  // ── Chart rendering ─────────────────────────────────────────────────────────
-
-  private renderMiniCharts(): void {
-    this.miniCharts.forEach(c => c.destroy());
-    this.miniCharts = [];
-
-    const curves = this.activeTab() === 'buses' ? this.busCurves() : this.channelCurves();
-    const canvases = this.miniCanvases.toArray();
-    const gridColor = this.chartGridColor();
-
-    curves.forEach((item, i) => {
-      const canvas = canvases[i]?.nativeElement;
-      if (!canvas) return;
-
-      // Adaptive y-axis: at least ±3 dB visible, padded 20%
-      const rawMin = Math.min(...item.curve);
-      const rawMax = Math.max(...item.curve);
-      const span   = Math.max(6, rawMax - rawMin);
-      const pad    = span * 0.20;
-      const yMin   = Math.min(-3, rawMin - pad);
-      const yMax   = Math.max( 3, rawMax + pad);
-
-      const chart = new Chart(canvas, {
-        type: 'line',
-        data: {
-          datasets: [{
-            data: toPts(item.curve),
-            borderColor: item.color,
-            borderWidth: 1.5,
-            pointRadius: 0,
-            fill: { target: { value: 0 }, above: item.color + '22', below: item.color + '22' },
-            tension: 0.3,
-          }],
-        },
-        options: {
-          animation: false,
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          scales: {
-            x: {
-              type: 'logarithmic',
-              min: 20, max: 20000,
-              ticks: { display: false },
-              grid: { color: gridColor },
-              border: { display: false },
-            },
-            y: {
-              min: yMin, max: yMax,
-              ticks: { display: false },
-              grid: { color: gridColor, lineWidth: 0.5 },
-              border: { display: false },
-            },
-          },
-        },
+  async confirmEdit(): Promise<void> {
+    const file = this.editFile();
+    if (!file || !this.editName().trim()) return;
+    this.editSaving.set(true);
+    try {
+      const updated = await this.db.updateScnFile({
+        id:      file.id,
+        name:    this.editName().trim(),
+        notes:   this.editNotes() || undefined,
+        gigId:   this.editGigId() || null,
+        venueId: this.editVenueId() || null,
       });
-      this.miniCharts.push(chart);
+      this.scnFiles.update(list => list.map(f => f.id === updated.id ? updated : f));
+      if (this.selectedFile()?.id === updated.id) this.selectedFile.set(updated);
+      this.showEditModal.set(false);
+      this.toast.success('Archivo actualizado');
+    } catch (e: any) {
+      this.toast.danger(e?.toString() ?? 'Error al actualizar');
+    } finally {
+      this.editSaving.set(false);
+    }
+  }
+
+  // ── Delete ───────────────────────────────────────────────────────────────────
+
+  deleteFile(file: ScnFile, event: Event): void {
+    event.stopPropagation();
+    const ref = this.dialog.open<boolean>(ConfirmDialogComponent, {
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-dark-backdrop',
+      disableClose: true,
+      data: { title: 'Eliminar archivo', message: `¿Eliminar "${file.name}"?`, confirmLabel: 'Eliminar', danger: true } as ConfirmDialogData,
+    });
+    ref.closed.subscribe(async result => {
+      if (!result) return;
+      try {
+        await this.db.deleteScnFile(file.id);
+        this.scnFiles.update(list => list.filter(f => f.id !== file.id));
+        if (this.selectedFile()?.id === file.id) this.closeFile();
+        this.toast.success('Archivo eliminado');
+      } catch (e: any) {
+        this.toast.danger(e?.toString() ?? 'Error al eliminar');
+      }
     });
   }
 
-  private renderDetailChart(ch: ChannelData): void {
-    this.detailChart?.destroy();
-    const canvas = document.getElementById('detailCanvas') as HTMLCanvasElement;
-    if (!canvas) return;
+  // ── Helpers ──────────────────────────────────────────────────────────────────
 
-    const curve = ch.eqMode === 'GEQ'
-      ? computeGeqCurve(ch.geqBands, FREQS)
-      : computeEqCurve(ch.eqBands, FREQS);
-
-    const color = CHANNEL_COLORS[(ch.type === 'ch' ? ch.number - 1 : ch.number + 8) % CHANNEL_COLORS.length];
-    const textColor = this.chartTextColor();
-    const gridColor = this.chartGridColor();
-
-    // Adaptive y-axis for detail chart
-    const rawMin = Math.min(...curve);
-    const rawMax = Math.max(...curve);
-    const span   = Math.max(6, rawMax - rawMin);
-    const pad    = span * 0.25;
-    const yMin   = Math.min(-3, rawMin - pad);
-    const yMax   = Math.max( 3, rawMax + pad);
-
-    this.detailChart = new Chart(canvas, {
-      type: 'line',
-      data: {
-        datasets: [{
-          label: ch.name,
-          data: toPts(curve),
-          borderColor: color,
-          borderWidth: 2,
-          pointRadius: 0,
-          fill: { target: { value: 0 }, above: color + '33', below: color + '33' },
-          tension: 0.3,
-        }],
-      },
-      options: {
-        animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            mode: 'index',
-            intersect: false,
-            callbacks: {
-              title: (items) => `${fmtFreq((items[0].raw as any).x)} Hz`,
-              label: (item) => `${((item.raw as any).y as number).toFixed(1)} dB`,
-            },
-          },
-        },
-        scales: {
-          x: {
-            type: 'logarithmic',
-            min: 20, max: 20000,
-            ticks: {
-              color: textColor,
-              font: { size: 10 },
-              callback: (val) => {
-                const ticks = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
-                return ticks.includes(+val) ? fmtFreq(+val) : '';
-              },
-              maxRotation: 0,
-            },
-            grid: { color: gridColor },
-          },
-          y: {
-            min: yMin, max: yMax,
-            ticks: { color: textColor, font: { size: 10 }, callback: (val) => `${val} dB`, stepSize: Math.ceil(span / 6) },
-            grid: { color: gridColor },
-          },
-        },
-      },
-    });
+  gigLabel(gigId: string): string {
+    const gig = this.gigs().find(g => g.id === gigId);
+    return gig ? `${gig.title}${gig.date ? ' · ' + this.fmtDate(gig.date) : ''}` : gigId;
   }
 
-  renderCombinedChart(): void {
-    this.combinedChart?.destroy();
-    const canvas = document.getElementById('combinedCanvas') as HTMLCanvasElement;
-    if (!canvas) return;
-
-    const curves = this.channelCurves();
-    const activeChannels = curves.filter(c => c.ch.on && c.ch.eqEnabled);
-    const textColor  = this.chartTextColor();
-    const gridColor  = this.chartGridColor();
-    const legendColor = this.chartLegendColor();
-
-    this.combinedChart = new Chart(canvas, {
-      type: 'line',
-      data: {
-        datasets: activeChannels.map(item => ({
-          label: item.ch.name,
-          data: toPts(item.curve),
-          borderColor: item.color,
-          borderWidth: 1.8,
-          pointRadius: 0,
-          tension: 0.3,
-          fill: false,
-        })),
-      },
-      options: {
-        animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: {
-            display: true,
-            position: 'right',
-            labels: { color: legendColor, font: { size: 11 }, boxWidth: 12, padding: 8 },
-          },
-          tooltip: {
-            callbacks: {
-              title: (items) => `${fmtFreq((items[0].raw as any).x)} Hz`,
-              label: (item) => `${item.dataset.label}: ${((item.raw as any).y as number).toFixed(1)} dB`,
-            },
-          },
-        },
-        scales: {
-          x: {
-            type: 'logarithmic',
-            min: 20, max: 20000,
-            ticks: {
-              color: textColor, font: { size: 11 },
-              callback: (val) => {
-                const ticks = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
-                return ticks.includes(+val) ? fmtFreq(+val) : '';
-              },
-              maxRotation: 0,
-            },
-            grid: { color: gridColor },
-            title: { display: true, text: 'Frecuencia (Hz)', color: textColor, font: { size: 11 } },
-          },
-          y: {
-            min: -18, max: 18,
-            ticks: { color: textColor, font: { size: 11 }, callback: (val) => `${val} dB`, stepSize: 6 },
-            grid: { color: gridColor },
-            title: { display: true, text: 'Ganancia (dB)', color: textColor, font: { size: 11 } },
-          },
-        },
-      },
-    });
+  fmtDate(d: string): string {
+    return new Date(d + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
   }
 
-  private destroyAllCharts(): void {
-    this.combinedChart?.destroy(); this.combinedChart = null;
-    this.detailChart?.destroy();   this.detailChart = null;
-    this.miniCharts.forEach(c => c.destroy()); this.miniCharts = [];
+  eqChip(ch: ChannelData): { label: string; cls: string } {
+    if (!ch.eqEnabled) return { label: 'EQ OFF', cls: 'chip-off' };
+    if (ch.eqMode === 'GEQ') return { label: 'GEQ', cls: 'chip-geq' };
+    const gains = ch.eqBands.map(b => b.gain).filter(g => g !== 0);
+    if (!gains.length) return { label: 'flat', cls: 'chip-flat' };
+    const maxG = Math.max(...gains.map(Math.abs));
+    const best = gains.find(g => Math.abs(g) === maxG)!;
+    const sign = best > 0 ? '+' : '';
+    return maxG >= 5
+      ? { label: `${sign}${best.toFixed(1)} dB`, cls: best > 0 ? 'chip-boost' : 'chip-cut' }
+      : { label: `${sign}${best.toFixed(1)} dB`, cls: 'chip-mild' };
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-
-  isFinite(n: number): boolean { return Number.isFinite(n); }
-
-  faderPct(db: number): number {
-    if (!isFinite(db)) return 0;
-    return Math.max(0, Math.min(100, (db + 90) / 90 * 100));
+  faderLabel(db: number): string {
+    return isFinite(db) ? `${db > 0 ? '+' : ''}${db.toFixed(1)} dB` : '-∞';
   }
 
   panLabel(pan: number): string {
@@ -495,25 +295,13 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
     return pan < 0 ? `L${Math.abs(pan)}` : `R${pan}`;
   }
 
-  xrColor(idx: number): string { return XR_COLORS[idx] ?? '#6b7280'; }
-
-  getChannelColor(ch: ChannelData): string {
-    return CHANNEL_COLORS[(ch.type === 'ch' ? ch.number - 1 : ch.number + 8) % CHANNEL_COLORS.length];
+  fmtFreq(f: number): string {
+    if (f >= 1000) return `${+(f / 1000).toPrecision(2)}k`;
+    return `${Math.round(f)}`;
   }
 
-  trackByKey(_: number, item: { ch: ChannelData }): string { return item.ch.key; }
-  trackById(_: number, item: ScnFile): string { return item.id; }
+  isFinite(n: number): boolean { return Number.isFinite(n); }
 
-  avgBand(curve: number[], lo: number, hi: number): number {
-    const indices = FREQS.map((f, i) => ({ f, i })).filter(({ f }) => f >= lo && f <= hi).map(({ i }) => i);
-    if (!indices.length) return 0;
-    return indices.reduce((s, i) => s + curve[i], 0) / indices.length;
-  }
-
-  maxGain(curve: number[]): number { return Math.max(...curve); }
-
-  peakFreq(curve: number[]): string {
-    const idx = curve.indexOf(Math.max(...curve));
-    return fmtFreq(FREQS[idx]) + ' Hz';
-  }
+  trackById(_: number, item: { id: string }): string { return item.id; }
+  trackByKey(_: number, item: ChannelData): string { return item.key; }
 }
