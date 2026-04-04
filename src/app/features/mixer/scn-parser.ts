@@ -78,23 +78,55 @@ function applyLine(ch: ChannelData, rest: string): void {
   const configM = rest.match(/^config\s+"([^"]*)"\s+(\d+)/);
   if (configM) { if (configM[1]) ch.name = configM[1]; ch.color = parseInt(configM[2]); return; }
 
-  // eq ON [GEQ|PEQ]? / eq OFF
-  const eqModeM = rest.match(/^eq (ON|OFF)(?:\s+(\S+))?/);
-  if (eqModeM) {
-    ch.eqEnabled = eqModeM[1] === 'ON';
-    if (eqModeM[2] === 'GEQ') ch.eqMode = 'GEQ';
+  // eq/N [ON|OFF] TYPE FREQ GAIN Q  (per-band line, optional enabled flag)
+  const eqBandM = rest.match(/^eq\/(\d+)\s+(?:(?:ON|OFF)\s+)?(\S+)\s+(\S+)\s+([+-]?\S+)\s+(\S+)/);
+  if (eqBandM) {
+    const freq = parseFreq(eqBandM[3]);
+    if (isFinite(freq) && freq > 0) {
+      ch.eqBands.push({
+        type: eqBandM[2],
+        freq,
+        gain: parseFloat(eqBandM[4]),
+        q:    parseFloat(eqBandM[5]),
+      });
+    }
     return;
   }
 
-  // eq/N TYPE FREQ GAIN Q
-  const eqBandM = rest.match(/^eq\/\d+\s+(\S+)\s+(\S+)\s+([+-]?\S+)\s+(\S+)/);
-  if (eqBandM) {
-    ch.eqBands.push({
-      type: eqBandM[1],
-      freq: parseFreq(eqBandM[2]),
-      gain: parseFloat(eqBandM[3]),
-      q: parseFloat(eqBandM[4]),
-    });
+  // eq ... — handles multiple sub-formats on one line:
+  //   eq ON|OFF [GEQ|PEQ]          → mode/enable only
+  //   eq ON|OFF (0|1) TYPE FREQ GAIN Q ...  → compact with mode prefix
+  //   eq (0|1) TYPE FREQ GAIN Q ...         → compact without mode prefix
+  if (rest.startsWith('eq ')) {
+    const tokens = rest.slice(3).trim().split(/\s+/);
+    let idx = 0;
+
+    // Optional ON/OFF (eq enabled)
+    if (tokens[idx] === 'ON' || tokens[idx] === 'OFF') {
+      ch.eqEnabled = tokens[idx] === 'ON';
+      idx++;
+    }
+
+    // Optional mode token (GEQ|PEQ)
+    if (tokens[idx] === 'GEQ' || tokens[idx] === 'PEQ') {
+      if (tokens[idx] === 'GEQ') ch.eqMode = 'GEQ';
+      idx++;
+    }
+
+    // Compact bands: groups of 5 tokens → (0|1) TYPE FREQ GAIN Q
+    if (tokens[idx] === '0' || tokens[idx] === '1') {
+      while (idx + 4 < tokens.length) {
+        // tokens[idx] = enabled flag (skip)
+        const type = tokens[idx + 1];
+        const freq = parseFreq(tokens[idx + 2]);
+        const gain = parseFloat(tokens[idx + 3]);
+        const q    = parseFloat(tokens[idx + 4]);
+        if (isFinite(freq) && freq > 0) {
+          ch.eqBands.push({ type, freq, gain, q });
+        }
+        idx += 5;
+      }
+    }
     return;
   }
 
