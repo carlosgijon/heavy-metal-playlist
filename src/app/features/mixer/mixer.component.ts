@@ -346,6 +346,14 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
     const textColor = this.chartTextColor();
     const gridColor = this.chartGridColor();
 
+    // Adaptive y-axis for detail chart
+    const rawMin = Math.min(...curve);
+    const rawMax = Math.max(...curve);
+    const span   = Math.max(6, rawMax - rawMin);
+    const pad    = span * 0.25;
+    const yMin   = Math.min(-3, rawMin - pad);
+    const yMax   = Math.max( 3, rawMax + pad);
+
     this.detailChart = new Chart(canvas, {
       type: 'line',
       data: {
@@ -390,8 +398,8 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
             grid: { color: gridColor },
           },
           y: {
-            min: -18, max: 18,
-            ticks: { color: textColor, font: { size: 10 }, callback: (val) => `${val} dB`, stepSize: 6 },
+            min: yMin, max: yMax,
+            ticks: { color: textColor, font: { size: 10 }, callback: (val) => `${val} dB`, stepSize: Math.ceil(span / 6) },
             grid: { color: gridColor },
           },
         },
