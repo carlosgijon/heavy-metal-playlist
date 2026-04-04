@@ -45,6 +45,7 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
   readonly activeTab     = signal<'canales' | 'combinado' | 'buses'>('canales');
   readonly selectedChannel = signal<ChannelData | null>(null);
   readonly isDragging    = signal(false);
+  readonly debugRaw      = signal<string[]>([]);
 
   // Library
   readonly scnFiles      = signal<ScnFile[]>([]);
@@ -115,6 +116,7 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
   loadFromLibrary(file: ScnFile): void {
     this.destroyAllCharts();
     this.scnData.set(parseScn(file.content, file.name + '.scn'));
+    this.debugRaw.set(file.content.split(/\r?\n/).slice(0, 30));
     this.loadedFileId.set(file.id);
     this.selectedChannel.set(null);
     this.showLibrary.set(false);
@@ -217,6 +219,8 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
       this.scnData.set(parsed);
       this.loadedFileId.set(null);
       this.selectedChannel.set(null);
+      // Capture first 30 lines for debug
+      this.debugRaw.set(text.split(/\r?\n/).slice(0, 30));
       setTimeout(() => {
         this.renderMiniCharts();
         if (this.activeTab() === 'combinado') this.renderCombinedChart();
@@ -250,6 +254,10 @@ export class MixerComponent implements AfterViewInit, OnDestroy {
   }
 
   // ── Theme-aware chart colors ─────────────────────────────────────────────────
+
+  get cardTextColor(): string {
+    return this.isDarkTheme() ? '#e5e7eb' : '#111827';
+  }
 
   private isDarkTheme(): boolean {
     const b1 = getComputedStyle(document.documentElement).getPropertyValue('--b1').trim();

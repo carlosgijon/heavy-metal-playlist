@@ -108,10 +108,19 @@
 
     <!-- ── TAB: Canales ─────────────────────────────────────────────────────── -->
     @if (activeTab() === 'canales') {
+
+      <!-- DEBUG: raw file lines (remove once EQ parsing confirmed) -->
+      @if (debugRaw().length > 0) {
+        <details class="mb-4 text-xs opacity-60">
+          <summary class="cursor-pointer font-semibold">🔍 Debug: primeras líneas del archivo SCN</summary>
+          <pre class="mt-2 p-2 bg-base-300 rounded overflow-x-auto text-[10px]">{{ debugRaw().join('\n') }}</pre>
+        </details>
+      }
+
       <div class="channels-grid">
         @for (item of channelCurves(); track item.ch.key; let i = $index) {
           <div class="channel-card" [class.muted]="!item.ch.on" (click)="selectChannel(item.ch)">
-            <div class="ch-header" [style.border-left-color]="item.color">
+            <div class="ch-header" [style.border-left-color]="item.color" [style.color]="cardTextColor">
               <span class="ch-num">{{ item.ch.number | number:'2.0-0' }}</span>
               <span class="ch-name" [title]="item.ch.name">{{ item.ch.name }}</span>
               <span class="ch-xr-dot" [style.background]="item.xrColor"></span>
@@ -162,6 +171,7 @@
                   <th>Baja (&lt;300Hz)</th>
                   <th>Medios (300–3kHz)</th>
                   <th>Agudos (&gt;3kHz)</th>
+
                   <th>Pico máx.</th>
                 </tr>
               </thead>
