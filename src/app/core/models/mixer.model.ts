@@ -1,3 +1,5 @@
+export type ScnFileType = 'general' | 'sala' | 'concierto' | 'ensayo';
+
 export interface ScnFile {
   id: string;
   bandId: string;
@@ -6,6 +8,7 @@ export interface ScnFile {
   notes?: string;
   gigId?: string;
   venueId?: string;
+  type: ScnFileType;
   createdAt: string;
   updatedAt: string;
 }
@@ -16,6 +19,7 @@ export interface SaveScnFileDto {
   notes?: string;
   gigId?: string;
   venueId?: string;
+  type: ScnFileType;
 }
 
 export interface UpdateScnFileDto {
@@ -23,4 +27,5 @@ export interface UpdateScnFileDto {
   notes?: string;
   gigId?: string | null;
   venueId?: string | null;
+  type?: ScnFileType;
 }

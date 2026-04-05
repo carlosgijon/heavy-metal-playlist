@@ -7,7 +7,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
-import { ScnFile, SaveScnFileDto } from '../../core/models/mixer.model';
+import { ScnFile, SaveScnFileDto, ScnFileType } from '../../core/models/mixer.model';
 import { Gig, Venue } from '../../core/models/gig.model';
 import { parseScn, ChannelData } from './scn-parser';
 
@@ -37,6 +37,11 @@ export class MixerComponent implements OnInit {
   readonly gigs         = signal<Gig[]>([]);
   readonly venues       = signal<Venue[]>([]);
 
+  // Filters
+  readonly typeFilter  = signal<ScnFileType | 'all'>('all');
+  readonly venueFilter = signal('');
+  readonly gigFilter   = signal('');
+
   // Detail panel
   readonly selectedFile    = signal<ScnFile | null>(null);
   readonly selectedChannels = signal<ChannelData[]>([]);
@@ -48,6 +53,7 @@ export class MixerComponent implements OnInit {
   readonly uploadNotes     = signal('');
   readonly uploadGigId     = signal('');
   readonly uploadVenueId   = signal('');
+  readonly uploadType      = signal<ScnFileType>('general');
   readonly uploadContent   = signal('');
   readonly uploadFileName  = signal('');
   readonly uploadSaving    = signal(false);
@@ -59,6 +65,7 @@ export class MixerComponent implements OnInit {
   readonly editNotes      = signal('');
   readonly editGigId      = signal('');
   readonly editVenueId    = signal('');
+  readonly editType       = signal<ScnFileType>('general');
   readonly editSaving     = signal(false);
 
   readonly venueGroups = computed<VenueGroup[]>(() => {
@@ -93,6 +100,24 @@ export class MixerComponent implements OnInit {
     });
   });
 
+  readonly filteredGroups = computed<VenueGroup[]>(() => {
+    const type  = this.typeFilter();
+    const venue = this.venueFilter();
+    const gig   = this.gigFilter();
+
+    return this.venueGroups()
+      .filter(g => !venue || g.venueId === venue)
+      .map(g => ({
+        ...g,
+        files: g.files.filter(f => {
+          if (type !== 'all' && f.type !== type) return false;
+          if (gig && f.gigId !== gig) return false;
+          return true;
+        }),
+      }))
+      .filter(g => g.files.length > 0);
+  });
+
   readonly filteredChannels = computed(() => {
     const q = this.channelSearch().toLowerCase().trim();
     if (!q) return this.selectedChannels();
@@ -116,6 +141,8 @@ export class MixerComponent implements OnInit {
     group.expanded = !group.expanded;
     this.scnFiles.update(v => [...v]); // trigger recompute
   }
+
+  setTypeFilter(t: string): void { this.typeFilter.set(t as ScnFileType | 'all'); }
 
   // ── Detail panel ─────────────────────────────────────────────────────────────
 
@@ -157,6 +184,7 @@ export class MixerComponent implements OnInit {
       this.uploadNotes.set('');
       this.uploadGigId.set('');
       this.uploadVenueId.set('');
+      this.uploadType.set('general');
       this.showUploadModal.set(true);
     };
     reader.readAsText(file);
@@ -167,6 +195,14 @@ export class MixerComponent implements OnInit {
     if (gigId) {
       const gig = this.gigs().find(g => g.id === gigId);
       if (gig?.venueId) this.uploadVenueId.set(gig.venueId);
+      this.uploadType.set('concierto');
+    }
+  }
+
+  onUploadVenueChange(venueId: string): void {
+    this.uploadVenueId.set(venueId);
+    if (venueId && !this.uploadGigId()) {
+      this.uploadType.set('sala');
     }
   }
 
@@ -182,6 +218,7 @@ export class MixerComponent implements OnInit {
         notes:   this.uploadNotes() || undefined,
         gigId:   this.uploadGigId() || undefined,
         venueId: this.uploadVenueId() || undefined,
+        type:    this.uploadType(),
       };
       const saved = await this.db.saveScnFile(dto);
       this.scnFiles.update(list => [saved, ...list]);
@@ -203,6 +240,7 @@ export class MixerComponent implements OnInit {
     this.editNotes.set(file.notes ?? '');
     this.editGigId.set(file.gigId ?? '');
     this.editVenueId.set(file.venueId ?? '');
+    this.editType.set(file.type ?? 'general');
     this.showEditModal.set(true);
   }
 
@@ -213,6 +251,14 @@ export class MixerComponent implements OnInit {
     if (gigId) {
       const gig = this.gigs().find(g => g.id === gigId);
       if (gig?.venueId) this.editVenueId.set(gig.venueId);
+      this.editType.set('concierto');
+    }
+  }
+
+  onEditVenueChange(venueId: string): void {
+    this.editVenueId.set(venueId);
+    if (venueId && !this.editGigId()) {
+      this.editType.set('sala');
     }
   }
 
@@ -226,6 +272,7 @@ export class MixerComponent implements OnInit {
         notes:   this.editNotes() || undefined,
         gigId:   this.editGigId() || null,
         venueId: this.editVenueId() || null,
+        type:    this.editType(),
       });
       this.scnFiles.update(list => list.map(f => f.id === updated.id ? updated : f));
       if (this.selectedFile()?.id === updated.id) this.selectedFile.set(updated);
@@ -297,6 +344,20 @@ export class MixerComponent implements OnInit {
   fmtFreq(f: number): string {
     if (f >= 1000) return `${+(f / 1000).toPrecision(2)}k`;
     return `${Math.round(f)}`;
+  }
+
+  typeLabel(type: ScnFileType): string {
+    const labels: Record<ScnFileType, string> = {
+      general: 'General', sala: 'Sala', concierto: 'Concierto', ensayo: 'Ensayo',
+    };
+    return labels[type] ?? type;
+  }
+
+  typeCls(type: ScnFileType): string {
+    const map: Record<ScnFileType, string> = {
+      general: 'type-general', sala: 'type-sala', concierto: 'type-concierto', ensayo: 'type-ensayo',
+    };
+    return map[type] ?? '';
   }
 
   venueNameForFile(file: ScnFile): string {

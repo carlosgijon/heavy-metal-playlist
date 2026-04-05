@@ -41,13 +41,44 @@
     </div>
   }
 
-  <!-- Main layout: list + detail panel -->
   @else {
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <!-- Type tabs -->
+      <div class="filter-tabs">
+        @for (tab of [['all','Todos'],['general','General'],['sala','Sala'],['concierto','Concierto'],['ensayo','Ensayo']]; track tab[0]) {
+          <button class="filter-tab" [class.active]="typeFilter() === tab[0]"
+                  (click)="setTypeFilter(tab[0])">{{ tab[1] }}</button>
+        }
+      </div>
+      <!-- Venue + gig dropdowns -->
+      <div class="filter-selects">
+        <select class="select select-bordered select-xs"
+                [ngModel]="venueFilter()" (ngModelChange)="venueFilter.set($event)">
+          <option value="">Todas las salas</option>
+          @for (v of venues(); track v.id) {
+            <option [value]="v.id">{{ v.name }}</option>
+          }
+        </select>
+        <select class="select select-bordered select-xs"
+                [ngModel]="gigFilter()" (ngModelChange)="gigFilter.set($event)">
+          <option value="">Todos los conciertos</option>
+          @for (g of gigs(); track g.id) {
+            <option [value]="g.id">{{ g.title }}@if (g.date) { · {{ fmtDate(g.date) }} }</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Main layout: list + detail panel -->
     <div class="scn-layout" [class.panel-open]="selectedFile()">
 
       <!-- ── Left: venue groups ───────────────────────────────────────────── -->
       <div class="scn-list">
-        @for (group of venueGroups(); track group.venueId) {
+        @if (filteredGroups().length === 0) {
+          <p class="text-sm opacity-40 text-center py-10">No hay archivos con estos filtros</p>
+        }
+        @for (group of filteredGroups(); track group.venueId) {
 
           <!-- Venue header -->
           <div class="venue-group">
@@ -89,6 +120,7 @@
                     <div class="scn-row-info">
                       <span class="scn-row-name">{{ file.name }}</span>
                       <div class="scn-row-meta">
+                        <span class="type-badge" [ngClass]="typeCls(file.type)">{{ typeLabel(file.type) }}</span>
                         @if (file.gigId) {
                           <span class="meta-chip">🎸 {{ gigLabel(file.gigId) }}</span>
                         }
@@ -158,6 +190,7 @@
 
           <!-- Meta chips -->
           <div class="detail-meta">
+            <span class="detail-chip type-badge" [ngClass]="typeCls(file.type)">{{ typeLabel(file.type) }}</span>
             @if (file.venueId) {
               <span class="detail-chip">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -256,12 +289,22 @@
                  placeholder="Ej: Sala Razzmatazz — Main PA">
         </div>
         <div class="form-control">
+          <label class="label"><span class="label-text">Tipo</span></label>
+          <select class="select select-bordered select-sm"
+                  [ngModel]="uploadType()" (ngModelChange)="uploadType.set($event)">
+            <option value="general">General</option>
+            <option value="sala">Sala</option>
+            <option value="concierto">Concierto</option>
+            <option value="ensayo">Ensayo</option>
+          </select>
+        </div>
+        <div class="form-control">
           <label class="label">
             <span class="label-text">Sala</span>
             @if (uploadGigId()) { <span class="label-text-alt opacity-40 text-xs">auto-rellenada por el concierto</span> }
           </label>
           <select class="select select-bordered select-sm"
-                  [ngModel]="uploadVenueId()" (ngModelChange)="uploadVenueId.set($event)">
+                  [ngModel]="uploadVenueId()" (ngModelChange)="onUploadVenueChange($event)">
             <option value="">Sin sala</option>
             @for (v of venues(); track v.id) {
               <option [value]="v.id">{{ v.name }}@if (v.city) { — {{ v.city }} }</option>
@@ -312,9 +355,19 @@
                  [ngModel]="editName()" (ngModelChange)="editName.set($event)">
         </div>
         <div class="form-control">
+          <label class="label"><span class="label-text">Tipo</span></label>
+          <select class="select select-bordered select-sm"
+                  [ngModel]="editType()" (ngModelChange)="editType.set($event)">
+            <option value="general">General</option>
+            <option value="sala">Sala</option>
+            <option value="concierto">Concierto</option>
+            <option value="ensayo">Ensayo</option>
+          </select>
+        </div>
+        <div class="form-control">
           <label class="label"><span class="label-text">Sala</span></label>
           <select class="select select-bordered select-sm"
-                  [ngModel]="editVenueId()" (ngModelChange)="editVenueId.set($event)">
+                  [ngModel]="editVenueId()" (ngModelChange)="onEditVenueChange($event)">
             <option value="">Sin sala</option>
             @for (v of venues(); track v.id) {
               <option [value]="v.id">{{ v.name }}@if (v.city) { — {{ v.city }} }</option>
