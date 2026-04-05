@@ -300,6 +300,11 @@ export class MixerComponent implements OnInit {
     return `${Math.round(f)}`;
   }
 
+  venueNameForFile(file: ScnFile): string {
+    if (!file.venueId) return '';
+    return this.venueGroups().find(g => g.venueId === file.venueId)?.venueName ?? file.venueId;
+  }
+
   isFinite(n: number): boolean { return Number.isFinite(n); }
 
   trackById(_: number, item: { id: string }): string { return item.id; }
