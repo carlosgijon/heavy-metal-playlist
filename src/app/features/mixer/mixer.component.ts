@@ -221,8 +221,7 @@ export class MixerComponent implements OnInit {
     if (!file || !this.editName().trim()) return;
     this.editSaving.set(true);
     try {
-      const updated = await this.db.updateScnFile({
-        id:      file.id,
+      const updated = await this.db.updateScnFile(file.id, {
         name:    this.editName().trim(),
         notes:   this.editNotes() || undefined,
         gigId:   this.editGigId() || null,
