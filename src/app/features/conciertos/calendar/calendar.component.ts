@@ -189,7 +189,7 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     headerToolbar: {
       left:   'prev,next today',
       center: 'title',
-      right:  'dayGridMonth,multiMonthYear,listMonth',
+      right:  'multiMonthYear,dayGridMonth,listMonth',
     },
     buttonText: {
       today: 'Hoy',
