@@ -94,10 +94,21 @@
 
             <!-- View mode -->
             <ng-container *ngIf="editingSongEntryId !== s.id">
-              <div class="rc-song-info">
-                <span class="rc-song-title">{{ s.title }}</span>
-                <span class="rc-song-artist">{{ s.artist }}</span>
-                <span class="rc-song-bpm" *ngIf="s.tempo">{{ s.tempo }} BPM</span>
+              <div class="rc-song-info flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="rc-song-title">{{ s.title }}</span>
+                  <select class="select select-bordered select-xs" 
+                          [ngModel]="getLibrarySongStatus(s.songId)" 
+                          (ngModelChange)="updateSongStatus(s.songId, $event)">
+                    <option value="NEW">Nueva</option>
+                    <option value="LEARNING">Aprend. </option>
+                    <option value="READY">Lista</option>
+                  </select>
+                </div>
+                <div class="flex items-center gap-2 text-xs opacity-70 mt-1">
+                  <span class="rc-song-artist">{{ s.artist }}</span>
+                  <span class="rc-song-bpm" *ngIf="s.tempo">{{ s.tempo }} BPM</span>
+                </div>
               </div>
               <div class="rc-song-right">
                 <span class="rc-song-rating" *ngIf="r.status === 'COMPLETED' && s.rating" title="Valoración">{{ ratingStars(s.rating) }}</span>
@@ -157,14 +168,34 @@
           <button class="btn btn-ghost btn-sm" (click)="pendingRehearsalId = null">Cancelar</button>
         </div>
 
-        <!-- Add song button -->
-        <button
-          class="btn btn-ghost btn-sm mt-2"
-          *ngIf="pendingRehearsalId !== r.id && availableSongs(r).length > 0"
-          (click)="openAddSong(r.id)">
-          <ng-icon name="heroPlus" class="w-4 h-4"></ng-icon>
-          Añadir canción
-        </button>
+        <!-- Import Playlist form -->
+        <div class="rc-add-song mt-2" *ngIf="importingPlaylistForRehearsal === r.id">
+          <select class="select select-bordered select-sm flex-1" [(ngModel)]="selectedPlaylistToImport">
+            <option *ngFor="let p of playlists" [value]="p.id">{{ p.name }}</option>
+          </select>
+          <button class="btn btn-primary btn-sm" (click)="confirmImportPlaylist()" [disabled]="isImporting || !selectedPlaylistToImport">
+            <span *ngIf="isImporting" class="loading loading-spinner loading-xs"></span>
+            Importar
+          </button>
+          <button class="btn btn-ghost btn-sm" (click)="importingPlaylistForRehearsal = null">Cancelar</button>
+        </div>
+
+        <!-- Add buttons -->
+        <div class="flex items-center gap-2 mt-2" *ngIf="pendingRehearsalId !== r.id && importingPlaylistForRehearsal !== r.id">
+          <button
+            class="btn btn-ghost btn-sm"
+            *ngIf="availableSongs(r).length > 0"
+            (click)="openAddSong(r.id)">
+            <ng-icon name="heroPlus" class="w-4 h-4"></ng-icon>
+            Añadir canción
+          </button>
+          <button
+            class="btn btn-ghost btn-sm"
+            *ngIf="playlists.length > 0"
+            (click)="openImportPlaylist(r.id)">
+            Importar Setlist...
+          </button>
+        </div>
 
       </div>
     </div>

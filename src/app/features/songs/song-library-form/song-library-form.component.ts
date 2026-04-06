@@ -75,6 +75,7 @@ export class SongLibraryFormComponent implements OnInit, OnDestroy {
       tempo:     [this.song?.tempo     ?? null],
       style:     [this.song?.style     ?? ''],
       notes:     [this.song?.notes     ?? ''],
+      status:    [this.song?.status    ?? 'READY'],
       startNote: [this.song?.startNote ?? ''],
       endNote:   [this.song?.endNote   ?? ''],
     });

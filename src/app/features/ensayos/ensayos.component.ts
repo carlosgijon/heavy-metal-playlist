@@ -6,7 +6,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { DatabaseService } from '../../core/services/database.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Rehearsal, RehearsalSongEntry } from '../../core/models/rehearsal.model';
-import { LibrarySong } from '../../core/models/song.model';
+import { LibrarySong, PlaylistWithStats } from '../../core/models/song.model';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
@@ -23,6 +23,7 @@ export class EnsayosComponent implements OnInit {
 
   rehearsals: Rehearsal[] = [];
   librarySongs: LibrarySong[] = [];
+  playlists: PlaylistWithStats[] = [];
   loading = true;
 
   // New rehearsal form
@@ -42,13 +43,24 @@ export class EnsayosComponent implements OnInit {
   songRating: number | null = null;
   addingSong = false;
 
+  // Import playlist
+  importingPlaylistForRehearsal: string | null = null;
+  selectedPlaylistToImport = '';
+  isImporting = false;
+
   // Inline edit notes for song
   editingSongEntryId: string | null = null;
   editSongNotes = '';
   editSongRating: number | null = null;
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.loadRehearsals(), this.loadLibrary()]);
+    await Promise.all([this.loadRehearsals(), this.loadLibrary(), this.loadPlaylists()]);
+  }
+
+  private async loadPlaylists(): Promise<void> {
+    try {
+      this.playlists = await this.db.getPlaylists();
+    } catch { /* ignore */ }
   }
 
   private async loadRehearsals(): Promise<void> {
@@ -126,6 +138,7 @@ export class EnsayosComponent implements OnInit {
   toggleExpand(id: string): void {
     this.expandedId = this.expandedId === id ? null : id;
     this.pendingRehearsalId = null;
+    this.importingPlaylistForRehearsal = null;
   }
 
   openAddSong(rehearsalId: string): void {
@@ -197,5 +210,53 @@ export class EnsayosComponent implements OnInit {
   availableSongs(r: Rehearsal): LibrarySong[] {
     const usedIds = new Set(r.songs.map(s => s.songId));
     return this.librarySongs.filter(s => !usedIds.has(s.id));
+  }
+
+  getLibrarySongStatus(songId: string): string {
+    return this.librarySongs.find(s => s.id === songId)?.status ?? 'READY';
+  }
+
+  async updateSongStatus(songId: string, newStatus: 'NEW' | 'LEARNING' | 'READY'): Promise<void> {
+    const libSong = this.librarySongs.find(s => s.id === songId);
+    if (!libSong) return;
+    try {
+      const updated = await this.db.updateLibrarySong({ ...libSong, status: newStatus });
+      this.librarySongs = this.librarySongs.map(s => s.id === songId ? updated : s);
+      this.toast.success('Estado de canción actualizado');
+    } catch {
+      this.toast.danger('Error al actualizar el estado global');
+    }
+  }
+
+  openImportPlaylist(rehearsalId: string): void {
+    this.importingPlaylistForRehearsal = rehearsalId;
+    this.selectedPlaylistToImport = this.playlists[0]?.id ?? '';
+    this.pendingRehearsalId = null;
+  }
+
+  async confirmImportPlaylist(): Promise<void> {
+    if (!this.importingPlaylistForRehearsal || !this.selectedPlaylistToImport) return;
+    this.isImporting = true;
+    try {
+      const songs = await this.db.getSongsByPlaylist(this.selectedPlaylistToImport);
+      const toAdd = songs.filter(s => s.type !== 'event' && s.songId);
+      
+      const rehearsal = this.rehearsals.find(r => r.id === this.importingPlaylistForRehearsal);
+      if (!rehearsal) throw new Error();
+
+      for (const song of toAdd) {
+        if (rehearsal.songs.some(s => s.songId === song.songId)) continue;
+        const entry = await this.db.addRehearsalSong(this.importingPlaylistForRehearsal, {
+          songId: song.songId!,
+        });
+        rehearsal.songs = [...rehearsal.songs, entry];
+      }
+      this.toast.success('Playlist importada al ensayo');
+      this.importingPlaylistForRehearsal = null;
+    } catch {
+      this.toast.danger('Error al importar la playlist');
+    } finally {
+      this.isImporting = false;
+    }
   }
 }

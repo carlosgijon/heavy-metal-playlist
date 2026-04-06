@@ -22,6 +22,7 @@ export interface LibrarySong {
   notes?: string;
   startNote?: string; // e.g. "Em", "A#"
   endNote?: string;   // e.g. "G", "Db"
+  status?: 'NEW' | 'LEARNING' | 'READY';
 }
 
 /** Entry linking a playlist to a library song (or an inline event) */
@@ -52,6 +53,7 @@ export interface PlaylistSongView {
   tempo?: number;
   style?: string;
   notes?: string;
+  status?: 'NEW' | 'LEARNING' | 'READY';
 }
 
 // Backwards-compatible alias — all existing components use Song

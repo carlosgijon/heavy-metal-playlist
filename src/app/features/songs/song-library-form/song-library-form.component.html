@@ -126,10 +126,20 @@
         placeholder="Ej: Thrash Metal, Death Metal..." autocomplete="off" />
     </div>
 
-    <div class="field-group">
-      <label class="field-label">Notas</label>
-      <textarea class="textarea textarea-bordered w-full" formControlName="notes" rows="2"
-        placeholder="Notas generales sobre la canción..."></textarea>
+    <div class="row-fields">
+      <div class="field-group">
+        <label class="field-label">Estado</label>
+        <select class="select select-bordered w-full" formControlName="status">
+          <option value="NEW">Nueva (Para proponer)</option>
+          <option value="LEARNING">Aprendiendo</option>
+          <option value="READY">Lista / En Repertorio</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Notas</label>
+        <textarea class="textarea textarea-bordered w-full" formControlName="notes" rows="2"
+          placeholder="Notas generales sobre la canción..."></textarea>
+      </div>
     </div>
 
     <div class="divider text-xs opacity-50">Para IA de setlist</div>

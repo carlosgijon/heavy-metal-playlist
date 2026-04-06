@@ -129,9 +129,13 @@
       </thead>
       <tbody>
         <tr *ngFor="let song of filteredSongs" class="song-row">
-          <td class="col-title">
-            <span class="song-title">{{ song.title }}</span>
-            <span class="song-album" *ngIf="song.album">{{ song.album }}</span>
+          <td class="col-title flex items-center gap-2">
+            <div>
+              <span class="song-title">{{ song.title }}</span>
+              <span class="song-album" *ngIf="song.album">{{ song.album }}</span>
+            </div>
+            <div class="badge badge-xs badge-info" *ngIf="song.status === 'NEW'">Nueva</div>
+            <div class="badge badge-xs badge-warning" *ngIf="song.status === 'LEARNING'">Aprendiendo</div>
           </td>
           <td class="col-artist">{{ song.artist }}</td>
           <td class="col-genre">
@@ -187,9 +191,11 @@
   <!-- Songs list (mobile) -->
   <div class="mobile-list md:hidden" *ngIf="!loading && filteredSongs.length > 0">
     <div class="mobile-card" *ngFor="let song of filteredSongs">
-      <div class="mc-row1">
+      <div class="mc-row1 flex items-center gap-2">
         <span class="mc-title">{{ song.title }}</span>
-        <span *ngIf="song.style" class="genre-tag" [ngStyle]="getGenreStyle(song.style)">{{ song.style }}</span>
+        <div class="badge badge-xs badge-info" *ngIf="song.status === 'NEW'">Nueva</div>
+        <div class="badge badge-xs badge-warning" *ngIf="song.status === 'LEARNING'">Aprendiendo</div>
+        <span *ngIf="song.style" class="genre-tag ml-auto" [ngStyle]="getGenreStyle(song.style)">{{ song.style }}</span>
       </div>
       <div class="mc-row2">
         <span class="mc-meta">
