@@ -16,13 +16,20 @@
 
   <!-- New rehearsal form -->
   <div class="new-form" *ngIf="showNewForm">
-    <div class="form-row">
+    <div class="form-row flex gap-2 w-full">
       <div class="field-group">
         <label class="field-label">Fecha *</label>
         <input class="input input-bordered input-sm" type="date" [(ngModel)]="newDate" />
       </div>
+      <div class="field-group">
+        <label class="field-label">Estado</label>
+        <select class="select select-bordered select-sm w-full" [(ngModel)]="newStatus">
+          <option value="PLANNED">Planificado</option>
+          <option value="COMPLETED">Completado</option>
+        </select>
+      </div>
       <div class="field-group flex-1">
-        <label class="field-label">Notas</label>
+        <label class="field-label">Notas / Objetivos</label>
         <input class="input input-bordered input-sm w-full" [(ngModel)]="newNotes" placeholder="Sala, objetivos..." />
       </div>
     </div>
@@ -57,8 +64,11 @@
       <div class="rc-header" (click)="toggleExpand(r.id)">
         <div class="rc-header-left">
           <ng-icon name="heroChevronRight" class="w-4 h-4 rc-chevron" [class.rc-chevron--open]="expandedId === r.id"></ng-icon>
-          <div>
+          <div class="flex items-center gap-2">
             <span class="rc-date">{{ formatDate(r.date) }}</span>
+            <div class="badge badge-sm" [ngClass]="{'badge-info': r.status === 'PLANNED', 'badge-success': r.status === 'COMPLETED'}">
+              {{ r.status === 'PLANNED' ? 'Planificado' : 'Completado' }}
+            </div>
             <span class="rc-song-count">{{ r.songs.length }} canción{{ r.songs.length !== 1 ? 'es' : '' }}</span>
             <span class="rc-notes" *ngIf="r.notes">· {{ r.notes }}</span>
           </div>
@@ -70,6 +80,13 @@
 
       <!-- Expanded body -->
       <div class="rc-body" *ngIf="expandedId === r.id">
+
+        <!-- Action to complete Rehearsal if PLANNED -->
+        <div class="mb-4" *ngIf="r.status === 'PLANNED'">
+           <button class="btn btn-outline btn-success btn-sm gap-2" (click)="completeRehearsal(r)">
+             ✓ Marcar como completado
+           </button>
+        </div>
 
         <!-- Song list -->
         <div class="rc-songs" *ngIf="r.songs.length > 0">
@@ -83,7 +100,7 @@
                 <span class="rc-song-bpm" *ngIf="s.tempo">{{ s.tempo }} BPM</span>
               </div>
               <div class="rc-song-right">
-                <span class="rc-song-rating" *ngIf="s.rating" title="Valoración">{{ ratingStars(s.rating) }}</span>
+                <span class="rc-song-rating" *ngIf="r.status === 'COMPLETED' && s.rating" title="Valoración">{{ ratingStars(s.rating) }}</span>
                 <span class="rc-song-notes" *ngIf="s.notes">{{ s.notes }}</span>
                 <button class="btn btn-ghost btn-xs" (click)="startEditSong(s)">
                   <ng-icon name="heroPencil" class="w-3 h-3"></ng-icon>
@@ -99,7 +116,7 @@
               <div class="rc-song-edit">
                 <span class="rc-song-title">{{ s.title }}</span>
                 <input class="input input-bordered input-xs flex-1" [(ngModel)]="editSongNotes" placeholder="Notas..." />
-                <select class="select select-bordered select-xs w-28" [(ngModel)]="editSongRating">
+                <select class="select select-bordered select-xs w-28" [(ngModel)]="editSongRating" *ngIf="r.status === 'COMPLETED'">
                   <option [ngValue]="null">Sin valoración</option>
                   <option [value]="1">★☆☆☆☆</option>
                   <option [value]="2">★★☆☆☆</option>
@@ -116,7 +133,7 @@
         </div>
 
         <p class="rc-empty-songs" *ngIf="r.songs.length === 0 && pendingRehearsalId !== r.id">
-          Sin canciones. Añade las que practicaste.
+          Sin canciones.
         </p>
 
         <!-- Add song form -->
@@ -124,7 +141,7 @@
           <select class="select select-bordered select-sm flex-1" [(ngModel)]="selectedSongId">
             <option *ngFor="let ls of availableSongs(r)" [value]="ls.id">{{ ls.title }} — {{ ls.artist }}</option>
           </select>
-          <select class="select select-bordered select-sm w-32" [(ngModel)]="songRating">
+          <select class="select select-bordered select-sm w-32" [(ngModel)]="songRating" *ngIf="r.status === 'COMPLETED'">
             <option [ngValue]="null">Sin nota</option>
             <option [value]="1">★☆☆☆☆</option>
             <option [value]="2">★★☆☆☆</option>
@@ -146,7 +163,7 @@
           *ngIf="pendingRehearsalId !== r.id && availableSongs(r).length > 0"
           (click)="openAddSong(r.id)">
           <ng-icon name="heroPlus" class="w-4 h-4"></ng-icon>
-          Añadir canción practicada
+          Añadir canción
         </button>
 
       </div>

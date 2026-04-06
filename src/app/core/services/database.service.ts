@@ -586,11 +586,11 @@ export class DatabaseService {
     return this.get('/rehearsals');
   }
 
-  createRehearsal(dto: { date: string; notes?: string }): Promise<Rehearsal> {
+  createRehearsal(dto: { date: string; notes?: string; status?: string }): Promise<Rehearsal> {
     return this.post('/rehearsals', dto);
   }
 
-  updateRehearsal(dto: Pick<Rehearsal, 'id'> & { date?: string; notes?: string }): Promise<Rehearsal> {
+  updateRehearsal(dto: Pick<Rehearsal, 'id'> & { date?: string; notes?: string; status?: string }): Promise<Rehearsal> {
     return this.put(`/rehearsals/${dto.id}`, dto);
   }
 

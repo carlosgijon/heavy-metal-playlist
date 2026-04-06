@@ -29,6 +29,7 @@ export class EnsayosComponent implements OnInit {
   showNewForm = false;
   newDate = new Date().toISOString().slice(0, 10);
   newNotes = '';
+  newStatus: 'PLANNED' | 'COMPLETED' = 'PLANNED';
   creating = false;
 
   // Expanded rehearsal
@@ -70,17 +71,40 @@ export class EnsayosComponent implements OnInit {
     if (!this.newDate) return;
     this.creating = true;
     try {
-      const r = await this.db.createRehearsal({ date: this.newDate, notes: this.newNotes || undefined });
+      const r = await this.db.createRehearsal({ date: this.newDate, notes: this.newNotes || undefined, status: this.newStatus });
+      
+      try {
+        await this.db.createCalendarEvent({
+          title: 'Ensayo' + (this.newStatus === 'PLANNED' ? ' (Planificado)' : ''),
+          date: this.newDate,
+          type: 'rehearsal',
+          allDay: true
+        });
+      } catch (calErr) {
+        console.warn('Could not sync w/ calendar', calErr);
+      }
+
       this.rehearsals = [r, ...this.rehearsals];
       this.showNewForm = false;
       this.newDate = new Date().toISOString().slice(0, 10);
       this.newNotes = '';
+      this.newStatus = 'PLANNED';
       this.expandedId = r.id;
       this.toast.success('Ensayo creado');
     } catch {
       this.toast.danger('Error al crear el ensayo');
     } finally {
       this.creating = false;
+    }
+  }
+
+  async completeRehearsal(r: Rehearsal): Promise<void> {
+    try {
+      const updated = await this.db.updateRehearsal({ id: r.id, status: 'COMPLETED' });
+      this.rehearsals = this.rehearsals.map(x => x.id === r.id ? { ...x, status: 'COMPLETED' } : x);
+      this.toast.success('Ensayo completado');
+    } catch {
+      this.toast.danger('Error al actualizar el estado');
     }
   }
 

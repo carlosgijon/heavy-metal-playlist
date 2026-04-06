@@ -13,6 +13,7 @@ export interface Rehearsal {
   id: string;
   date: string; // YYYY-MM-DD
   notes?: string;
+  status: 'PLANNED' | 'COMPLETED' | 'CANCELLED';
   createdAt: string;
   songs: RehearsalSongEntry[];
 }
