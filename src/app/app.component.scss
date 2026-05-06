@@ -124,6 +124,53 @@
   flex-shrink: 0;
 }
 
+// ── Band switcher modal ───────────────────────────────────────────
+
+.band-switcher-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.band-switcher-box {
+  background: oklch(var(--b1));
+  border: 1px solid oklch(var(--bc) / 0.1);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  color: oklch(var(--bc));
+}
+
+.band-switch-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s, border-color 0.15s;
+  color: oklch(var(--bc));
+
+  &:hover:not(:disabled) { background: oklch(var(--b2)); }
+
+  &.band-switch-active {
+    background: oklch(var(--p) / 0.1);
+    border-color: oklch(var(--p) / 0.25);
+  }
+
+  &:disabled { opacity: 0.6; cursor: default; }
+}
+
 // ── Mobile bottom nav ──────────────────────────────────────────────
 
 .bottom-nav {

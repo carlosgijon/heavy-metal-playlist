@@ -28,7 +28,11 @@
 
       <!-- Band logo / identity -->
       @if (currentBand()) {
-        <div class="nav-item band-identity" [title]="currentBand()!.name">
+        <button class="nav-item band-identity w-full"
+                [title]="availableBands().length > 1 ? 'Cambiar grupo' : currentBand()!.name"
+                [class.cursor-pointer]="availableBands().length > 1"
+                [class.cursor-default]="availableBands().length <= 1"
+                (click)="openBandSwitcher()">
           @if (currentBand()!.logo) {
             <img [src]="currentBand()!.logo" class="nav-icon rounded-full object-cover" alt="Logo" />
           } @else {
@@ -36,8 +40,15 @@
               {{ currentBand()!.name.charAt(0).toUpperCase() }}
             </span>
           }
-          <span class="nav-label font-semibold truncate">{{ currentBand()!.name }}</span>
-        </div>
+          <span class="nav-label font-semibold truncate flex-1">{{ currentBand()!.name }}</span>
+          @if (availableBands().length > 1) {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" width="12" height="12" stroke-linecap="round" stroke-linejoin="round"
+                 class="opacity-40 flex-shrink-0">
+              <path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/>
+            </svg>
+          }
+        </button>
         <div class="divider my-0 px-2 opacity-20"></div>
       }
       <button
@@ -221,6 +232,47 @@
       <span>Blackout ORM · Datos guardados localmente</span>
     </footer>
   </div>
+
+  <!-- Band switcher modal -->
+  @if (showBandSwitcher()) {
+    <div class="band-switcher-backdrop" (click)="showBandSwitcher.set(false)">
+      <div class="band-switcher-box" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-base">Cambiar grupo</h3>
+          <button class="btn btn-ghost btn-xs btn-circle" (click)="showBandSwitcher.set(false)">✕</button>
+        </div>
+        <div class="flex flex-col gap-2">
+          @for (band of availableBands(); track band.id) {
+            <button class="band-switch-item" [class.band-switch-active]="band.id === currentBand()?.id"
+                    [disabled]="bandSwitchLoading()"
+                    (click)="switchBand(band.id)">
+              @if (band.logo) {
+                <img [src]="band.logo" class="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+              } @else {
+                <span class="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
+                  {{ band.name[0].toUpperCase() }}
+                </span>
+              }
+              <div class="text-left flex-1 min-w-0">
+                <div class="font-semibold truncate">{{ band.name }}</div>
+                <div class="text-xs opacity-50">{{ band.role }}</div>
+              </div>
+              @if (band.id === currentBand()?.id) {
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.5" width="16" height="16" stroke-linecap="round" stroke-linejoin="round"
+                     class="text-primary flex-shrink-0">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              }
+              @if (bandSwitchLoading() && band.id !== currentBand()?.id) {
+                <span class="loading loading-spinner loading-xs flex-shrink-0"></span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- Bottom nav (mobile only, hidden on desktop via CSS) -->
   <nav class="bottom-nav">

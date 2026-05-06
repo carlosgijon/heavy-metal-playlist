@@ -11,6 +11,8 @@ export class AuthService {
   readonly currentBand = signal<BandInfo | null>(null);
   /** Non-empty while band selector is shown (user logged in but no band chosen yet). */
   readonly pendingBands = signal<BandInfo[]>([]);
+  /** All bands the authenticated user belongs to. */
+  readonly availableBands = signal<BandInfo[]>([]);
 
   readonly isAuthenticated = computed(() => {
     const user = this.currentUser();
@@ -33,8 +35,11 @@ export class AuthService {
       this.currentUser.set(user);
       this.token.set(storedToken);
       if (band) this.currentBand.set(band);
+      const storedBands = localStorage.getItem('available_bands');
+      if (storedBands) this.availableBands.set(JSON.parse(storedBands));
     } catch {
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('available_bands');
     }
   }
 
@@ -49,6 +54,8 @@ export class AuthService {
     if (response.bands.length === 0) {
       return []; // superadmin
     }
+    this.availableBands.set(response.bands);
+    localStorage.setItem('available_bands', JSON.stringify(response.bands));
     if (response.bands.length === 1) {
       this.currentBand.set(response.bands[0]);
       return [];
@@ -66,11 +73,21 @@ export class AuthService {
     this.pendingBands.set([]);
   }
 
+  async switchBand(bandId: string): Promise<void> {
+    const response = await this.db.selectBand(bandId);
+    this.token.set(response.token);
+    localStorage.setItem('auth_token', response.token);
+    this.currentUser.set(response.user);
+    this.currentBand.set(response.band);
+  }
+
   async logout(): Promise<void> {
     this.currentUser.set(null);
     this.token.set(null);
     this.currentBand.set(null);
     this.pendingBands.set([]);
+    this.availableBands.set([]);
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('available_bands');
   }
 }

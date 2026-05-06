@@ -60,6 +60,10 @@ export class AppComponent implements OnInit {
   readonly isSuperAdmin = this.auth.isSuperAdmin;
   readonly currentUser = this.auth.currentUser;
   readonly currentBand = this.auth.currentBand;
+  readonly availableBands = this.auth.availableBands;
+
+  readonly showBandSwitcher = signal(false);
+  readonly bandSwitchLoading = signal(false);
 
   view = signal<AppView>('calendario');
   selectedPlaylist = signal<PlaylistWithStats | null>(null);
@@ -118,6 +122,22 @@ export class AppComponent implements OnInit {
       hasBackdrop: true,
       backdropClass: 'cdk-overlay-dark-backdrop',
     });
+  }
+
+  openBandSwitcher(): void {
+    if (this.availableBands().length > 1) this.showBandSwitcher.set(true);
+  }
+
+  async switchBand(bandId: string): Promise<void> {
+    if (bandId === this.currentBand()?.id) { this.showBandSwitcher.set(false); return; }
+    this.bandSwitchLoading.set(true);
+    try {
+      await this.auth.switchBand(bandId);
+      this.showBandSwitcher.set(false);
+      this.view.set('calendario');
+    } catch { /* ignore */ } finally {
+      this.bandSwitchLoading.set(false);
+    }
   }
 
   logout(): void {
