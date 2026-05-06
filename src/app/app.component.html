@@ -167,7 +167,7 @@
   </aside>
 
   <!-- Main area -->
-  <div class="main-area">
+  <div class="main-area" [style]="currentBand()?.logo ? '--band-logo: url(' + currentBand()!.logo + ')' : ''">
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">

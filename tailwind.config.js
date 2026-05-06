@@ -40,6 +40,31 @@ module.exports = {
       'caramellatte',
       'abyss',
       'silk',
+      // ── App custom themes ───────────────────────────────────────────
+      {
+        'crystal': {
+          'primary':          '#7dd3fc',
+          'primary-content':  '#082f49',
+          'secondary':        '#c4b5fd',
+          'secondary-content':'#2e1065',
+          'accent':           '#67e8f9',
+          'accent-content':   '#083344',
+          'neutral':          '#1e3a5f',
+          'neutral-content':  '#e2e8f0',
+          'base-100':         '#060d1f',
+          'base-200':         '#0d1b35',
+          'base-300':         '#162040',
+          'base-content':     '#e8f4ff',
+          'info':             '#38bdf8',
+          'info-content':     '#082f49',
+          'success':          '#86efac',
+          'success-content':  '#052e16',
+          'warning':          '#fde68a',
+          'warning-content':  '#451a03',
+          'error':            '#fca5a5',
+          'error-content':    '#450a0a',
+        },
+      },
       // ── App-inspired custom themes ─────────────────────────────────
       {
         'github-dark': {

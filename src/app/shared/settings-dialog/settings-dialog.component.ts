@@ -87,6 +87,9 @@ const FONT_SIZE_OPTIONS = [
         class="select select-bordered select-sm w-full mb-5"
         [(ngModel)]="currentTheme"
         (ngModelChange)="changeTheme($event)">
+        <optgroup label="── Especiales ───────">
+          <option value="crystal">Crystal Glass</option>
+        </optgroup>
         <optgroup label="── Apps ────────────">
           <option value="github-dark">GitHub Dark</option>
           <option value="discord">Discord</option>
