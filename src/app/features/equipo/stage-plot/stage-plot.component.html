@@ -1,0 +1,66 @@
+<div class="p-4 h-full flex flex-col md:flex-row gap-4 printable-area">
+  
+  <!-- Sidebar de Herramientas -->
+  <div class="w-full md:w-64 bg-base-200 rounded-xl p-4 flex flex-col hide-on-print h-[400px] md:h-auto overflow-hidden">
+    <h3 class="font-bold text-lg mb-2">Inventario</h3>
+    <p class="text-xs opacity-70 mb-4">Añade elementos al escenario</p>
+    
+    <div class="flex-1 overflow-y-auto pr-2">
+      <div *ngFor="let eq of availableEquipment" class="bg-base-100 p-2 rounded-lg mb-2 flex justify-between items-center text-sm shadow-sm border border-base-300">
+        <span class="truncate pr-2">{{eq.label}}</span>
+        <button class="btn btn-xs btn-primary" (click)="addToStage(eq)">Añadir</button>
+      </div>
+    </div>
+
+    <div class="mt-4 pt-4 border-t border-base-300 flex justify-between items-center">
+      <span class="text-xs opacity-70">
+        <span *ngIf="saving">Guardando...</span>
+        <span *ngIf="!saving" class="text-success">Guardado</span>
+      </span>
+      <button class="btn btn-sm btn-outline" (click)="printStagePlot()">Imprimir</button>
+    </div>
+  </div>
+
+  <!-- Escenario Principal -->
+  <div class="flex-1 bg-neutral rounded-xl relative overflow-hidden border-4 border-neutral-focus shadow-inner min-h-[500px]">
+    
+    <!-- Decoración Escenario -->
+    <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-base-300 to-transparent pointer-events-none flex items-end justify-center pb-2">
+      <span class="text-3xl font-bold opacity-20 text-base-content tracking-widest">PÚBLICO</span>
+    </div>
+    <div class="absolute inset-x-0 top-0 h-8 flex items-center justify-center pointer-events-none">
+      <span class="text-xs font-bold opacity-30 text-white">FONDO DEL ESCENARIO</span>
+    </div>
+
+    <!-- Contenedor Drag & Drop -->
+    <div class="absolute inset-4" id="stage-boundary">
+      
+      <div *ngFor="let item of items" 
+           cdkDrag 
+           cdkDragBoundary="#stage-boundary"
+           [cdkDragFreeDragPosition]="{x: item.x, y: item.y}"
+           (cdkDragEnded)="onDragEnded($event, item)"
+           class="absolute cursor-move group">
+        
+        <div class="relative flex flex-col items-center">
+          <!-- Item Box -->
+          <div class="w-16 h-16 rounded-lg bg-base-100 shadow-xl border-2 border-primary flex items-center justify-center text-primary transform transition-transform group-hover:scale-105">
+            <span class="font-bold text-xs uppercase">{{item.icon}}</span>
+          </div>
+          <!-- Etiqueta -->
+          <div class="mt-1 bg-neutral-focus text-white text-[10px] px-2 py-1 rounded shadow text-center w-20 truncate">
+            {{item.label}}
+          </div>
+          <!-- Borrar -->
+          <button class="absolute -top-2 -right-2 bg-error text-white w-5 h-5 rounded-full text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity hide-on-print"
+                  (click)="removeFromStage(item); $event.stopPropagation()">
+            ×
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>

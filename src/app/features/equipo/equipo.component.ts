@@ -21,13 +21,16 @@ import { InstrumentsComponent } from './instruments/instruments.component';
 import { MembersComponent } from './members/members.component';
 import { MicrophonesComponent } from './microphones/microphones.component';
 import { PaComponent } from './pa/pa.component';
+import { StagePlotComponent } from './stage-plot/stage-plot.component';
 
 type EquipoTab =
   | 'members'
   | 'instruments'
   | 'amplifiers'
+  | 'amplifiers'
   | 'microphones'
-  | 'pa';
+  | 'pa'
+  | 'stage-plot';
 
 @Component({
   selector: 'app-equipo',
@@ -40,6 +43,7 @@ type EquipoTab =
     InstrumentsComponent,
     AmplifiersComponent,
     PaComponent,
+    StagePlotComponent,
   ],
   providers: [provideIcons({ heroDocumentText })],
   template: `
@@ -120,6 +124,9 @@ type EquipoTab =
           @if (activeTab() === 'pa') {
             <app-pa [paEquipment]="paEquipment" (changed)="reload()" />
           }
+          @if (activeTab() === 'stage-plot') {
+            <app-stage-plot />
+          }
         }
       </div>
     </div>
@@ -164,6 +171,11 @@ export class EquipoComponent implements OnInit {
       id: 'pa' as EquipoTab,
       label: 'PA / Mesa',
       count: () => this.paEquipment.length,
+    },
+    {
+      id: 'stage-plot' as EquipoTab,
+      label: 'Stage Plot (Visual)',
+      count: () => 1,
     },
   ];
 

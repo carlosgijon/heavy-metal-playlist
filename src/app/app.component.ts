@@ -23,7 +23,9 @@ import { AuthService } from './core/services/auth.service';
 import { DatabaseService } from './core/services/database.service';
 import { PlaylistWithStats } from './core/models/song.model';
 
-type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario' | 'admin' | 'band-settings' | 'finanzas' | 'merch' | 'ensayos' | 'votaciones' | 'mixer';
+import { TaskBoardComponent } from './features/tasks/task-board/task-board.component';
+
+type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'calendario' | 'admin' | 'band-settings' | 'finanzas' | 'merch' | 'ensayos' | 'votaciones' | 'mixer' | 'tasks';
 
 @Component({
   selector: 'app-root',
@@ -46,6 +48,7 @@ type AppView = 'songs' | 'playlists' | 'detail' | 'equipo' | 'conciertos' | 'cal
     EnsayosComponent,
     VotacionesComponent,
     MixerComponent,
+    TaskBoardComponent,
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
