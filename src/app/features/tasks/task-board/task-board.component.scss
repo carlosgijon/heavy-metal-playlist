@@ -1,0 +1,32 @@
+.task-card {
+  @apply bg-base-100 p-4 rounded-lg shadow-sm border border-base-300 mb-3 cursor-grab hover:shadow-md transition-shadow relative;
+  
+  &:hover button {
+    @apply opacity-100;
+  }
+}
+
+.task-card:active {
+  @apply cursor-grabbing;
+}
+
+.cdk-drag-preview {
+  @apply bg-base-100 p-4 rounded-lg shadow-xl border border-primary;
+  box-sizing: border-box;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.board-column > div:last-child.cdk-drop-list-dragging .task-card:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.empty-state {
+  @apply text-center text-base-content/40 py-8 border-2 border-dashed border-base-300 rounded-lg text-sm;
+}
