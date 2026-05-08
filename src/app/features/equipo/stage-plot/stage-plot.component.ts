@@ -11,7 +11,8 @@ interface StageItem {
   label: string;
   x: number;
   y: number;
-  icon?: string;
+  iconType: 'svg' | 'text';
+  iconValue: string;
 }
 
 @Component({
@@ -50,19 +51,28 @@ export class StagePlotComponent implements OnInit {
 
       const eq: StageItem[] = [];
       instruments.forEach(i => {
-        eq.push({ id: `inst_${i.id}`, type: 'instrument', label: i.name, x: 0, y: 0, icon: 'guitar' });
+        eq.push({ 
+          id: `inst_${i.id}`, type: 'instrument', label: i.name, x: 0, y: 0, 
+          iconType: 'svg', iconValue: this.getSvgForInstrument(i.type) 
+        });
       });
       amps.forEach(a => {
-        eq.push({ id: `amp_${a.id}`, type: 'amp', label: a.name, x: 0, y: 0, icon: 'amp' });
+        eq.push({ 
+          id: `amp_${a.id}`, type: 'amp', label: a.name, x: 0, y: 0, 
+          iconType: 'svg', iconValue: this.getSvgForAmp(a.type) 
+        });
       });
       members.forEach(m => {
-        eq.push({ id: `member_${m.id}`, type: 'member', label: m.name, x: 0, y: 0, icon: 'vocal' });
+        eq.push({ 
+          id: `member_${m.id}`, type: 'member', label: m.name, x: 0, y: 0, 
+          iconType: 'text', iconValue: m.name.charAt(0).toUpperCase() 
+        });
       });
       
       // Additional general elements
-      eq.push({ id: 'gen_drum', type: 'drums', label: 'Batería', x: 0, y: 0, icon: 'drums' });
-      eq.push({ id: 'gen_mic1', type: 'mic', label: 'Vocal Mic', x: 0, y: 0, icon: 'mic' });
-      eq.push({ id: 'gen_monitor1', type: 'monitor', label: 'Monitor', x: 0, y: 0, icon: 'monitor' });
+      eq.push({ id: 'gen_drum', type: 'drums', label: 'Batería (Set)', x: 0, y: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
+      eq.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Voz', x: 0, y: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
+      eq.push({ id: 'gen_di', type: 'di', label: 'Caja DI', x: 0, y: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
 
       this.availableEquipment = eq;
 
@@ -88,6 +98,19 @@ export class StagePlotComponent implements OnInit {
       this.toast.danger('Error al cargar inventario');
       this.loading = false;
     }
+  }
+
+  getSvgForInstrument(type: string): string {
+    if (type === 'guitar') return 'icons/instruments/guitar.svg';
+    if (type === 'bass') return 'icons/instruments/bass_guitar.svg';
+    if (type === 'drums') return 'icons/instruments/drum.svg';
+    if (type === 'keyboard') return 'icons/instruments/synth.svg';
+    return 'icons/instruments/guitar.svg';
+  }
+
+  getSvgForAmp(type: string): string {
+    if (type === 'bass') return 'icons/instruments/bass_amp.svg';
+    return 'icons/instruments/guitar_amp.svg';
   }
 
   onDragEnded(event: CdkDragEnd, item: StageItem) {
