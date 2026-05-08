@@ -44,8 +44,9 @@
         
         <div class="relative flex flex-col items-center">
           <!-- Item Box -->
-          <div class="w-16 h-16 rounded-lg bg-base-100 shadow-xl border-2 border-primary flex items-center justify-center text-primary transform transition-transform group-hover:scale-105">
-            <span class="font-bold text-xs uppercase">{{item.icon}}</span>
+          <div class="w-16 h-16 rounded-lg bg-base-100 shadow-xl border-2 border-primary flex items-center justify-center text-primary transform transition-transform group-hover:scale-105 p-2 overflow-hidden">
+            <img *ngIf="item.iconType === 'svg'" [src]="item.iconValue" class="w-full h-full object-contain" alt="">
+            <span *ngIf="item.iconType === 'text'" class="font-bold text-2xl uppercase">{{item.iconValue}}</span>
           </div>
           <!-- Etiqueta -->
           <div class="mt-1 bg-neutral-focus text-white text-[10px] px-2 py-1 rounded shadow text-center w-20 truncate">
