@@ -1,33 +1,46 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { StagePlotService } from '../../../core/services/stage-plot.service';
 import { DatabaseService } from '../../../core/services/database.service';
 import { ToastService } from '../../../core/services/toast.service';
 
-interface StageItem {
+export interface StageItem {
   id: string;
   type: string;
   label: string;
   x: number;
   y: number;
+  width: number;
+  height: number;
+  rotation: number;
   iconType: 'svg' | 'text';
   iconValue: string;
+}
+
+export interface EquipmentCategory {
+  id: string;
+  title: string;
+  items: StageItem[];
+  open: boolean;
 }
 
 @Component({
   selector: 'app-stage-plot',
   standalone: true,
-  imports: [CommonModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule],
   templateUrl: './stage-plot.component.html',
   styleUrls: ['./stage-plot.component.scss']
 })
 export class StagePlotComponent implements OnInit {
 
   items: StageItem[] = [];
-  availableEquipment: StageItem[] = [];
+  categories: EquipmentCategory[] = [];
   loading = true;
   saving = false;
+  
+  selectedItem: StageItem | null = null;
 
   constructor(
     private stagePlotService: StagePlotService,
@@ -43,38 +56,77 @@ export class StagePlotComponent implements OnInit {
     this.loading = true;
     try {
       // 1. Fetch available equipment from db
-      const [members, instruments, amps] = await Promise.all([
+      const [members, instruments, amps, mics, pa] = await Promise.all([
         this.db.getMembers(),
         this.db.getInstruments(),
-        this.db.getAmplifiers()
+        this.db.getAmplifiers(),
+        this.db.getMicrophones(),
+        this.db.getPaEquipment()
       ]);
 
-      const eq: StageItem[] = [];
-      instruments.forEach(i => {
-        eq.push({ 
-          id: `inst_${i.id}`, type: 'instrument', label: i.name, x: 0, y: 0, 
-          iconType: 'svg', iconValue: this.getSvgForInstrument(i.type) 
-        });
-      });
-      amps.forEach(a => {
-        eq.push({ 
-          id: `amp_${a.id}`, type: 'amp', label: a.name, x: 0, y: 0, 
-          iconType: 'svg', iconValue: this.getSvgForAmp(a.type) 
-        });
-      });
+      const catMembers: StageItem[] = [];
+      const catInstruments: StageItem[] = [];
+      const catAmps: StageItem[] = [];
+      const catMics: StageItem[] = [];
+      const catOthers: StageItem[] = [];
+
       members.forEach(m => {
-        eq.push({ 
-          id: `member_${m.id}`, type: 'member', label: m.name, x: 0, y: 0, 
+        catMembers.push({ 
+          id: `member_${m.id}`, type: 'member', label: m.name, 
+          x: 0, y: 0, width: 45, height: 45, rotation: 0,
           iconType: 'text', iconValue: m.name.charAt(0).toUpperCase() 
         });
       });
-      
-      // Additional general elements
-      eq.push({ id: 'gen_drum', type: 'drums', label: 'Batería (Set)', x: 0, y: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
-      eq.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Voz', x: 0, y: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
-      eq.push({ id: 'gen_di', type: 'di', label: 'Caja DI', x: 0, y: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
 
-      this.availableEquipment = eq;
+      instruments.forEach(i => {
+        const isDrum = i.type === 'drums';
+        const isKeys = i.type === 'keyboard';
+        const w = isDrum ? 120 : (isKeys ? 100 : 30);
+        const h = isDrum ? 120 : (isKeys ? 40 : 80);
+        catInstruments.push({ 
+          id: `inst_${i.id}`, type: 'instrument', label: i.name, 
+          x: 0, y: 0, width: w, height: h, rotation: 0,
+          iconType: 'svg', iconValue: this.getSvgForInstrument(i.type) 
+        });
+      });
+
+      amps.forEach(a => {
+        catAmps.push({ 
+          id: `amp_${a.id}`, type: 'amp', label: a.name, 
+          x: 0, y: 0, width: 50, height: 40, rotation: 0,
+          iconType: 'svg', iconValue: this.getSvgForAmp(a.type) 
+        });
+      });
+
+      mics.forEach(m => {
+        catMics.push({
+          id: `mic_${m.id}`, type: 'mic', label: m.name + (m.brand ? ` (${m.brand})` : ''),
+          x: 0, y: 0, width: 20, height: 20, rotation: 0,
+          iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg'
+        });
+      });
+
+      // Monitores u otros PAs
+      pa.forEach(p => {
+        catOthers.push({
+          id: `pa_${p.id}`, type: 'monitor', label: p.name,
+          x: 0, y: 0, width: 40, height: 30, rotation: 0,
+          iconType: 'svg', iconValue: 'icons/instruments/DI.svg' // TODO: add real monitor SVG if available, fallback to DI for now
+        });
+      });
+
+      // Generales fijos
+      catInstruments.push({ id: 'gen_drum', type: 'drums', label: 'Batería Genérica', x: 0, y: 0, width: 120, height: 120, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
+      catMics.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Genérico', x: 0, y: 0, width: 20, height: 20, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
+      catOthers.push({ id: 'gen_di', type: 'di', label: 'Caja DI Genérica', x: 0, y: 0, width: 20, height: 20, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
+
+      this.categories = [
+        { id: 'members', title: 'Integrantes', items: catMembers, open: true },
+        { id: 'instruments', title: 'Instrumentos', items: catInstruments, open: false },
+        { id: 'amps', title: 'Amplificadores', items: catAmps, open: false },
+        { id: 'mics', title: 'Micrófonos', items: catMics, open: false },
+        { id: 'others', title: 'PA y Otros', items: catOthers, open: false },
+      ];
 
       // 2. Fetch saved positions
       this.stagePlotService.getStagePlot().subscribe({
@@ -82,7 +134,13 @@ export class StagePlotComponent implements OnInit {
           if (plot.plotData && plot.plotData !== '[]') {
             try {
               const savedItems: StageItem[] = JSON.parse(plot.plotData);
-              this.items = savedItems;
+              // Ensure old items get the new properties (width, height, rotation) if they were missing
+              this.items = savedItems.map(si => ({
+                ...si,
+                width: si.width || 50,
+                height: si.height || 50,
+                rotation: si.rotation || 0
+              }));
             } catch (e) {
               this.items = [];
             }
@@ -113,6 +171,10 @@ export class StagePlotComponent implements OnInit {
     return 'icons/instruments/guitar_amp.svg';
   }
 
+  toggleCategory(cat: EquipmentCategory) {
+    cat.open = !cat.open;
+  }
+
   onDragEnded(event: CdkDragEnd, item: StageItem) {
     const transform = event.source.getFreeDragPosition();
     item.x = transform.x;
@@ -125,13 +187,29 @@ export class StagePlotComponent implements OnInit {
       this.toast.warning('Este elemento ya está en el escenario');
       return;
     }
-    const newItem = { ...eq, x: 50, y: 50 };
+    const newItem = { ...eq, x: 100, y: 100 };
     this.items.push(newItem);
+    this.selectItem(newItem);
     this.savePlot();
   }
 
   removeFromStage(item: StageItem) {
     this.items = this.items.filter(i => i.id !== item.id);
+    if (this.selectedItem?.id === item.id) {
+      this.selectedItem = null;
+    }
+    this.savePlot();
+  }
+
+  selectItem(item: StageItem) {
+    this.selectedItem = item;
+  }
+
+  deselectAll() {
+    this.selectedItem = null;
+  }
+
+  onRotationChange() {
     this.savePlot();
   }
 
@@ -149,6 +227,9 @@ export class StagePlotComponent implements OnInit {
   }
 
   printStagePlot() {
-    window.print();
+    this.selectedItem = null; // deselect to remove outlines before printing
+    setTimeout(() => {
+      window.print();
+    }, 100);
   }
 }

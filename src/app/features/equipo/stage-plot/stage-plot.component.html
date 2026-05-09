@@ -1,62 +1,104 @@
 <div class="p-4 h-full flex flex-col md:flex-row gap-4 printable-area">
   
-  <!-- Sidebar de Herramientas -->
-  <div class="w-full md:w-64 bg-base-200 rounded-xl p-4 flex flex-col hide-on-print h-[400px] md:h-auto overflow-hidden">
-    <h3 class="font-bold text-lg mb-2">Inventario</h3>
-    <p class="text-xs opacity-70 mb-4">Añade elementos al escenario</p>
+  <!-- Sidebar Izquierdo: Inventario y Propiedades -->
+  <div class="w-full md:w-80 bg-base-200 rounded-xl flex flex-col hide-on-print h-[400px] md:h-auto overflow-hidden shadow-lg border border-base-300">
     
-    <div class="flex-1 overflow-y-auto pr-2">
-      <div *ngFor="let eq of availableEquipment" class="bg-base-100 p-2 rounded-lg mb-2 flex justify-between items-center text-sm shadow-sm border border-base-300">
-        <span class="truncate pr-2">{{eq.label}}</span>
-        <button class="btn btn-xs btn-primary" (click)="addToStage(eq)">Añadir</button>
+    <!-- Pestañas simuladas (Podemos simplemente apilar) -->
+    <div class="p-4 bg-base-300 font-bold border-b border-base-400 shadow-sm z-10 flex justify-between items-center">
+      <span>Constructor Escenario</span>
+      <span class="text-xs font-normal">
+        <span *ngIf="saving">⏳</span>
+        <span *ngIf="!saving" class="text-success">✔</span>
+      </span>
+    </div>
+
+    <!-- Panel de Selección (Muestra controles si hay algo seleccionado) -->
+    <div *ngIf="selectedItem" class="bg-primary/10 border-b border-primary p-4 animate-fade-in shrink-0">
+      <div class="flex justify-between items-center mb-2">
+        <h4 class="font-bold text-sm text-primary">Elemento Seleccionado</h4>
+        <button class="btn btn-xs btn-ghost text-error" (click)="removeFromStage(selectedItem)">Quitar</button>
+      </div>
+      <p class="text-xs mb-3 truncate">{{selectedItem.label}}</p>
+      
+      <div class="form-control">
+        <label class="label p-0 pb-1">
+          <span class="label-text text-xs">Rotación ({{selectedItem.rotation}}º)</span>
+        </label>
+        <input type="range" min="0" max="360" [(ngModel)]="selectedItem.rotation" (change)="onRotationChange()" class="range range-xs range-primary" />
       </div>
     </div>
 
-    <div class="mt-4 pt-4 border-t border-base-300 flex justify-between items-center">
-      <span class="text-xs opacity-70">
-        <span *ngIf="saving">Guardando...</span>
-        <span *ngIf="!saving" class="text-success">Guardado</span>
-      </span>
-      <button class="btn btn-sm btn-outline" (click)="printStagePlot()">Imprimir</button>
+    <!-- Lista de Inventario -->
+    <div class="flex-1 overflow-y-auto p-2 space-y-2">
+      <div *ngFor="let cat of categories" class="collapse collapse-arrow bg-base-100 border border-base-300">
+        <input type="checkbox" [checked]="cat.open" (change)="toggleCategory(cat)" /> 
+        <div class="collapse-title font-medium text-sm py-3 min-h-0">
+          {{cat.title}} <span class="opacity-50 text-xs ml-1">({{cat.items.length}})</span>
+        </div>
+        <div class="collapse-content p-2 pt-0 space-y-1">
+          <div *ngFor="let eq of cat.items" class="bg-base-200 p-2 rounded flex justify-between items-center text-xs border border-transparent hover:border-primary/30 transition-colors">
+            <span class="truncate pr-2 flex-1" [title]="eq.label">{{eq.label}}</span>
+            <button class="btn btn-xs btn-outline btn-primary shrink-0" (click)="addToStage(eq)">Añadir</button>
+          </div>
+          <div *ngIf="cat.items.length === 0" class="text-xs opacity-50 p-2 text-center">
+            No hay elementos
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-4 bg-base-300 border-t border-base-400 shrink-0">
+      <button class="btn btn-sm btn-block btn-secondary" (click)="printStagePlot()">Imprimir PDF</button>
     </div>
   </div>
 
   <!-- Escenario Principal -->
-  <div class="flex-1 bg-neutral rounded-xl relative overflow-hidden border-4 border-neutral-focus shadow-inner min-h-[500px]">
+  <!-- Al hacer click fuera de los elementos, deseleccionamos -->
+  <div class="flex-1 bg-neutral rounded-xl relative overflow-hidden shadow-inner min-h-[500px] border-2 border-neutral-focus" (click)="deselectAll()">
     
+    <!-- Grid pattern (cuadrícula) -->
+    <div class="absolute inset-0 stage-grid pointer-events-none opacity-20"></div>
+
     <!-- Decoración Escenario -->
-    <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-base-300 to-transparent pointer-events-none flex items-end justify-center pb-2">
+    <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-base-300 to-transparent pointer-events-none flex items-end justify-center pb-2 z-0">
       <span class="text-3xl font-bold opacity-20 text-base-content tracking-widest">PÚBLICO</span>
     </div>
-    <div class="absolute inset-x-0 top-0 h-8 flex items-center justify-center pointer-events-none">
+    <div class="absolute inset-x-0 top-0 h-8 flex items-center justify-center pointer-events-none z-0">
       <span class="text-xs font-bold opacity-30 text-white">FONDO DEL ESCENARIO</span>
     </div>
 
     <!-- Contenedor Drag & Drop -->
-    <div class="absolute inset-4" id="stage-boundary">
+    <div class="absolute inset-4 z-10" id="stage-boundary">
       
+      <!-- Wrapper cdkDrag: controla SOLO la traslación (x, y) -->
       <div *ngFor="let item of items" 
            cdkDrag 
            cdkDragBoundary="#stage-boundary"
            [cdkDragFreeDragPosition]="{x: item.x, y: item.y}"
            (cdkDragEnded)="onDragEnded($event, item)"
-           class="absolute cursor-move group">
+           (click)="selectItem(item); $event.stopPropagation()"
+           class="absolute cursor-move group"
+           [style.width.px]="item.width"
+           [style.height.px]="item.height"
+           [style.zIndex]="selectedItem?.id === item.id ? 100 : 10">
         
-        <div class="relative flex flex-col items-center">
-          <!-- Item Box -->
-          <div class="w-16 h-16 rounded-lg bg-base-100 shadow-xl border-2 border-primary flex items-center justify-center text-primary transform transition-transform group-hover:scale-105 p-2 overflow-hidden">
-            <img *ngIf="item.iconType === 'svg'" [src]="item.iconValue" class="w-full h-full object-contain" alt="">
-            <span *ngIf="item.iconType === 'text'" class="font-bold text-2xl uppercase">{{item.iconValue}}</span>
+        <!-- Elemento interno: controla ROTACIÓN y TAMAÑO REAL -->
+        <!-- La rotación se aplica centrada -->
+        <div class="w-full h-full relative" [style.transform]="'rotate(' + item.rotation + 'deg)'">
+          
+          <div class="w-full h-full rounded bg-base-100/90 shadow-md border flex items-center justify-center text-primary overflow-hidden transition-colors"
+               [ngClass]="selectedItem?.id === item.id ? 'border-primary ring-2 ring-primary ring-opacity-50' : 'border-base-content/20'">
+            <img *ngIf="item.iconType === 'svg'" [src]="item.iconValue" class="w-full h-full object-contain p-1" [alt]="item.label">
+            <span *ngIf="item.iconType === 'text'" class="font-bold text-lg uppercase" [style.fontSize]="(item.width * 0.4) + 'px'">{{item.iconValue}}</span>
           </div>
-          <!-- Etiqueta -->
-          <div class="mt-1 bg-neutral-focus text-white text-[10px] px-2 py-1 rounded shadow text-center w-20 truncate">
-            {{item.label}}
-          </div>
-          <!-- Borrar -->
-          <button class="absolute -top-2 -right-2 bg-error text-white w-5 h-5 rounded-full text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity hide-on-print"
-                  (click)="removeFromStage(item); $event.stopPropagation()">
-            ×
-          </button>
+
+        </div>
+
+        <!-- Etiqueta externa (No rota con el elemento, siempre se lee bien) -->
+        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-neutral-focus/80 text-white text-[9px] px-1.5 py-0.5 rounded shadow text-center truncate whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 transition-opacity"
+             [ngClass]="{'opacity-100': selectedItem?.id === item.id}"
+             style="max-width: 120px;">
+          {{item.label}}
         </div>
 
       </div>
