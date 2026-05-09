@@ -1,22 +1,32 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
+import { DragDropModule, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
 import { StagePlotService } from '../../../core/services/stage-plot.service';
 import { DatabaseService } from '../../../core/services/database.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { NgIconComponent } from '@ng-icons/core';
 
 export interface StageItem {
   id: string;
   type: string;
   label: string;
+  displayType: string;
   x: number;
   y: number;
+  currentX?: number; // Used for realtime drag rendering
+  currentY?: number;
   width: number;
   height: number;
   rotation: number;
-  iconType: 'svg' | 'text';
+  iconType: 'svg' | 'ng-icon';
   iconValue: string;
+}
+
+export interface Cable {
+  id: string;
+  fromId: string;
+  toId: string;
 }
 
 export interface EquipmentCategory {
@@ -29,18 +39,21 @@ export interface EquipmentCategory {
 @Component({
   selector: 'app-stage-plot',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule, NgIconComponent],
   templateUrl: './stage-plot.component.html',
   styleUrls: ['./stage-plot.component.scss']
 })
 export class StagePlotComponent implements OnInit {
 
   items: StageItem[] = [];
+  cables: Cable[] = [];
   categories: EquipmentCategory[] = [];
+  
   loading = true;
   saving = false;
   
   selectedItem: StageItem | null = null;
+  connectingFrom: StageItem | null = null;
 
   constructor(
     private stagePlotService: StagePlotService,
@@ -55,7 +68,6 @@ export class StagePlotComponent implements OnInit {
   async loadData() {
     this.loading = true;
     try {
-      // 1. Fetch available equipment from db
       const [members, instruments, amps, mics, pa] = await Promise.all([
         this.db.getMembers(),
         this.db.getInstruments(),
@@ -72,19 +84,19 @@ export class StagePlotComponent implements OnInit {
 
       members.forEach(m => {
         catMembers.push({ 
-          id: `member_${m.id}`, type: 'member', label: m.name, 
-          x: 0, y: 0, width: 45, height: 45, rotation: 0,
-          iconType: 'text', iconValue: m.name.charAt(0).toUpperCase() 
+          id: `member_${m.id}`, type: 'member', label: m.name, displayType: 'Integrante',
+          x: 0, y: 0, width: 60, height: 60, rotation: 0,
+          iconType: 'ng-icon', iconValue: 'heroUser' 
         });
       });
 
       instruments.forEach(i => {
         const isDrum = i.type === 'drums';
         const isKeys = i.type === 'keyboard';
-        const w = isDrum ? 120 : (isKeys ? 100 : 30);
-        const h = isDrum ? 120 : (isKeys ? 40 : 80);
+        const w = isDrum ? 200 : (isKeys ? 130 : 80);
+        const h = isDrum ? 200 : (isKeys ? 50 : 80);
         catInstruments.push({ 
-          id: `inst_${i.id}`, type: 'instrument', label: i.name, 
+          id: `inst_${i.id}`, type: 'instrument', label: i.name, displayType: i.type,
           x: 0, y: 0, width: w, height: h, rotation: 0,
           iconType: 'svg', iconValue: this.getSvgForInstrument(i.type) 
         });
@@ -92,33 +104,32 @@ export class StagePlotComponent implements OnInit {
 
       amps.forEach(a => {
         catAmps.push({ 
-          id: `amp_${a.id}`, type: 'amp', label: a.name, 
-          x: 0, y: 0, width: 50, height: 40, rotation: 0,
+          id: `amp_${a.id}`, type: 'amp', label: a.name, displayType: 'Amplificador',
+          x: 0, y: 0, width: 75, height: 40, rotation: 0,
           iconType: 'svg', iconValue: this.getSvgForAmp(a.type) 
         });
       });
 
       mics.forEach(m => {
         catMics.push({
-          id: `mic_${m.id}`, type: 'mic', label: m.name + (m.brand ? ` (${m.brand})` : ''),
-          x: 0, y: 0, width: 20, height: 20, rotation: 0,
+          id: `mic_${m.id}`, type: 'mic', label: m.name + (m.brand ? ` (${m.brand})` : ''), displayType: 'Micrófono',
+          x: 0, y: 0, width: 30, height: 30, rotation: 0,
           iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg'
         });
       });
 
-      // Monitores u otros PAs
       pa.forEach(p => {
+        const isMonitor = p.category === 'monitor';
         catOthers.push({
-          id: `pa_${p.id}`, type: 'monitor', label: p.name,
-          x: 0, y: 0, width: 40, height: 30, rotation: 0,
-          iconType: 'svg', iconValue: 'icons/instruments/DI.svg' // TODO: add real monitor SVG if available, fallback to DI for now
+          id: `pa_${p.id}`, type: 'monitor', label: p.name, displayType: isMonitor ? 'Monitor' : 'PA',
+          x: 0, y: 0, width: isMonitor ? 60 : 40, height: isMonitor ? 40 : 40, rotation: 0,
+          iconType: 'svg', iconValue: 'icons/instruments/DI.svg'
         });
       });
 
-      // Generales fijos
-      catInstruments.push({ id: 'gen_drum', type: 'drums', label: 'Batería Genérica', x: 0, y: 0, width: 120, height: 120, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
-      catMics.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Genérico', x: 0, y: 0, width: 20, height: 20, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
-      catOthers.push({ id: 'gen_di', type: 'di', label: 'Caja DI Genérica', x: 0, y: 0, width: 20, height: 20, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
+      catInstruments.push({ id: 'gen_drum', type: 'drums', label: 'Batería Genérica', displayType: 'Batería', x: 0, y: 0, width: 200, height: 200, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
+      catMics.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Genérico', displayType: 'Micrófono', x: 0, y: 0, width: 30, height: 30, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
+      catOthers.push({ id: 'gen_di', type: 'di', label: 'Caja DI Genérica', displayType: 'DI Box', x: 0, y: 0, width: 30, height: 30, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
 
       this.categories = [
         { id: 'members', title: 'Integrantes', items: catMembers, open: true },
@@ -128,21 +139,28 @@ export class StagePlotComponent implements OnInit {
         { id: 'others', title: 'PA y Otros', items: catOthers, open: false },
       ];
 
-      // 2. Fetch saved positions
       this.stagePlotService.getStagePlot().subscribe({
         next: (plot) => {
           if (plot.plotData && plot.plotData !== '[]') {
             try {
-              const savedItems: StageItem[] = JSON.parse(plot.plotData);
-              // Ensure old items get the new properties (width, height, rotation) if they were missing
-              this.items = savedItems.map(si => ({
-                ...si,
-                width: si.width || 50,
-                height: si.height || 50,
-                rotation: si.rotation || 0
-              }));
+              const data = JSON.parse(plot.plotData);
+              if (Array.isArray(data)) {
+                // Old format
+                this.items = data.map(si => this.migrateOldItem(si));
+                this.cables = [];
+              } else {
+                // New format: { items: [], cables: [] }
+                this.items = (data.items || []).map((si: any) => this.migrateOldItem(si));
+                this.cables = data.cables || [];
+              }
+              // Sync currentX and currentY
+              this.items.forEach(i => {
+                i.currentX = i.x;
+                i.currentY = i.y;
+              });
             } catch (e) {
               this.items = [];
+              this.cables = [];
             }
           }
           this.loading = false;
@@ -156,6 +174,18 @@ export class StagePlotComponent implements OnInit {
       this.toast.danger('Error al cargar inventario');
       this.loading = false;
     }
+  }
+
+  private migrateOldItem(si: any): StageItem {
+    return {
+      ...si,
+      width: si.width || 60,
+      height: si.height || 60,
+      rotation: si.rotation || 0,
+      displayType: si.displayType || si.type,
+      currentX: si.x,
+      currentY: si.y
+    };
   }
 
   getSvgForInstrument(type: string): string {
@@ -175,19 +205,29 @@ export class StagePlotComponent implements OnInit {
     cat.open = !cat.open;
   }
 
+  isItemOnStage(id: string): boolean {
+    return !!this.items.find(i => i.id === id);
+  }
+
+  onDragMoved(event: CdkDragMove, item: StageItem) {
+    item.currentX = item.x + event.distance.x;
+    item.currentY = item.y + event.distance.y;
+  }
+
   onDragEnded(event: CdkDragEnd, item: StageItem) {
     const transform = event.source.getFreeDragPosition();
     item.x = transform.x;
     item.y = transform.y;
+    item.currentX = item.x;
+    item.currentY = item.y;
     this.savePlot();
   }
 
   addToStage(eq: StageItem) {
-    if (this.items.find(i => i.id === eq.id)) {
-      this.toast.warning('Este elemento ya está en el escenario');
+    if (this.isItemOnStage(eq.id)) {
       return;
     }
-    const newItem = { ...eq, x: 100, y: 100 };
+    const newItem = { ...eq, x: 200, y: 200, currentX: 200, currentY: 200 };
     this.items.push(newItem);
     this.selectItem(newItem);
     this.savePlot();
@@ -195,18 +235,52 @@ export class StagePlotComponent implements OnInit {
 
   removeFromStage(item: StageItem) {
     this.items = this.items.filter(i => i.id !== item.id);
+    this.cables = this.cables.filter(c => c.fromId !== item.id && c.toId !== item.id);
     if (this.selectedItem?.id === item.id) {
       this.selectedItem = null;
+      this.connectingFrom = null;
     }
     this.savePlot();
   }
 
   selectItem(item: StageItem) {
+    if (this.connectingFrom && this.connectingFrom.id !== item.id) {
+      // Complete connection
+      this.addCable(this.connectingFrom.id, item.id);
+      this.connectingFrom = null;
+      this.selectedItem = item;
+      return;
+    }
+    
     this.selectedItem = item;
+    this.connectingFrom = null;
   }
 
   deselectAll() {
     this.selectedItem = null;
+    this.connectingFrom = null;
+  }
+
+  startConnection(item: StageItem) {
+    this.connectingFrom = item;
+  }
+
+  cancelConnection() {
+    this.connectingFrom = null;
+  }
+
+  addCable(fromId: string, toId: string) {
+    // Avoid duplicates
+    if (this.cables.find(c => (c.fromId === fromId && c.toId === toId) || (c.fromId === toId && c.toId === fromId))) {
+      return;
+    }
+    this.cables.push({ id: `cable_${Date.now()}`, fromId, toId });
+    this.savePlot();
+  }
+
+  removeCable(cableId: string) {
+    this.cables = this.cables.filter(c => c.id !== cableId);
+    this.savePlot();
   }
 
   onRotationChange() {
@@ -215,7 +289,8 @@ export class StagePlotComponent implements OnInit {
 
   savePlot() {
     this.saving = true;
-    this.stagePlotService.saveStagePlot(JSON.stringify(this.items)).subscribe({
+    const payload = JSON.stringify({ items: this.items, cables: this.cables });
+    this.stagePlotService.saveStagePlot(payload).subscribe({
       next: () => {
         this.saving = false;
       },
@@ -227,9 +302,23 @@ export class StagePlotComponent implements OnInit {
   }
 
   printStagePlot() {
-    this.selectedItem = null; // deselect to remove outlines before printing
+    this.selectedItem = null;
+    this.connectingFrom = null;
     setTimeout(() => {
       window.print();
     }, 100);
+  }
+
+  // Helpers for SVG cables
+  getCenterX(item: StageItem): number {
+    return (item.currentX || item.x) + (item.width / 2);
+  }
+
+  getCenterY(item: StageItem): number {
+    return (item.currentY || item.y) + (item.height / 2);
+  }
+
+  getItemById(id: string): StageItem | undefined {
+    return this.items.find(i => i.id === id);
   }
 }
