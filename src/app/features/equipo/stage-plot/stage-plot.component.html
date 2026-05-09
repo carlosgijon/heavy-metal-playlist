@@ -1,9 +1,8 @@
-<div class="p-4 h-full flex flex-col md:flex-row gap-4 printable-area">
+<div class="p-4 h-full flex flex-col md:flex-row gap-4 printable-area" (click)="deselectAll()">
   
   <!-- Sidebar Izquierdo: Inventario y Propiedades -->
-  <div class="w-full md:w-80 bg-base-200 rounded-xl flex flex-col hide-on-print h-[400px] md:h-auto overflow-hidden shadow-lg border border-base-300">
+  <div class="w-full md:w-80 bg-base-200 rounded-xl flex flex-col hide-on-print h-[400px] md:h-auto overflow-hidden shadow-lg border border-base-300" (click)="$event.stopPropagation()">
     
-    <!-- Pestañas simuladas (Podemos simplemente apilar) -->
     <div class="p-4 bg-base-300 font-bold border-b border-base-400 shadow-sm z-10 flex justify-between items-center">
       <span>Constructor Escenario</span>
       <span class="text-xs font-normal">
@@ -12,33 +11,55 @@
       </span>
     </div>
 
-    <!-- Panel de Selección (Muestra controles si hay algo seleccionado) -->
-    <div *ngIf="selectedItem" class="bg-primary/10 border-b border-primary p-4 animate-fade-in shrink-0">
-      <div class="flex justify-between items-center mb-2">
-        <h4 class="font-bold text-sm text-primary">Elemento Seleccionado</h4>
+    <!-- Panel de Selección -->
+    <div *ngIf="selectedItem" class="bg-primary/10 border-b border-primary p-4 animate-fade-in shrink-0 relative">
+      <div class="flex justify-between items-center mb-1">
+        <h4 class="font-bold text-sm text-primary">Propiedades</h4>
         <button class="btn btn-xs btn-ghost text-error" (click)="removeFromStage(selectedItem)">Quitar</button>
       </div>
-      <p class="text-xs mb-3 truncate">{{selectedItem.label}}</p>
+      <p class="text-xs mb-3 font-semibold">{{selectedItem.label}} <span class="opacity-60 font-normal">({{selectedItem.displayType}})</span></p>
       
-      <div class="form-control">
+      <div class="form-control mb-3">
         <label class="label p-0 pb-1">
-          <span class="label-text text-xs">Rotación ({{selectedItem.rotation}}º)</span>
+          <span class="label-text text-xs font-bold">Rotación ({{selectedItem.rotation}}º)</span>
         </label>
         <input type="range" min="0" max="360" [(ngModel)]="selectedItem.rotation" (change)="onRotationChange()" class="range range-xs range-primary" />
+      </div>
+
+      <div class="flex gap-2">
+        <button *ngIf="connectingFrom?.id !== selectedItem.id" class="btn btn-xs btn-outline btn-primary" (click)="startConnection(selectedItem)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="mr-1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          Conectar a...
+        </button>
+        <button *ngIf="connectingFrom?.id === selectedItem.id" class="btn btn-xs btn-primary animate-pulse" (click)="cancelConnection()">
+          Cancelar conexión
+        </button>
+      </div>
+      
+      <div *ngIf="connectingFrom" class="mt-2 text-[10px] text-info bg-info/10 p-1.5 rounded">
+        Haz clic en otro elemento en el escenario para unirlos.
       </div>
     </div>
 
     <!-- Lista de Inventario -->
     <div class="flex-1 overflow-y-auto p-2 space-y-2">
-      <div *ngFor="let cat of categories" class="collapse collapse-arrow bg-base-100 border border-base-300">
+      <div *ngFor="let cat of categories" class="collapse collapse-arrow bg-base-100 border border-base-300 rounded-lg">
         <input type="checkbox" [checked]="cat.open" (change)="toggleCategory(cat)" /> 
-        <div class="collapse-title font-medium text-sm py-3 min-h-0">
-          {{cat.title}} <span class="opacity-50 text-xs ml-1">({{cat.items.length}})</span>
+        <div class="collapse-title font-bold text-sm py-3 min-h-0">
+          {{cat.title}} <span class="opacity-50 text-xs ml-1 font-normal">({{cat.items.length}})</span>
         </div>
         <div class="collapse-content p-2 pt-0 space-y-1">
           <div *ngFor="let eq of cat.items" class="bg-base-200 p-2 rounded flex justify-between items-center text-xs border border-transparent hover:border-primary/30 transition-colors">
-            <span class="truncate pr-2 flex-1" [title]="eq.label">{{eq.label}}</span>
-            <button class="btn btn-xs btn-outline btn-primary shrink-0" (click)="addToStage(eq)">Añadir</button>
+            <span class="truncate pr-2 flex-1" [title]="eq.label">
+              <strong>{{eq.label}}</strong> <span class="opacity-60 block text-[10px]">{{eq.displayType}}</span>
+            </span>
+            <button class="btn btn-xs shrink-0" 
+                    [ngClass]="isItemOnStage(eq.id) ? 'btn-disabled opacity-50' : 'btn-outline btn-primary'" 
+                    (click)="addToStage(eq)">
+              {{ isItemOnStage(eq.id) ? 'En escenario' : 'Añadir' }}
+            </button>
           </div>
           <div *ngIf="cat.items.length === 0" class="text-xs opacity-50 p-2 text-center">
             No hay elementos
@@ -53,8 +74,7 @@
   </div>
 
   <!-- Escenario Principal -->
-  <!-- Al hacer click fuera de los elementos, deseleccionamos -->
-  <div class="flex-1 bg-neutral rounded-xl relative overflow-hidden shadow-inner min-h-[500px] border-2 border-neutral-focus" (click)="deselectAll()">
+  <div class="flex-1 bg-neutral rounded-xl relative overflow-hidden shadow-inner min-h-[500px] border-2 border-neutral-focus">
     
     <!-- Grid pattern (cuadrícula) -->
     <div class="absolute inset-0 stage-grid pointer-events-none opacity-20"></div>
@@ -67,14 +87,49 @@
       <span class="text-xs font-bold opacity-30 text-white">FONDO DEL ESCENARIO</span>
     </div>
 
+    <!-- SVG Layer para los Cables -->
+    <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
+      <g *ngFor="let cable of cables">
+        <ng-container *ngIf="getItemById(cable.fromId) as fromItem">
+          <ng-container *ngIf="getItemById(cable.toId) as toItem">
+            <!-- Linea del cable -->
+            <path [attr.d]="'M ' + (getCenterX(fromItem) + 16) + ' ' + (getCenterY(fromItem) + 16) + ' L ' + (getCenterX(toItem) + 16) + ' ' + (getCenterY(toItem) + 16)" 
+                  stroke="rgba(255,255,255,0.4)" 
+                  stroke-width="3" 
+                  stroke-dasharray="6,4"
+                  fill="none" />
+            <!-- Punto central del cable para borrarlo (requiere pointer-events en el SVG, mejor un botón HTML absoluto o que el path tenga events) -->
+            <!-- Lo implementaremos con elementos html posicionales arriba -->
+          </ng-container>
+        </ng-container>
+      </g>
+    </svg>
+
+    <!-- Botones HTML absolutos para borrar cables -->
+    <div class="absolute inset-0 w-full h-full pointer-events-none z-30 overflow-hidden hide-on-print">
+      <ng-container *ngFor="let cable of cables">
+        <ng-container *ngIf="getItemById(cable.fromId) as fromItem">
+          <ng-container *ngIf="getItemById(cable.toId) as toItem">
+            <button class="absolute pointer-events-auto bg-error text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow transform -translate-x-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity"
+                    [style.left.px]="(getCenterX(fromItem) + getCenterX(toItem))/2 + 16"
+                    [style.top.px]="(getCenterY(fromItem) + getCenterY(toItem))/2 + 16"
+                    title="Borrar cable"
+                    (click)="removeCable(cable.id); $event.stopPropagation()">
+              ×
+            </button>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+    </div>
+
     <!-- Contenedor Drag & Drop -->
-    <div class="absolute inset-4 z-10" id="stage-boundary">
+    <div class="absolute inset-4 z-40" id="stage-boundary">
       
-      <!-- Wrapper cdkDrag: controla SOLO la traslación (x, y) -->
       <div *ngFor="let item of items" 
            cdkDrag 
            cdkDragBoundary="#stage-boundary"
            [cdkDragFreeDragPosition]="{x: item.x, y: item.y}"
+           (cdkDragMoved)="onDragMoved($event, item)"
            (cdkDragEnded)="onDragEnded($event, item)"
            (click)="selectItem(item); $event.stopPropagation()"
            class="absolute cursor-move group"
@@ -82,23 +137,27 @@
            [style.height.px]="item.height"
            [style.zIndex]="selectedItem?.id === item.id ? 100 : 10">
         
-        <!-- Elemento interno: controla ROTACIÓN y TAMAÑO REAL -->
-        <!-- La rotación se aplica centrada -->
         <div class="w-full h-full relative" [style.transform]="'rotate(' + item.rotation + 'deg)'">
           
-          <div class="w-full h-full rounded bg-base-100/90 shadow-md border flex items-center justify-center text-primary overflow-hidden transition-colors"
-               [ngClass]="selectedItem?.id === item.id ? 'border-primary ring-2 ring-primary ring-opacity-50' : 'border-base-content/20'">
-            <img *ngIf="item.iconType === 'svg'" [src]="item.iconValue" class="w-full h-full object-contain p-1" [alt]="item.label">
-            <span *ngIf="item.iconType === 'text'" class="font-bold text-lg uppercase" [style.fontSize]="(item.width * 0.4) + 'px'">{{item.iconValue}}</span>
+          <!-- Elemento grÃ¡fico -->
+          <div class="w-full h-full rounded-lg bg-base-100/95 shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-2 flex items-center justify-center text-primary overflow-hidden transition-all"
+               [ngClass]="selectedItem?.id === item.id ? 'border-primary ring-4 ring-primary ring-opacity-50' : (connectingFrom?.id === item.id ? 'border-info ring-4 ring-info ring-opacity-70 animate-pulse' : 'border-neutral-focus/30 hover:border-primary/50')">
+            
+            <img *ngIf="item.iconType === 'svg'" [src]="item.iconValue" class="w-full h-full object-contain p-2" [alt]="item.label">
+            
+            <div *ngIf="item.iconType === 'ng-icon'" class="flex items-center justify-center w-full h-full text-base-content opacity-70">
+              <ng-icon [name]="item.iconValue" [style.fontSize]="(item.width * 0.5) + 'px'"></ng-icon>
+            </div>
+            
           </div>
 
         </div>
 
-        <!-- Etiqueta externa (No rota con el elemento, siempre se lee bien) -->
-        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-neutral-focus/80 text-white text-[9px] px-1.5 py-0.5 rounded shadow text-center truncate whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 transition-opacity"
-             [ngClass]="{'opacity-100': selectedItem?.id === item.id}"
-             style="max-width: 120px;">
-          {{item.label}}
+        <!-- Etiqueta externa centrada debajo -->
+        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-black/80 text-white text-[10px] px-2 py-1 rounded shadow-lg text-center whitespace-nowrap z-50 transition-opacity"
+             [ngClass]="(selectedItem?.id === item.id || connectingFrom?.id === item.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 hide-on-print'">
+          <span class="font-bold">{{item.label}}</span>
+          <span class="block text-[9px] opacity-70">{{item.displayType}}</span>
         </div>
 
       </div>
