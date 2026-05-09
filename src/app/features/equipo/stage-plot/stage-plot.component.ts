@@ -6,6 +6,7 @@ import { StagePlotService } from '../../../core/services/stage-plot.service';
 import { DatabaseService } from '../../../core/services/database.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { NgIconComponent } from '@ng-icons/core';
+import { findOrthogonalPath } from './a-star.util';
 
 export interface StageItem {
   id: string;
@@ -27,6 +28,8 @@ export interface Cable {
   id: string;
   fromId: string;
   toId: string;
+  color?: string;
+  pathPoints?: {x: number, y: number}[];
 }
 
 export interface EquipmentCategory {
@@ -161,6 +164,7 @@ export class StagePlotComponent implements OnInit {
                 i.currentX = i.x;
                 i.currentY = i.y;
               });
+              setTimeout(() => this.recalculateCables(), 100);
             } catch (e) {
               this.items = [];
               this.cables = [];
@@ -215,6 +219,7 @@ export class StagePlotComponent implements OnInit {
   onDragMoved(event: CdkDragMove, item: StageItem) {
     item.currentX = item.x + event.distance.x;
     item.currentY = item.y + event.distance.y;
+    this.recalculateCables();
   }
 
   onDragEnded(event: CdkDragEnd, item: StageItem) {
@@ -223,6 +228,7 @@ export class StagePlotComponent implements OnInit {
     item.y = transform.y;
     item.currentX = item.x;
     item.currentY = item.y;
+    this.recalculateCables();
     this.savePlot();
   }
 
@@ -247,6 +253,7 @@ export class StagePlotComponent implements OnInit {
       this.selectedItem = null;
       this.connectingFrom = null;
     }
+    this.recalculateCables();
     this.savePlot();
   }
 
@@ -281,13 +288,38 @@ export class StagePlotComponent implements OnInit {
     if (this.cables.find(c => (c.fromId === fromId && c.toId === toId) || (c.fromId === toId && c.toId === fromId))) {
       return;
     }
-    this.cables.push({ id: `cable_${Date.now()}`, fromId, toId });
+    const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+    const color = colors[this.cables.length % colors.length];
+    this.cables.push({ id: `cable_${Date.now()}`, fromId, toId, color });
+    this.recalculateCables();
     this.savePlot();
   }
 
   removeCable(cableId: string) {
     this.cables = this.cables.filter(c => c.id !== cableId);
+    this.recalculateCables();
     this.savePlot();
+  }
+
+  recalculateCables() {
+    const obstacles = this.items.map(i => ({
+      x: i.currentX || i.x,
+      y: i.currentY || i.y,
+      w: i.width,
+      h: i.height
+    }));
+
+    this.cables.forEach(cable => {
+      const fromItem = this.getItemById(cable.fromId);
+      const toItem = this.getItemById(cable.toId);
+      if (fromItem && toItem) {
+        cable.pathPoints = findOrthogonalPath(
+          this.getCenterX(fromItem), this.getCenterY(fromItem),
+          this.getCenterX(toItem), this.getCenterY(toItem),
+          obstacles
+        );
+      }
+    });
   }
 
   onRotationChange() {
@@ -323,6 +355,16 @@ export class StagePlotComponent implements OnInit {
 
   getCenterY(item: StageItem): number {
     return (item.currentY || item.y) + (item.height / 2);
+  }
+
+  getCablePathString(cable: Cable): string {
+    if (!cable.pathPoints || cable.pathPoints.length === 0) return '';
+    return 'M ' + cable.pathPoints.map(p => `${p.x} ${p.y}`).join(' L ');
+  }
+
+  getCableMidPoint(cable: Cable): {x: number, y: number} | null {
+    if (!cable.pathPoints || cable.pathPoints.length === 0) return null;
+    return cable.pathPoints[Math.floor(cable.pathPoints.length / 2)];
   }
 
   getItemById(id: string): StageItem | undefined {

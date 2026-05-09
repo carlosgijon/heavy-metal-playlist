@@ -90,17 +90,12 @@
     <!-- SVG Layer para los Cables -->
     <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
       <g *ngFor="let cable of cables">
-        <ng-container *ngIf="getItemById(cable.fromId) as fromItem">
-          <ng-container *ngIf="getItemById(cable.toId) as toItem">
-            <!-- Linea del cable -->
-            <path [attr.d]="'M ' + (getCenterX(fromItem) + 16) + ' ' + (getCenterY(fromItem) + 16) + ' L ' + (getCenterX(toItem) + 16) + ' ' + (getCenterY(toItem) + 16)" 
-                  stroke="rgba(255,255,255,0.4)" 
-                  stroke-width="3" 
-                  stroke-dasharray="6,4"
-                  fill="none" />
-            <!-- Punto central del cable para borrarlo (requiere pointer-events en el SVG, mejor un botón HTML absoluto o que el path tenga events) -->
-            <!-- Lo implementaremos con elementos html posicionales arriba -->
-          </ng-container>
+        <ng-container *ngIf="cable.pathPoints && cable.pathPoints.length > 0">
+          <path [attr.d]="getCablePathString(cable)" 
+                [attr.stroke]="cable.color || 'rgba(255,255,255,0.4)'" 
+                stroke-width="3" 
+                stroke-dasharray="6,4"
+                fill="none" />
         </ng-container>
       </g>
     </svg>
@@ -108,16 +103,14 @@
     <!-- Botones HTML absolutos para borrar cables -->
     <div class="absolute inset-0 w-full h-full pointer-events-none z-30 overflow-hidden hide-on-print">
       <ng-container *ngFor="let cable of cables">
-        <ng-container *ngIf="getItemById(cable.fromId) as fromItem">
-          <ng-container *ngIf="getItemById(cable.toId) as toItem">
-            <button class="absolute pointer-events-auto bg-error text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow transform -translate-x-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity"
-                    [style.left.px]="(getCenterX(fromItem) + getCenterX(toItem))/2 + 16"
-                    [style.top.px]="(getCenterY(fromItem) + getCenterY(toItem))/2 + 16"
-                    title="Borrar cable"
-                    (click)="removeCable(cable.id); $event.stopPropagation()">
-              ×
-            </button>
-          </ng-container>
+        <ng-container *ngIf="getCableMidPoint(cable) as midPoint">
+          <button class="absolute pointer-events-auto bg-error text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow transform -translate-x-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity"
+                  [style.left.px]="midPoint.x"
+                  [style.top.px]="midPoint.y"
+                  title="Borrar cable"
+                  (click)="removeCable(cable.id); $event.stopPropagation()">
+            ×
+          </button>
         </ng-container>
       </ng-container>
     </div>
