@@ -105,7 +105,7 @@ export class StagePlotComponent implements OnInit {
       amps.forEach(a => {
         catAmps.push({ 
           id: `amp_${a.id}`, type: 'amp', label: a.name, displayType: 'Amplificador',
-          x: 0, y: 0, width: 75, height: 40, rotation: 0,
+          x: 0, y: 0, width: 90, height: 50, rotation: 0,
           iconType: 'svg', iconValue: this.getSvgForAmp(a.type) 
         });
       });
@@ -113,7 +113,7 @@ export class StagePlotComponent implements OnInit {
       mics.forEach(m => {
         catMics.push({
           id: `mic_${m.id}`, type: 'mic', label: m.name + (m.brand ? ` (${m.brand})` : ''), displayType: 'Micrófono',
-          x: 0, y: 0, width: 30, height: 30, rotation: 0,
+          x: 0, y: 0, width: 40, height: 40, rotation: 0,
           iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg'
         });
       });
@@ -128,8 +128,11 @@ export class StagePlotComponent implements OnInit {
       });
 
       catInstruments.push({ id: 'gen_drum', type: 'drums', label: 'Batería Genérica', displayType: 'Batería', x: 0, y: 0, width: 200, height: 200, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
-      catMics.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Genérico', displayType: 'Micrófono', x: 0, y: 0, width: 30, height: 30, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
-      catOthers.push({ id: 'gen_di', type: 'di', label: 'Caja DI Genérica', displayType: 'DI Box', x: 0, y: 0, width: 30, height: 30, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
+      catMics.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Genérico', displayType: 'Micrófono', x: 0, y: 0, width: 40, height: 40, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
+      catOthers.push({ id: 'gen_di', type: 'di', label: 'Caja DI Genérica', displayType: 'DI Box', x: 0, y: 0, width: 40, height: 40, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
+      
+      // Stage Box (Cajetín de escenario) para conectar la mesa FOH
+      catOthers.push({ id: 'gen_stagebox', type: 'stagebox', label: 'Cajetín Escenario (Hacia Mesa)', displayType: 'Stage Box / FOH', x: 0, y: 0, width: 80, height: 50, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
 
       this.categories = [
         { id: 'members', title: 'Integrantes', items: catMembers, open: true },
@@ -224,10 +227,14 @@ export class StagePlotComponent implements OnInit {
   }
 
   addToStage(eq: StageItem) {
-    if (this.isItemOnStage(eq.id)) {
+    // Si no es generico y ya está, salimos
+    if (!eq.id.startsWith('gen_') && this.isItemOnStage(eq.id)) {
       return;
     }
-    const newItem = { ...eq, x: 200, y: 200, currentX: 200, currentY: 200 };
+    
+    // Los elementos genericos se pueden añadir múltiples veces generando un ID único
+    const uniqueId = eq.id.startsWith('gen_') ? `${eq.id}_${Date.now()}` : eq.id;
+    const newItem = { ...eq, id: uniqueId, x: 200, y: 200, currentX: 200, currentY: 200 };
     this.items.push(newItem);
     this.selectItem(newItem);
     this.savePlot();
