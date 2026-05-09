@@ -56,9 +56,9 @@
               <strong>{{eq.label}}</strong> <span class="opacity-60 block text-[10px]">{{eq.displayType}}</span>
             </span>
             <button class="btn btn-xs shrink-0" 
-                    [ngClass]="isItemOnStage(eq.id) ? 'btn-disabled opacity-50' : 'btn-outline btn-primary'" 
+                    [ngClass]="(!eq.id.startsWith('gen_') && isItemOnStage(eq.id)) ? 'btn-disabled opacity-50' : 'btn-outline btn-primary'" 
                     (click)="addToStage(eq)">
-              {{ isItemOnStage(eq.id) ? 'En escenario' : 'Añadir' }}
+              {{ (!eq.id.startsWith('gen_') && isItemOnStage(eq.id)) ? 'En escenario' : 'Añadir' }}
             </button>
           </div>
           <div *ngIf="cat.items.length === 0" class="text-xs opacity-50 p-2 text-center">
@@ -143,7 +143,7 @@
           <div class="w-full h-full rounded-lg bg-base-100/95 shadow-[0_8px_30px_rgb(0,0,0,0.3)] border-2 flex items-center justify-center text-primary overflow-hidden transition-all"
                [ngClass]="selectedItem?.id === item.id ? 'border-primary ring-4 ring-primary ring-opacity-50' : (connectingFrom?.id === item.id ? 'border-info ring-4 ring-info ring-opacity-70 animate-pulse' : 'border-neutral-focus/30 hover:border-primary/50')">
             
-            <img *ngIf="item.iconType === 'svg'" [src]="item.iconValue" class="w-full h-full object-contain p-2" [alt]="item.label">
+            <img *ngIf="item.iconType === 'svg'" [src]="item.iconValue" class="w-full h-full object-contain p-1" [alt]="item.label">
             
             <div *ngIf="item.iconType === 'ng-icon'" class="flex items-center justify-center w-full h-full text-base-content opacity-70">
               <ng-icon [name]="item.iconValue" [style.fontSize]="(item.width * 0.5) + 'px'"></ng-icon>
