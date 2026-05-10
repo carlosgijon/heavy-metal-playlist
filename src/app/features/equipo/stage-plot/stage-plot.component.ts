@@ -147,8 +147,8 @@ export class StagePlotComponent implements OnInit {
           w = 80;
           h = 80;
         } else if (m.usage === 'drums-overhead') {
-          w = 60;
-          h = 140;
+          w = 100;
+          h = 160;
         }
 
         catMics.push({
@@ -233,9 +233,12 @@ export class StagePlotComponent implements OnInit {
     else if (si.type === 'amp') { w = 140; h = 80; }
     else if (si.type === 'mic') { 
       w = 80; h = 80; 
-      // If the icon is vocal or overhead, make it rectangular
-      if (si.iconValue?.includes('vocal_mic') || si.iconValue?.includes('overhead_mic')) {
+      // If the icon is vocal, make it rectangular (60x140)
+      if (si.iconValue?.includes('vocal_mic')) {
         w = 60; h = 140;
+      } else if (si.iconValue?.includes('overhead_mic')) {
+        // Overhead has a boom arm so it's wider
+        w = 100; h = 160;
       }
     }
     else if (si.type === 'monitor') { 
