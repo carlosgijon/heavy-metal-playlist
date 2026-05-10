@@ -16,7 +16,7 @@ export interface MicrophoneFormData {
 }
 
 // Combined UI value for "¿Dónde va este micrófono?"
-type DestinationType = '' | 'member' | 'amplifier' | 'instrument' | 'drums-kick' | 'drums-overhead' | 'drums-snare';
+type DestinationType = '' | 'member' | 'vocal-headset' | 'amplifier' | 'instrument' | 'drums-kick' | 'drums-overhead' | 'drums-snare';
 
 @Component({
   selector: 'app-microphone-form',
@@ -93,6 +93,7 @@ type DestinationType = '' | 'member' | 'amplifier' | 'instrument' | 'drums-kick'
                   (change)="onDestTypeChange()">
             <option value="">Ambiente / público (sin asignar)</option>
             <option value="member">Micrófono vocal (integrante)</option>
+            <option value="vocal-headset">Micrófono de diadema (integrante)</option>
             <option value="amplifier">Amplificador</option>
             <option value="instrument">Instrumento de batería (general)</option>
             <option value="drums-kick">Micrófono de bombo</option>
@@ -101,7 +102,7 @@ type DestinationType = '' | 'member' | 'amplifier' | 'instrument' | 'drums-kick'
           </select>
         </div>
 
-        @if (form.get('destType')?.value === 'member') {
+        @if (form.get('destType')?.value === 'member' || form.get('destType')?.value === 'vocal-headset') {
           <div class="form-control mb-3">
             <label class="label"><span class="label-text">Integrante (vocal)</span></label>
             <select class="select select-bordered select-sm" formControlName="assignedToId">
@@ -189,7 +190,9 @@ export class MicrophoneFormComponent implements OnInit {
       const m = this.data.microphone;
       // Reconstruct combined destType from assignedToType + usage
       let destType: DestinationType = (m.assignedToType ?? '') as DestinationType;
-      if (m.assignedToType === 'instrument' && m.usage) {
+      if (m.usage === 'vocal-headset') {
+        destType = 'vocal-headset';
+      } else if (m.assignedToType === 'instrument' && m.usage) {
         if (['drums-kick', 'drums-overhead', 'drums-snare'].includes(m.usage)) {
           destType = m.usage as DestinationType;
         }
@@ -221,6 +224,10 @@ export class MicrophoneFormComponent implements OnInit {
     if (destType === 'member') {
       assignedToType = 'member';
       usage = 'vocal';
+      assignedToId = v.assignedToId || undefined;
+    } else if (destType === 'vocal-headset') {
+      assignedToType = 'member';
+      usage = 'vocal-headset';
       assignedToId = v.assignedToId || undefined;
     } else if (destType === 'amplifier') {
       assignedToType = 'amplifier';

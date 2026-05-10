@@ -135,7 +135,7 @@ export class StagePlotComponent implements OnInit {
         let iconPath = 'icons/instruments/vocal_mic.svg';
         if (m.usage === 'drums-kick') iconPath = 'icons/instruments/kick_mic.svg';
         else if (m.usage === 'drums-overhead') iconPath = 'icons/instruments/overhead_mic.svg';
-        else if (m.usage === 'vocal-headset') iconPath = 'icons/instruments/headset_mic.svg';
+        else if (m.usage === 'vocal-headset' || m.type === 'headset') iconPath = 'icons/instruments/headset_mic.svg';
         else if (m.usage === 'instrument' || m.usage === 'drums-snare' || m.usage === 'ambient') iconPath = 'icons/instruments/amp_mic_ight.svg';
         
         // Size differentiation
@@ -144,7 +144,7 @@ export class StagePlotComponent implements OnInit {
         if (m.usage === 'vocal') {
           w = 60;
           h = 140; // Rectangular and tall
-        } else if (m.usage === 'vocal-headset') {
+        } else if (m.usage === 'vocal-headset' || m.type === 'headset') {
           w = 40;
           h = 40; // Small
         } else if (m.usage === 'drums-kick') {

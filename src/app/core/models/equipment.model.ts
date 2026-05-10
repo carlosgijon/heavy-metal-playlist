@@ -9,7 +9,7 @@ export type InstrumentRouting = 'amp' | 'di' | 'mesa';
 export type AmpRouting        = 'mic' | 'di' | 'mesa';
 export type MonoStereo        = 'mono' | 'stereo';
 
-export type MicType = 'dynamic' | 'condenser' | 'ribbon';
+export type MicType = 'dynamic' | 'condenser' | 'ribbon' | 'headset';
 export type PolarPattern = 'cardioid' | 'supercardioid' | 'hypercardioid' | 'omnidirectional' | 'figure-8';
 export type InstrumentType = 'guitar' | 'bass' | 'drums' | 'keyboard' | 'other';
 export type AmpType = 'guitar' | 'bass' | 'keyboard';
@@ -138,6 +138,7 @@ export const MIC_TYPE_LABELS: Record<MicType, string> = {
   dynamic:   'Dinámico',
   condenser: 'Condensador',
   ribbon:    'Cinta',
+  headset:   'Diadema',
 };
 
 export const POLAR_LABELS: Record<PolarPattern, string> = {
