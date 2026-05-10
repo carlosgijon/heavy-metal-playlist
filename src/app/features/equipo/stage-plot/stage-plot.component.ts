@@ -132,11 +132,30 @@ export class StagePlotComponent implements OnInit {
       });
 
       mics.forEach(m => {
+        let iconPath = 'icons/instruments/vocal_mic.svg';
+        if (m.usage === 'drums-kick') iconPath = 'icons/instruments/kick_mic.svg';
+        else if (m.usage === 'drums-overhead') iconPath = 'icons/instruments/overhead_mic.svg';
+        else if (m.usage === 'instrument' || m.usage === 'drums-snare' || m.usage === 'ambient') iconPath = 'icons/instruments/amp_mic_ight.svg';
+        
+        // Size differentiation
+        let w = 80;
+        let h = 80;
+        if (m.usage === 'vocal') {
+          w = 60;
+          h = 140; // Rectangular and tall
+        } else if (m.usage === 'drums-kick') {
+          w = 80;
+          h = 80;
+        } else if (m.usage === 'drums-overhead') {
+          w = 60;
+          h = 140;
+        }
+
         catMics.push({
           id: `mic_${m.id}`, type: 'mic', label: m.name + (m.brand ? ` (${m.brand})` : ''), displayType: 'Micrófono',
-          x: 0, y: 0, width: 80, height: 80, rotation: 0,
+          x: 0, y: 0, width: w, height: h, rotation: 0,
           isStereo: m.monoStereo === 'stereo',
-          iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg'
+          iconType: 'svg', iconValue: iconPath
         });
       });
 
@@ -212,7 +231,13 @@ export class StagePlotComponent implements OnInit {
     else if (si.type === 'keyboard') { w = 200; h = 80; }
     else if (si.type === 'instrument') { w = 100; h = 100; }
     else if (si.type === 'amp') { w = 140; h = 80; }
-    else if (si.type === 'mic') { w = 80; h = 80; }
+    else if (si.type === 'mic') { 
+      w = 80; h = 80; 
+      // If the icon is vocal or overhead, make it rectangular
+      if (si.iconValue?.includes('vocal_mic') || si.iconValue?.includes('overhead_mic')) {
+        w = 60; h = 140;
+      }
+    }
     else if (si.type === 'monitor') { 
       if (si.displayType === 'PA') { w = 80; h = 80; }
       else { w = 90; h = 60; }
@@ -365,6 +390,7 @@ export class StagePlotComponent implements OnInit {
 
   recalculateCables() {
     const obstacles = this.items.map(i => ({
+      id: i.id,
       x: i.currentX || i.x,
       y: i.currentY || i.y,
       w: i.width,
@@ -379,7 +405,8 @@ export class StagePlotComponent implements OnInit {
           cable.pathPoints = findOrthogonalPath(
             this.getCenterX(fromItem), this.getCenterY(fromItem),
             this.getCenterX(fromItem), Math.max(500, this.stageHeight) - 30, // Justo encima del borde inferior
-            obstacles
+            obstacles,
+            [cable.fromId] // exclude
           );
         } else {
           const toItem = this.getItemById(cable.toId);
@@ -387,7 +414,8 @@ export class StagePlotComponent implements OnInit {
             cable.pathPoints = findOrthogonalPath(
               this.getCenterX(fromItem), this.getCenterY(fromItem),
               this.getCenterX(toItem), this.getCenterY(toItem),
-              obstacles
+              obstacles,
+              [cable.fromId, cable.toId] // exclude start and end
             );
           }
         }
