@@ -1,0 +1,11 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Headband back curve -->
+  <path d="M 25 10 C 35 15, 35 25, 25 30" stroke="#111" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Earpiece curve -->
+  <path d="M 25 15 C 30 20, 25 30, 20 35" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Thin boom arm -->
+  <line x1="20" y1="35" x2="8" y2="28" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Mic capsule -->
+  <circle cx="7" cy="27" r="3" fill="#111"/>
+  <circle cx="6" cy="26" r="1.5" fill="#aaa"/>
+</svg>
