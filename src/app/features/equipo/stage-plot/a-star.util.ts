@@ -1,7 +1,8 @@
 export function findOrthogonalPath(
   startX: number, startY: number, 
   endX: number, endY: number, 
-  obstacles: {x: number, y: number, w: number, h: number}[]
+  obstacles: {id?: string, x: number, y: number, w: number, h: number}[],
+  excludeIds: string[] = []
 ): {x: number, y: number}[] {
   
   const GRID_SIZE = 20;
@@ -11,6 +12,8 @@ export function findOrthogonalPath(
 
   const gridObstacles = new Set<string>();
   for (const obs of obstacles) {
+      if (obs.id && excludeIds.includes(obs.id)) continue;
+      
       // Dejamos un pequeño margen para que los cables no pasen rozando el borde del svg (opcional)
       const minX = Math.floor(obs.x / GRID_SIZE);
       const minY = Math.floor(obs.y / GRID_SIZE);
@@ -21,19 +24,6 @@ export function findOrthogonalPath(
           for(let j = minY; j <= maxY; j++) {
               gridObstacles.add(`${i},${j}`);
           }
-      }
-  }
-
-  // Siempre permitimos que el nodo inicial y final sean transitables
-  // De lo contrario el algoritmo no empezaría o no terminaría si el equipo origen/destino ocupa celdas
-  for(let i = startNode.x - 1; i <= startNode.x + 1; i++) {
-      for(let j = startNode.y - 1; j <= startNode.y + 1; j++) {
-          gridObstacles.delete(`${i},${j}`);
-      }
-  }
-  for(let i = endNode.x - 1; i <= endNode.x + 1; i++) {
-      for(let j = endNode.y - 1; j <= endNode.y + 1; j++) {
-          gridObstacles.delete(`${i},${j}`);
       }
   }
 

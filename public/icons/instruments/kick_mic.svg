@@ -1,0 +1,12 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Base -->
+  <circle cx="40" cy="70" r="10" fill="#555" stroke="black" stroke-width="1.5"/>
+  <!-- Short stand -->
+  <rect x="38" y="45" width="4" height="25" fill="#888" stroke="black" stroke-width="1"/>
+  <!-- Kick mic body -->
+  <rect x="30" y="25" width="20" height="20" rx="4" fill="#333" stroke="black" stroke-width="1.5"/>
+  <!-- Grill -->
+  <path d="M 30 25 Q 40 15 50 25 Z" fill="#777" stroke="black" stroke-width="1"/>
+  <!-- Connector -->
+  <rect x="24" y="30" width="6" height="10" fill="#999" stroke="black" stroke-width="1"/>
+</svg>

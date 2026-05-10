@@ -1,0 +1,10 @@
+<svg width="48" height="167" viewBox="0 0 48 167" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Base -->
+  <circle cx="24" cy="142" r="23.5" fill="#555" stroke="black" stroke-width="1.5"/>
+  <!-- Tall stand -->
+  <rect x="22.5" y="35" width="3" height="107" fill="#888" stroke="black"/>
+  <!-- Pencil condenser mic body -->
+  <rect x="20" y="10" width="8" height="25" fill="#333" stroke="black" stroke-width="1.5"/>
+  <!-- Mic tip -->
+  <path d="M 20 10 L 24 0 L 28 10 Z" fill="#777" stroke="black" stroke-width="1"/>
+</svg>
