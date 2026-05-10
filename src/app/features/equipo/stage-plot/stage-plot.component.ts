@@ -10,18 +10,19 @@ import { findOrthogonalPath } from './a-star.util';
 
 export interface StageItem {
   id: string;
-  type: string;
+  type: string; // 'member', 'instrument', 'amp', 'mic', 'drums', etc.
   label: string;
   displayType: string;
   x: number;
   y: number;
-  currentX?: number; // Used for realtime drag rendering
-  currentY?: number;
   width: number;
   height: number;
   rotation: number;
-  iconType: 'svg' | 'ng-icon';
+  iconType: 'ng-icon' | 'svg';
   iconValue: string;
+  currentX?: number;
+  currentY?: number;
+  isStereo?: boolean;
 }
 
 export interface Cable {
@@ -30,6 +31,7 @@ export interface Cable {
   toId: string;
   color?: string;
   pathPoints?: {x: number, y: number}[];
+  isStereo?: boolean;
 }
 
 export interface EquipmentCategory {
@@ -101,6 +103,7 @@ export class StagePlotComponent implements OnInit {
         catInstruments.push({ 
           id: `inst_${i.id}`, type: 'instrument', label: i.name, displayType: i.type,
           x: 0, y: 0, width: w, height: h, rotation: 0,
+          isStereo: i.monoStereo === 'stereo',
           iconType: 'svg', iconValue: this.getSvgForInstrument(i.type) 
         });
       });
@@ -108,7 +111,8 @@ export class StagePlotComponent implements OnInit {
       amps.forEach(a => {
         catAmps.push({ 
           id: `amp_${a.id}`, type: 'amp', label: a.name, displayType: 'Amplificador',
-          x: 0, y: 0, width: 90, height: 50, rotation: 0,
+          x: 0, y: 0, width: 110, height: 60, rotation: 0,
+          isStereo: a.monoStereo === 'stereo',
           iconType: 'svg', iconValue: this.getSvgForAmp(a.type) 
         });
       });
@@ -117,6 +121,7 @@ export class StagePlotComponent implements OnInit {
         catMics.push({
           id: `mic_${m.id}`, type: 'mic', label: m.name + (m.brand ? ` (${m.brand})` : ''), displayType: 'Micrófono',
           x: 0, y: 0, width: 40, height: 40, rotation: 0,
+          isStereo: m.monoStereo === 'stereo',
           iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg'
         });
       });
@@ -233,14 +238,10 @@ export class StagePlotComponent implements OnInit {
   }
 
   addToStage(eq: StageItem) {
-    // Si no es generico y ya está, salimos
-    if (!eq.id.startsWith('gen_') && this.isItemOnStage(eq.id)) {
+    if (this.isItemOnStage(eq.id)) {
       return;
     }
-    
-    // Los elementos genericos se pueden añadir múltiples veces generando un ID único
-    const uniqueId = eq.id.startsWith('gen_') ? `${eq.id}_${Date.now()}` : eq.id;
-    const newItem = { ...eq, id: uniqueId, x: 200, y: 200, currentX: 200, currentY: 200 };
+    const newItem = { ...eq, x: 200, y: 200, currentX: 200, currentY: 200 };
     this.items.push(newItem);
     this.selectItem(newItem);
     this.savePlot();
@@ -284,7 +285,29 @@ export class StagePlotComponent implements OnInit {
   }
 
   connectToFOH(item: StageItem) {
-    this.addCable(item.id, 'FOH');
+    const stageBoxes = this.items.filter(i => i.type === 'stagebox');
+    
+    if (stageBoxes.length > 0) {
+      // Find closest stagebox
+      let closestBox = stageBoxes[0];
+      let minDistance = Infinity;
+      const startX = this.getCenterX(item);
+      const startY = this.getCenterY(item);
+
+      stageBoxes.forEach(sb => {
+        const dx = this.getCenterX(sb) - startX;
+        const dy = this.getCenterY(sb) - startY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestBox = sb;
+        }
+      });
+      this.addCable(item.id, closestBox.id);
+    } else {
+      // No stagebox, go direct to FOH
+      this.addCable(item.id, 'FOH');
+    }
   }
 
   addCable(fromId: string, toId: string) {
@@ -294,7 +317,11 @@ export class StagePlotComponent implements OnInit {
     }
     const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
     const color = colors[this.cables.length % colors.length];
-    this.cables.push({ id: `cable_${Date.now()}`, fromId, toId, color });
+    
+    const fromItem = this.getItemById(fromId);
+    const isStereo = fromItem ? !!fromItem.isStereo : false;
+    
+    this.cables.push({ id: `cable_${Date.now()}`, fromId, toId, color, isStereo });
     this.recalculateCables();
     this.savePlot();
   }

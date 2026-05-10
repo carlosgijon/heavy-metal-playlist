@@ -59,9 +59,9 @@
               <strong>{{eq.label}}</strong> <span class="opacity-60 block text-[10px]">{{eq.displayType}}</span>
             </span>
             <button class="btn btn-xs shrink-0" 
-                    [ngClass]="(!eq.id.startsWith('gen_') && isItemOnStage(eq.id)) ? 'btn-disabled opacity-50' : 'btn-outline btn-primary'" 
+                    [ngClass]="isItemOnStage(eq.id) ? 'btn-disabled opacity-50' : 'btn-outline btn-primary'" 
                     (click)="addToStage(eq)">
-              {{ (!eq.id.startsWith('gen_') && isItemOnStage(eq.id)) ? 'En escenario' : 'Añadir' }}
+              {{ isItemOnStage(eq.id) ? 'En escenario' : 'Añadir' }}
             </button>
           </div>
           <div *ngIf="cat.items.length === 0" class="text-xs opacity-50 p-2 text-center">
@@ -92,21 +92,54 @@
 
     <!-- SVG Layer para los Cables -->
     <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
+      <defs>
+        <marker id="arrowFOH" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="white" />
+        </marker>
+      </defs>
       <g *ngFor="let cable of cables">
         <ng-container *ngIf="cable.pathPoints && cable.pathPoints.length > 0">
-          <path [attr.d]="getCablePathString(cable)" 
-                [attr.stroke]="cable.color || 'rgba(255,255,255,0.4)'" 
-                stroke-width="3" 
-                stroke-dasharray="6,4"
-                fill="none" />
+          <ng-container *ngIf="cable.isStereo; else monoCable">
+            <!-- Stereo: Cable grueso con línea central para simular dos cables paralelos -->
+            <path [attr.d]="getCablePathString(cable)" 
+                  stroke="rgba(0,0,0,0.5)" 
+                  stroke-width="8" 
+                  fill="none" />
+            <path [attr.d]="getCablePathString(cable)" 
+                  [attr.stroke]="cable.color || 'rgba(255,255,255,0.4)'" 
+                  stroke-width="8" 
+                  stroke-dasharray="8,4"
+                  [attr.marker-end]="cable.toId === 'FOH' ? 'url(#arrowFOH)' : null"
+                  fill="none" />
+            <path [attr.d]="getCablePathString(cable)" 
+                  stroke="#1a1a1a" 
+                  stroke-width="2" 
+                  fill="none" />
+          </ng-container>
+          <ng-template #monoCable>
+            <!-- Mono: Cable normal -->
+            <path [attr.d]="getCablePathString(cable)" 
+                  [attr.stroke]="cable.color || 'rgba(255,255,255,0.4)'" 
+                  stroke-width="3" 
+                  stroke-dasharray="6,4"
+                  [attr.marker-end]="cable.toId === 'FOH' ? 'url(#arrowFOH)' : null"
+                  fill="none" />
+          </ng-template>
         </ng-container>
       </g>
     </svg>
 
-    <!-- Botones HTML absolutos para borrar cables -->
+    <!-- Elementos HTML sobre los cables (botones y etiquetas) -->
     <div class="absolute inset-0 w-full h-full pointer-events-none z-30 overflow-hidden hide-on-print">
       <ng-container *ngFor="let cable of cables">
         <ng-container *ngIf="getCableMidPoint(cable) as midPoint">
+          <!-- Etiqueta L/R para Stereo -->
+          <div *ngIf="cable.isStereo" class="absolute transform -translate-x-1/2 -translate-y-[150%] text-[9px] font-bold bg-black/60 text-white px-1 rounded shadow"
+               [style.left.px]="midPoint.x"
+               [style.top.px]="midPoint.y">
+            L/R
+          </div>
+          
           <button class="absolute pointer-events-auto bg-error text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow transform -translate-x-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity"
                   [style.left.px]="midPoint.x"
                   [style.top.px]="midPoint.y"
@@ -114,6 +147,16 @@
                   (click)="removeCable(cable.id); $event.stopPropagation()">
             ×
           </button>
+        </ng-container>
+        
+        <!-- Texto "A MESA" al final del cable si es FOH -->
+        <ng-container *ngIf="cable.toId === 'FOH' && cable.pathPoints && cable.pathPoints.length > 0">
+          <div class="absolute transform -translate-x-1/2 text-[10px] font-bold text-white tracking-widest uppercase"
+               style="text-shadow: 1px 1px 3px rgba(0,0,0,0.8);"
+               [style.left.px]="cable.pathPoints[cable.pathPoints.length - 1].x"
+               [style.top.px]="cable.pathPoints[cable.pathPoints.length - 1].y + 10">
+            A MESA
+          </div>
         </ng-container>
       </ng-container>
     </div>
