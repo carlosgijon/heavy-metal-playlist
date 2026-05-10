@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
@@ -60,6 +60,20 @@ export class StagePlotComponent implements OnInit {
   selectedItem: StageItem | null = null;
   connectingFrom: StageItem | null = null;
 
+  @ViewChild('stageContainer') stageContainer?: ElementRef;
+
+  get stageHeight(): number {
+    if (this.stageContainer && this.stageContainer.nativeElement) {
+      return this.stageContainer.nativeElement.clientHeight;
+    }
+    return 650; // Fallback
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.recalculateCables();
+  }
+
   constructor(
     private stagePlotService: StagePlotService,
     private db: DatabaseService,
@@ -90,7 +104,7 @@ export class StagePlotComponent implements OnInit {
       members.forEach(m => {
         catMembers.push({ 
           id: `member_${m.id}`, type: 'member', label: m.name, displayType: 'Integrante',
-          x: 0, y: 0, width: 60, height: 60, rotation: 0,
+          x: 0, y: 0, width: 120, height: 120, rotation: 0,
           iconType: 'ng-icon', iconValue: 'heroUser' 
         });
       });
@@ -98,8 +112,8 @@ export class StagePlotComponent implements OnInit {
       instruments.forEach(i => {
         const isDrum = i.type === 'drums';
         const isKeys = i.type === 'keyboard';
-        const w = isDrum ? 200 : (isKeys ? 130 : 80);
-        const h = isDrum ? 200 : (isKeys ? 50 : 80);
+        const w = isDrum ? 400 : (isKeys ? 260 : 160);
+        const h = isDrum ? 400 : (isKeys ? 100 : 160);
         catInstruments.push({ 
           id: `inst_${i.id}`, type: 'instrument', label: i.name, displayType: i.type,
           x: 0, y: 0, width: w, height: h, rotation: 0,
@@ -111,7 +125,7 @@ export class StagePlotComponent implements OnInit {
       amps.forEach(a => {
         catAmps.push({ 
           id: `amp_${a.id}`, type: 'amp', label: a.name, displayType: 'Amplificador',
-          x: 0, y: 0, width: 110, height: 60, rotation: 0,
+          x: 0, y: 0, width: 220, height: 120, rotation: 0,
           isStereo: a.monoStereo === 'stereo',
           iconType: 'svg', iconValue: this.getSvgForAmp(a.type) 
         });
@@ -120,7 +134,7 @@ export class StagePlotComponent implements OnInit {
       mics.forEach(m => {
         catMics.push({
           id: `mic_${m.id}`, type: 'mic', label: m.name + (m.brand ? ` (${m.brand})` : ''), displayType: 'Micrófono',
-          x: 0, y: 0, width: 40, height: 40, rotation: 0,
+          x: 0, y: 0, width: 160, height: 160, rotation: 0,
           isStereo: m.monoStereo === 'stereo',
           iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg'
         });
@@ -130,17 +144,17 @@ export class StagePlotComponent implements OnInit {
         const isMonitor = p.category === 'monitor';
         catOthers.push({
           id: `pa_${p.id}`, type: 'monitor', label: p.name, displayType: isMonitor ? 'Monitor' : 'PA',
-          x: 0, y: 0, width: isMonitor ? 60 : 40, height: isMonitor ? 40 : 40, rotation: 0,
+          x: 0, y: 0, width: isMonitor ? 120 : 80, height: isMonitor ? 80 : 80, rotation: 0,
           iconType: 'svg', iconValue: 'icons/instruments/DI.svg'
         });
       });
 
-      catInstruments.push({ id: 'gen_drum', type: 'drums', label: 'Batería Genérica', displayType: 'Batería', x: 0, y: 0, width: 200, height: 200, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
-      catMics.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Genérico', displayType: 'Micrófono', x: 0, y: 0, width: 40, height: 40, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
-      catOthers.push({ id: 'gen_di', type: 'di', label: 'Caja DI Genérica', displayType: 'DI Box', x: 0, y: 0, width: 40, height: 40, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
+      catInstruments.push({ id: 'gen_drum', type: 'drums', label: 'Batería Genérica', displayType: 'Batería', x: 0, y: 0, width: 400, height: 400, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
+      catMics.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Genérico', displayType: 'Micrófono', x: 0, y: 0, width: 160, height: 160, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
+      catOthers.push({ id: 'gen_di', type: 'di', label: 'Caja DI Genérica', displayType: 'DI Box', x: 0, y: 0, width: 80, height: 80, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
       
       // Stage Box (Cajetín de escenario) para conectar la mesa FOH
-      catOthers.push({ id: 'gen_stagebox', type: 'stagebox', label: 'Cajetín Escenario (Hacia Mesa)', displayType: 'Stage Box / FOH', x: 0, y: 0, width: 80, height: 50, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
+      catOthers.push({ id: 'gen_stagebox', type: 'stagebox', label: 'Cajetín Escenario (Hacia Mesa)', displayType: 'Stage Box / FOH', x: 0, y: 0, width: 160, height: 100, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
 
       this.categories = [
         { id: 'members', title: 'Integrantes', items: catMembers, open: true },
@@ -189,10 +203,24 @@ export class StagePlotComponent implements OnInit {
   }
 
   private migrateOldItem(si: any): StageItem {
+    let w = si.width || 120;
+    let h = si.height || 120;
+    
+    // Forzar siempre los tamaños nuevos para que el stage plot sea uniforme tras la actualización
+    if (si.type === 'member') { w = 120; h = 120; }
+    else if (si.type === 'drums') { w = 400; h = 400; }
+    else if (si.type === 'keyboard') { w = 260; h = 100; }
+    else if (si.type === 'instrument') { w = 160; h = 160; }
+    else if (si.type === 'amp') { w = 220; h = 120; }
+    else if (si.type === 'mic') { w = 160; h = 160; }
+    else if (si.type === 'monitor') { w = 120; h = 80; }
+    else if (si.type === 'stagebox') { w = 160; h = 100; }
+    else if (si.type === 'di') { w = 80; h = 80; }
+
     return {
       ...si,
-      width: si.width || 60,
-      height: si.height || 60,
+      width: w,
+      height: h,
       rotation: si.rotation || 0,
       displayType: si.displayType || si.type,
       currentX: si.x,
@@ -347,7 +375,7 @@ export class StagePlotComponent implements OnInit {
           // Destino fijo hacia abajo (fuera del escenario por la parte inferior)
           cable.pathPoints = findOrthogonalPath(
             this.getCenterX(fromItem), this.getCenterY(fromItem),
-            this.getCenterX(fromItem), 650, // Y = 650 asume la parte inferior (Público)
+            this.getCenterX(fromItem), Math.max(500, this.stageHeight) - 30, // Justo encima del borde inferior
             obstacles
           );
         } else {
