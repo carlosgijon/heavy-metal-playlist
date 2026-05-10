@@ -104,7 +104,7 @@ export class StagePlotComponent implements OnInit {
       members.forEach(m => {
         catMembers.push({ 
           id: `member_${m.id}`, type: 'member', label: m.name, displayType: 'Integrante',
-          x: 0, y: 0, width: 120, height: 120, rotation: 0,
+          x: 0, y: 0, width: 90, height: 90, rotation: 0,
           iconType: 'ng-icon', iconValue: 'heroUser' 
         });
       });
@@ -112,8 +112,8 @@ export class StagePlotComponent implements OnInit {
       instruments.forEach(i => {
         const isDrum = i.type === 'drums';
         const isKeys = i.type === 'keyboard';
-        const w = isDrum ? 400 : (isKeys ? 260 : 160);
-        const h = isDrum ? 400 : (isKeys ? 100 : 160);
+        const w = isDrum ? 260 : (isKeys ? 200 : 100);
+        const h = isDrum ? 260 : (isKeys ? 80 : 100);
         catInstruments.push({ 
           id: `inst_${i.id}`, type: 'instrument', label: i.name, displayType: i.type,
           x: 0, y: 0, width: w, height: h, rotation: 0,
@@ -125,7 +125,7 @@ export class StagePlotComponent implements OnInit {
       amps.forEach(a => {
         catAmps.push({ 
           id: `amp_${a.id}`, type: 'amp', label: a.name, displayType: 'Amplificador',
-          x: 0, y: 0, width: 220, height: 120, rotation: 0,
+          x: 0, y: 0, width: 140, height: 80, rotation: 0,
           isStereo: a.monoStereo === 'stereo',
           iconType: 'svg', iconValue: this.getSvgForAmp(a.type) 
         });
@@ -134,7 +134,7 @@ export class StagePlotComponent implements OnInit {
       mics.forEach(m => {
         catMics.push({
           id: `mic_${m.id}`, type: 'mic', label: m.name + (m.brand ? ` (${m.brand})` : ''), displayType: 'Micrófono',
-          x: 0, y: 0, width: 160, height: 160, rotation: 0,
+          x: 0, y: 0, width: 80, height: 80, rotation: 0,
           isStereo: m.monoStereo === 'stereo',
           iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg'
         });
@@ -144,17 +144,17 @@ export class StagePlotComponent implements OnInit {
         const isMonitor = p.category === 'monitor';
         catOthers.push({
           id: `pa_${p.id}`, type: 'monitor', label: p.name, displayType: isMonitor ? 'Monitor' : 'PA',
-          x: 0, y: 0, width: isMonitor ? 120 : 80, height: isMonitor ? 80 : 80, rotation: 0,
+          x: 0, y: 0, width: isMonitor ? 90 : 80, height: isMonitor ? 60 : 80, rotation: 0,
           iconType: 'svg', iconValue: 'icons/instruments/DI.svg'
         });
       });
 
-      catInstruments.push({ id: 'gen_drum', type: 'drums', label: 'Batería Genérica', displayType: 'Batería', x: 0, y: 0, width: 400, height: 400, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
-      catMics.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Genérico', displayType: 'Micrófono', x: 0, y: 0, width: 160, height: 160, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
-      catOthers.push({ id: 'gen_di', type: 'di', label: 'Caja DI Genérica', displayType: 'DI Box', x: 0, y: 0, width: 80, height: 80, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
+      catInstruments.push({ id: 'gen_drum', type: 'drums', label: 'Batería Genérica', displayType: 'Batería', x: 0, y: 0, width: 260, height: 260, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/drum.svg' });
+      catMics.push({ id: 'gen_mic1', type: 'mic', label: 'Micrófono Genérico', displayType: 'Micrófono', x: 0, y: 0, width: 80, height: 80, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/vocal_mic.svg' });
+      catOthers.push({ id: 'gen_di', type: 'di', label: 'Caja DI Genérica', displayType: 'DI Box', x: 0, y: 0, width: 50, height: 50, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
       
       // Stage Box (Cajetín de escenario) para conectar la mesa FOH
-      catOthers.push({ id: 'gen_stagebox', type: 'stagebox', label: 'Cajetín Escenario (Hacia Mesa)', displayType: 'Stage Box / FOH', x: 0, y: 0, width: 160, height: 100, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
+      catOthers.push({ id: 'gen_stagebox', type: 'stagebox', label: 'Cajetín Escenario (Hacia Mesa)', displayType: 'Stage Box / FOH', x: 0, y: 0, width: 70, height: 50, rotation: 0, iconType: 'svg', iconValue: 'icons/instruments/DI.svg' });
 
       this.categories = [
         { id: 'members', title: 'Integrantes', items: catMembers, open: true },
@@ -203,19 +203,22 @@ export class StagePlotComponent implements OnInit {
   }
 
   private migrateOldItem(si: any): StageItem {
-    let w = si.width || 120;
-    let h = si.height || 120;
+    let w = si.width || 90;
+    let h = si.height || 90;
     
     // Forzar siempre los tamaños nuevos para que el stage plot sea uniforme tras la actualización
-    if (si.type === 'member') { w = 120; h = 120; }
-    else if (si.type === 'drums') { w = 400; h = 400; }
-    else if (si.type === 'keyboard') { w = 260; h = 100; }
-    else if (si.type === 'instrument') { w = 160; h = 160; }
-    else if (si.type === 'amp') { w = 220; h = 120; }
-    else if (si.type === 'mic') { w = 160; h = 160; }
-    else if (si.type === 'monitor') { w = 120; h = 80; }
-    else if (si.type === 'stagebox') { w = 160; h = 100; }
-    else if (si.type === 'di') { w = 80; h = 80; }
+    if (si.type === 'member') { w = 90; h = 90; }
+    else if (si.type === 'drums') { w = 260; h = 260; }
+    else if (si.type === 'keyboard') { w = 200; h = 80; }
+    else if (si.type === 'instrument') { w = 100; h = 100; }
+    else if (si.type === 'amp') { w = 140; h = 80; }
+    else if (si.type === 'mic') { w = 80; h = 80; }
+    else if (si.type === 'monitor') { 
+      if (si.displayType === 'PA') { w = 80; h = 80; }
+      else { w = 90; h = 60; }
+    }
+    else if (si.type === 'stagebox') { w = 70; h = 50; }
+    else if (si.type === 'di') { w = 50; h = 50; }
 
     return {
       ...si,
