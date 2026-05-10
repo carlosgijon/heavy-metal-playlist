@@ -340,7 +340,7 @@ export class StagePlotComponent implements OnInit {
       h: i.height
     }));
 
-    this.cables.forEach(cable => {
+    this.cables.forEach((cable, index) => {
       const fromItem = this.getItemById(cable.fromId);
       if (fromItem) {
         if (cable.toId === 'FOH') {
@@ -358,6 +358,18 @@ export class StagePlotComponent implements OnInit {
               this.getCenterX(toItem), this.getCenterY(toItem),
               obstacles
             );
+          }
+        }
+
+        // Aplicar offset a los puntos intermedios para que los cables paralelos no se solapen
+        if (cable.pathPoints && cable.pathPoints.length > 2) {
+          // Generar un offset basado en el index para separar visualmente los cables que comparten ruta
+          const offsets = [-12, -8, -4, 4, 8, 12, -10, -6, 6, 10, -14, 14];
+          const offset = offsets[index % offsets.length];
+          
+          for (let i = 1; i < cable.pathPoints.length - 1; i++) {
+            cable.pathPoints[i].x += offset;
+            cable.pathPoints[i].y += offset;
           }
         }
       }

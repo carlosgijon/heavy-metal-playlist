@@ -54,9 +54,9 @@
           {{cat.title}} <span class="opacity-50 text-xs ml-1 font-normal">({{cat.items.length}})</span>
         </div>
         <div class="collapse-content p-2 pt-0 space-y-1">
-          <div *ngFor="let eq of cat.items" class="bg-base-200 p-2 rounded flex justify-between items-center text-xs border border-transparent hover:border-primary/30 transition-colors">
-            <span class="truncate pr-2 flex-1" [title]="eq.label">
-              <strong>{{eq.label}}</strong> <span class="opacity-60 block text-[10px]">{{eq.displayType}}</span>
+          <div *ngFor="let eq of cat.items" class="bg-base-200 p-2 rounded flex justify-between items-center text-xs border border-transparent hover:border-primary/30 transition-colors w-full overflow-hidden gap-1">
+            <span class="truncate flex-1 min-w-0" [title]="eq.label">
+              <strong class="truncate block">{{eq.label}}</strong> <span class="opacity-60 block text-[10px] truncate">{{eq.displayType}}</span>
             </span>
             <button class="btn btn-xs shrink-0" 
                     [ngClass]="isItemOnStage(eq.id) ? 'btn-disabled opacity-50' : 'btn-outline btn-primary'" 
