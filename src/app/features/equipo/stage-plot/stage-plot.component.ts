@@ -135,6 +135,7 @@ export class StagePlotComponent implements OnInit {
         let iconPath = 'icons/instruments/vocal_mic.svg';
         if (m.usage === 'drums-kick') iconPath = 'icons/instruments/kick_mic.svg';
         else if (m.usage === 'drums-overhead') iconPath = 'icons/instruments/overhead_mic.svg';
+        else if (m.usage === 'vocal-headset') iconPath = 'icons/instruments/headset_mic.svg';
         else if (m.usage === 'instrument' || m.usage === 'drums-snare' || m.usage === 'ambient') iconPath = 'icons/instruments/amp_mic_ight.svg';
         
         // Size differentiation
@@ -143,12 +144,15 @@ export class StagePlotComponent implements OnInit {
         if (m.usage === 'vocal') {
           w = 60;
           h = 140; // Rectangular and tall
+        } else if (m.usage === 'vocal-headset') {
+          w = 40;
+          h = 40; // Small
         } else if (m.usage === 'drums-kick') {
           w = 80;
           h = 80;
         } else if (m.usage === 'drums-overhead') {
-          w = 100;
-          h = 160;
+          w = 260;
+          h = 80;
         }
 
         catMics.push({
@@ -237,8 +241,10 @@ export class StagePlotComponent implements OnInit {
       if (si.iconValue?.includes('vocal_mic')) {
         w = 60; h = 140;
       } else if (si.iconValue?.includes('overhead_mic')) {
-        // Overhead has a boom arm so it's wider
-        w = 100; h = 160;
+        // Overhead is now a wide horizontal stereo pair
+        w = 260; h = 80;
+      } else if (si.iconValue?.includes('headset_mic')) {
+        w = 40; h = 40;
       }
     }
     else if (si.type === 'monitor') { 
@@ -424,14 +430,21 @@ export class StagePlotComponent implements OnInit {
         }
 
         // Aplicar offset a los puntos intermedios para que los cables paralelos no se solapen
-        if (cable.pathPoints && cable.pathPoints.length > 2) {
+        if (cable.pathPoints && cable.pathPoints.length >= 2) {
           // Generar un offset basado en el index para separar visualmente los cables que comparten ruta
-          const offsets = [-12, -8, -4, 4, 8, 12, -10, -6, 6, 10, -14, 14];
+          const offsets = [-15, -10, -5, 5, 10, 15, -20, 20, -25, 25];
           const offset = offsets[index % offsets.length];
           
-          for (let i = 1; i < cable.pathPoints.length - 1; i++) {
-            cable.pathPoints[i].x += offset;
-            cable.pathPoints[i].y += offset;
+          if (cable.pathPoints.length > 2) {
+            for (let i = 1; i < cable.pathPoints.length - 1; i++) {
+              cable.pathPoints[i].x += offset;
+              cable.pathPoints[i].y += offset;
+            }
+          }
+
+          if (cable.toId === 'FOH') {
+            // Offset horizontal al destino final para que no se pisen los textos "A MESA" ni las flechas
+            cable.pathPoints[cable.pathPoints.length - 1].x += offset * 3;
           }
         }
       }

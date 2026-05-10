@@ -14,7 +14,7 @@ export type PolarPattern = 'cardioid' | 'supercardioid' | 'hypercardioid' | 'omn
 export type InstrumentType = 'guitar' | 'bass' | 'drums' | 'keyboard' | 'other';
 export type AmpType = 'guitar' | 'bass' | 'keyboard';
 export type PaCategory = 'console' | 'main-speaker' | 'subwoofer' | 'monitor' | 'di-box' | 'power-amp' | 'other';
-export type MicUsage = 'instrument' | 'vocal' | 'drums-overhead' | 'drums-snare' | 'drums-kick' | 'drums-pack' | 'ambient';
+export type MicUsage = 'instrument' | 'vocal' | 'vocal-headset' | 'drums-overhead' | 'drums-snare' | 'drums-kick' | 'drums-pack' | 'ambient';
 export type SpeakerConfig = '1x12' | '2x12' | '4x12' | '1x15' | '2x15' | '4x10' | '8x10' | '2x10' | 'custom';
 export type MonitorType = 'speaker' | 'iem';
 
@@ -161,6 +161,7 @@ export const PA_CATEGORY_LABELS: Record<PaCategory, string> = {
 export const MIC_USAGE_LABELS: Record<MicUsage, string> = {
   'instrument':     'Para ampli / instrumento',
   'vocal':          'Para voces',
+  'vocal-headset':  'Para voces (Diadema)',
   'drums-overhead': 'Para batería — Aéreos (Overhead)',
   'drums-snare':    'Para batería — Caja (Snare)',
   'drums-kick':     'Para batería — Bombo (Kick)',
