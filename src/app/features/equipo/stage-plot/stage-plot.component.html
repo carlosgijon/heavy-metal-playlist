@@ -26,12 +26,15 @@
         <input type="range" min="0" max="360" [(ngModel)]="selectedItem.rotation" (change)="onRotationChange()" class="range range-xs range-primary" />
       </div>
 
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button *ngIf="connectingFrom?.id !== selectedItem.id" class="btn btn-xs btn-outline btn-primary" (click)="startConnection(selectedItem)">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="mr-1">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
           Conectar a...
+        </button>
+        <button *ngIf="!connectingFrom" class="btn btn-xs btn-outline btn-accent" (click)="connectToFOH(selectedItem)" title="Tirar cable directo a Mesa (hacia abajo)">
+          Directo a Mesa
         </button>
         <button *ngIf="connectingFrom?.id === selectedItem.id" class="btn btn-xs btn-primary animate-pulse" (click)="cancelConnection()">
           Cancelar conexión

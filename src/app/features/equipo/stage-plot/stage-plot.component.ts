@@ -283,6 +283,10 @@ export class StagePlotComponent implements OnInit {
     this.connectingFrom = null;
   }
 
+  connectToFOH(item: StageItem) {
+    this.addCable(item.id, 'FOH');
+  }
+
   addCable(fromId: string, toId: string) {
     // Avoid duplicates
     if (this.cables.find(c => (c.fromId === fromId && c.toId === toId) || (c.fromId === toId && c.toId === fromId))) {
@@ -311,13 +315,24 @@ export class StagePlotComponent implements OnInit {
 
     this.cables.forEach(cable => {
       const fromItem = this.getItemById(cable.fromId);
-      const toItem = this.getItemById(cable.toId);
-      if (fromItem && toItem) {
-        cable.pathPoints = findOrthogonalPath(
-          this.getCenterX(fromItem), this.getCenterY(fromItem),
-          this.getCenterX(toItem), this.getCenterY(toItem),
-          obstacles
-        );
+      if (fromItem) {
+        if (cable.toId === 'FOH') {
+          // Destino fijo hacia abajo (fuera del escenario por la parte inferior)
+          cable.pathPoints = findOrthogonalPath(
+            this.getCenterX(fromItem), this.getCenterY(fromItem),
+            this.getCenterX(fromItem), 650, // Y = 650 asume la parte inferior (Público)
+            obstacles
+          );
+        } else {
+          const toItem = this.getItemById(cable.toId);
+          if (toItem) {
+            cable.pathPoints = findOrthogonalPath(
+              this.getCenterX(fromItem), this.getCenterY(fromItem),
+              this.getCenterX(toItem), this.getCenterY(toItem),
+              obstacles
+            );
+          }
+        }
       }
     });
   }
